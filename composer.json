@@ -1,0 +1,32 @@
+{
+
+    "name": "vipkwd/utils",
+    "description": "PHP常用函数集合",
+    "type": "library",
+    "homepage": "https://www.vipkwd.com",
+    "require": {
+        "symfony/console": "^5.3",
+        "php": ">=7.0",
+        "phpoffice/phpexcel": "1.8.2",
+        "phpmailer/phpmailer": "6.1.6",
+        "phpoffice/phpspreadsheet": "*"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Vipkwd\\Utils\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Vipkwd",
+            "email": "service@vipkwd.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "scripts": {
+      "post-install-cmd": [
+        "chmod +x artisan"
+      ]
+    }
+}

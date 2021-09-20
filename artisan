@@ -1,0 +1,85 @@
+#!/usr/bin/env php
+<?php
+
+define('VIPKWD_START', microtime(true));
+
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader
+| for our application. We just need to utilize it! We'll require it
+| into the script here so that we do not have to worry about the
+| loading of any of our classes manually. It's great to relax.
+|
+*/
+$autoload = '/vendor/autoload.php';
+$autoloadPath=[];
+$deep ="";
+for($i=0; $i<5; $i++){
+    $i>0 && $deep .= "/..";
+    $autoloadPath[] = $autoLoadFile = __DIR__ . $deep . $autoload;
+    if(file_exists($autoLoadFile)){   
+        $i=true;
+        break;
+    }  
+}
+if($i !== true){
+    echo "\r\n";
+    echo sprintf("\033[31mNot found the autoload.php in below path list\033[0m");
+    echo "\r\n";
+    foreach($autoloadPath as $file){
+        echo sprintf("\033[31m%-6sin:\033[0m %s"," ",$file);
+        echo "\r\n";
+    }
+    exit;
+};
+require_once $autoLoadFile;
+unset($autoLoadFile, $autoloadPath, $autoload, $deep);
+function libcheck($lib){
+    $line = "-------------------------------------------------------------------".PHP_EOL;
+    echo $line;
+    echo "\r\n";
+    echo "  Check {$lib} lib... [ lost! ]".PHP_EOL;
+    echo "\r\n";
+    echo sprintf("\033[31m  You must install the dependent lib with below command !\033[0m");
+    echo "\r\n\r\n";
+    echo sprintf("%-6s\033[32mcomposer require %s\033[0m", " ", $lib);
+    echo "\r\n";
+    echo PHP_EOL;
+    echo $line;
+    exit; 
+}
+if(!class_exists("Symfony\\Component\\Console\\Application")){
+    libcheck("ymfony/console");
+}
+if(!class_exists("Vipkwd\\Utils\\Libs\\Console")){
+    libcheck("vipkwd/utils");
+}
+
+/*
+|--------------------------------------------------------------------------
+| Run The Artisan Application
+|--------------------------------------------------------------------------
+|
+| When we run the console application, the current CLI command will be
+| executed in this console and the response sent back to a terminal
+| or another output device for the developers. Here goes nothing!
+|
+*/
+
+$application = new Symfony\Component\Console\Application("Vipkwd/Tools", "1.0.2");
+
+/*
+|--------------------------------------------------------------------------
+| Register The Artisan Commands
+|--------------------------------------------------------------------------
+|
+| When we run the console application, the current CLI command will be
+| executed in this console and the response sent back to a terminal
+| or another output device for the developers. Here goes nothing!
+|
+*/
+$application->add(new Vipkwd\Utils\Libs\Console());
+$application->run();
