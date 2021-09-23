@@ -57,14 +57,14 @@ class Console extends Command {
 	private static function buildMethodListDoc(&$input, &$output, $cmd){
 		
 		$path = realpath(__DIR__."/../");
-		$classOnly = false;
+		$showList = true;
 		if($cmd !="list"){
 			if(!file_exists($path.'/'.$cmd.".php")){
 				$output->writeln('Class "'.$cmd.'" not found in Namespace.');
 				return 1;
 			}
 			$cmd = ucfirst($cmd);
-			$classOnly = true;
+			$showList = false;
 		}
 
 		$output->writeln(self::createTRLine("+", "-"));
@@ -72,7 +72,7 @@ class Console extends Command {
 		$output->writeln(self::createTRLine("+", "-"));
 
 		foreach(glob($path ."/*.php") as $index => $classFile){
-			if($classOnly === true){
+			if($showList === false){
 				if( substr($classFile, 0 - strlen("{$cmd}.php") ) != "{$cmd}.php" ){
 					continue;
 				}
@@ -81,18 +81,18 @@ class Console extends Command {
 			$classFile = explode("/", $classFile);
 			$filename=array_pop($classFile);
 			unset($classFile);
-			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $classOnly);
+			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $showList);
 		};
 		$output->writeln(self::createTRLine("+", "-"));
 		return 1;
 	}
 
-	private static function parseClass($class, &$input, &$output, $index, $classOnly){
+	private static function parseClass($class, &$input, &$output, $index, $showList){
 		$class = str_replace('Libs', $class, __NAMESPACE__);
 		$class = new \ReflectionClass($class);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		
-		if( $classOnly === FALSE){
+		if( $showList === true){
 			$output->writeln(self::createTRLine("|", [
 				"No." => ($index+1)."",
 				"Namespace" => $class->getNamespaceName(),
