@@ -59,11 +59,13 @@ class Console extends Command {
 		$path = realpath(__DIR__."/../");
 		$showList = true;
 		if($cmd !="list"){
+			$cmd = ucfirst($cmd);
 			if(!file_exists($path.'/'.$cmd.".php")){
-				$output->writeln('Class "'.$cmd.'" not found in Namespace.');
+				$output->writeln('');
+				$output->writeln('[Notice] Class "<info>'.$cmd.'</info>" not found in Package.');
+				$output->writeln('');
 				return 1;
 			}
-			$cmd = ucfirst($cmd);
 			$showList = false;
 		}
 
