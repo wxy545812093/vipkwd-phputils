@@ -20,41 +20,91 @@ use Vipkwd\Utils\Tools;
 class Console extends Command {
 
 	protected function configure(){
-		$this->setName('doc')
-			->setDescription('Show the doc')
+		// return $this->__default_configure();
+		$this->setName('dump:class')
+			->setDescription('Show the class list of <info>Vipkwd-Utils</info> package')
 			->setHelp('This command allow you to View/Show the doc of class methods list')
+			//->addArgument('name', InputArgument::REQUIRED, 'what\'s model you want to create?')
+
+			->addArgument('className', InputArgument::OPTIONAL, 'Show the method list of "className", give "list" and return the class of all', "--help")
+			//->addOption("type", null, InputOption::VALUE_OPTIONAL,"Overwrite the argument 'type'")
 		;
-		//$this->__default_configure();
+
 	}
 	protected function execute(InputInterface $input, OutputInterface $output){
 
-		return self::buildMethodListDoc($input, $output);
-		//return $this->__default_execute($input, $output);
+		// 你想要做的任何操作
+		$class_argument = $input->getArgument('className');
+		if ($class_argument){
+			if($class_argument == "--help"){
+				$output->writeln("");
+				$output->writeln("<info> dump:class --help</info>");
+				$output->writeln("");
+				$output->writeln("<info> dump:class list</info> -- Show the Classes in Package");
+				$output->writeln("");
+				$output->writeln("<info> dump:class [<className>]</info> -- Show the methods of \"className\"");
+				$output->writeln("");
+				return 1;
+			}
+			return self::buildMethodListDoc($input, $output, trim($class_argument));
+		}
+		return 1;
+
+		// return $this->__default_execute($input, $output);
+		
 	}
 
-	private static function buildMethodListDoc(&$input, &$output){
+	private static function buildMethodListDoc(&$input, &$output, $cmd){
+		
+		$path = realpath(__DIR__."/../");
+		$classOnly = false;
+		if($cmd !="list"){
+			if(!file_exists($path.'/'.$cmd.".php")){
+				$output->writeln('Class "'.$cmd.'" not found in Namespace.');
+				return 1;
+			}
+			$cmd = ucfirst($cmd);
+			$classOnly = true;
+		}
 
 		$output->writeln(self::createTRLine("+", "-"));
 		$output->writeln(self::createTRLine("|",true, true));
 		$output->writeln(self::createTRLine("+", "-"));
 
-		$path = realpath(__DIR__."/../");
-		foreach(glob($path ."/*.php") as $class){
-			$class = str_replace('\\','/', $class);
-			$class = explode("/", $class);
-			$filename=array_pop($class);
-			unset($class);
-			self::parseClass( str_replace(".php","", $filename), $input, $output);
+		foreach(glob($path ."/*.php") as $index => $classFile){
+			if($classOnly === true){
+				if( substr($classFile, 0 - strlen("{$cmd}.php") ) != "{$cmd}.php" ){
+					continue;
+				}
+			}
+			$classFile = str_replace('\\','/', $classFile);
+			$classFile = explode("/", $classFile);
+			$filename=array_pop($classFile);
+			unset($classFile);
+			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $classOnly);
 		};
 		$output->writeln(self::createTRLine("+", "-"));
 		return 1;
 	}
 
-	private static function parseClass($class, &$input, &$output){
+	private static function parseClass($class, &$input, &$output, $index, $classOnly){
 		$class = str_replace('Libs', $class, __NAMESPACE__);
 		$class = new \ReflectionClass($class);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		
+		if( $classOnly === FALSE){
+			$output->writeln(self::createTRLine("|", [
+				"No." => ($index+1)."",
+				"Namespace" => $class->getNamespaceName(),
+				"Class" => $class->getShortName(),
+				"Method" => count($methods)." (s)",
+				"Type" => "#",
+				"Arguments" => "#",
+				"Comment" => "#",
+			]));
+			return;
+		}
+
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
 			//获取并解析方法注释
@@ -110,6 +160,7 @@ class Console extends Command {
 				"Comment" => $doc,
 			]));
 		}
+		return ;
 	}
 
 	private static function createTRLine(string $septer, $data=" ", $isTitle=false){
@@ -185,7 +236,7 @@ class Console extends Command {
 		if ($optional_argument){
 			$output->writeln('optional argument is ' . $optional_argument);
 		}
-		$output->writeln('<info>the end.</info>');
+		$output->writeln('<info>the end.</info>'.$input->getOption('show'));
 		return 1;
 	}
 }
