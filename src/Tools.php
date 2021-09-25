@@ -2,6 +2,7 @@
 
 /**
  * @author devkeep <devkeep@skeep.cc>
+ * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/aiqq363927173/Tools
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools

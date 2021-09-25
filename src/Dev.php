@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @author devkeep <devkeep@skeep.cc>
- * @link https://github.com/aiqq363927173/Tools
+ * @author vipkwd <service@vipwd.com>
+ * @link https://github.com/wxy545812093/phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */

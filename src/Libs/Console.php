@@ -93,7 +93,13 @@ class Console extends Command {
 		$class = str_replace('Libs', $class, __NAMESPACE__);
 		$class = new \ReflectionClass($class);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
-		
+		//剔除未公开的方法
+		foreach($methods as $k => $method){;
+			if($method->isProtected() || $method->isPrivate()){
+				unset($methods[$k]);
+			}
+			unset($k,$method);
+		}
 		if( $showList === true){
 			$output->writeln(self::createTRLine("|", [
 				"No." => ($index+1)."",
@@ -109,8 +115,9 @@ class Console extends Command {
 
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
+			$comment = $method->getDocComment();
 			//获取并解析方法注释
-			$doc = explode("\r\n", $method->getDocComment());
+			$doc = explode("\r\n", is_string($comment)? $comment : "");
 			$doc = str_replace(["/**","*"," "],"", trim( $doc[1] ?? "" ));
 			//获取方法的类型
 			//$method_flag = $method->isProtected();//还可能是public,protected类型的
