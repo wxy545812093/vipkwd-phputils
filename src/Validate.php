@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @author vipkwd <service@vipwd.com>
+ * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
@@ -279,7 +279,9 @@ class Validate{
 	 *
 	 * @param string $regexp
 	 * @param string $str
-	 * @return boolean|Exception
+	 * 
+     * @return boolean
+     * @throws Exception
 	 */
     static function exec(string $regexp, string $str){
         $str = urldecode($str);

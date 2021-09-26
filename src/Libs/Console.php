@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @author devkeep <devkeep@skeep.cc>
- * @link https://github.com/aiqq363927173/Tools
+ * @author vipkwd <service@vipkwd.com>
+ * @link https://github.com/wxy545812093/phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -118,6 +118,9 @@ class Console extends Command {
 			$comment = $method->getDocComment();
 			//获取并解析方法注释
 			$doc = explode("\r\n", is_string($comment)? $comment : "");
+			if(count($doc) < 2){
+				$doc = explode("\n", is_string($comment)? $comment : "");
+			}
 			$doc = str_replace(["/**","*"," "],"", trim( $doc[1] ?? "" ));
 			//获取方法的类型
 			//$method_flag = $method->isProtected();//还可能是public,protected类型的
@@ -177,7 +180,7 @@ class Console extends Command {
 			"No." => 5,
 			"Namespace" => 18,
 			"Class" => 10,
-			"Method" => 18,
+			"Method" => 25,
 			"Type" => 8,
 			"Arguments" => 72,
 			"Comment" => 40,

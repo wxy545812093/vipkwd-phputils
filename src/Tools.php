@@ -12,6 +12,7 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use Vipkwd\Utils\Libs\QRcode;
+use PHPMailer\PHPMailer\PHPMailer;
 
 class Tools
 {
@@ -458,96 +459,6 @@ class Tools
     }
 
     /**
-     * 导出excel表格
-     * 
-     * @param array   $columName  第一行的列名称
-     * @param array   $list       二维数组
-     * @param array   $fileName   文件名称
-     * @param string  $setTitle   sheet名称
-     * @param string  $table   表单元格，用于合并
-     *
-     * @return void
-     */
-    static public function exportExcel(array $columName, array $list, string $fileName = 'demo', string $setTitle = 'Sheet1', array $table = []){
-        if ( empty($columName) || empty($list) )
-        {
-            return '列名或者内容不能为空';
-        }
-
-        if ( count($list[0]) != count($columName) )
-        {
-            return '列名跟数据的列不一致';
-        }
-
-        //实例化PHPExcel类
-        $PHPExcel = new \PHPExcel();
-
-        //获得当前sheet对象
-        $PHPSheet = $PHPExcel->getActiveSheet();
-
-        //定义sheet名称
-        $PHPSheet->setTitle($setTitle);
-
-        //Excel列
-        $letter = [
-            'A','B','C','D','E','F','G','H','I','J','K','L','M',
-            'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-            'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK',
-        ];
-
-        // 设置字体大小
-        $PHPSheet->getDefaultStyle()->getFont()->setSize(12);
-
-        // 水平居中
-        $PHPSheet->getDefaultStyle()->getAlignment()->setHorizontal(\PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-
-        // 垂直居中
-        $PHPSheet->getDefaultStyle()->getAlignment()->setVertical(\PHPExcel_Style_Alignment::VERTICAL_CENTER);
-
-        // 合并单元格
-        if(count($table) > 0)
-        {
-            foreach ($table as $res)
-            {
-                $PHPSheet->mergeCells($res);
-            }
-        }
-
-        //把列名写入第1行
-        for ($i = 0; $i < count($list[0]); $i++)
-        {
-            //$letter[$i]1 = A1 B1 C1  $letter[$i] = 列1 列2 列3
-
-            // 第一行加粗
-            $PHPSheet->getStyle($letter[$i] . '1')->getFont()->setBold(true);
-
-            // 设置值
-            $PHPSheet->setCellValue("$letter[$i]1", "$columName[$i]");
-        }
-
-        //内容第2行开始
-        foreach ($list as $key => $val)
-        {
-            //array_values 把一维数组的键转为0 1 2 ..
-            foreach (array_values($val) as $key2 => $val2)
-            {
-                //$letter[$key2].($key+2) = A2 B2 C2 ……
-                $PHPSheet->setCellValue($letter[$key2] . ($key+2), $val2);
-
-                // 自动换行
-                $PHPSheet->getStyle($letter[$key2] . ($key+2))->getAlignment()->setWrapText(true);
-            }
-        }
-
-        //生成2007版本的xlsx
-        $PHPWriter = \PHPExcel_IOFactory::createWriter($PHPExcel,'Excel2007');
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename='.$fileName.'.xlsx');
-        header('Cache-Control: max-age=0');
-        $PHPWriter->save("php://output");
-    }
-
-    /**
      * 发送邮件
      * 
      * @param array  $form 发件人信息
@@ -555,9 +466,8 @@ class Tools
      *
      * @return mixed
      */
-    static public function sendMail(array $form, array $data) 
-    {    
-        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);       // 实例化PHPMailer对象
+    static public function sendMail(array $form, array $data) {    
+        $mail = new PHPMailer(true);       // 实例化PHPMailer对象
         $mail->CharSet = 'UTF-8';                               // 设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
         $mail->isSMTP();                                        // 设定使用SMTP服务
         $mail->SMTPDebug = 0;                                   // SMTP调试功能 0=关闭 1 = 错误和消息 2 = 消息
@@ -640,8 +550,7 @@ class Tools
      * 
      * @return string
      */
-    static function substrPlus($str, $len = 1):string
-    {
+    static function substrPlus($str, $len = 1):string{
         $rstr = '';//待返回字符串
         $i = 0;
         $n = 0;
@@ -685,8 +594,7 @@ class Tools
      * @param [type] $str
      * @return int
      */
-    static function strLenPlus($str): int
-    {
+    static function strLenPlus($str): int{
         $i = 0;
         $n = 0;
         $str_length = strlen ( $str ); //字符串的字节数
@@ -724,8 +632,7 @@ class Tools
      * @param const $pad_type
      * @return string
      */
-    static function strPadPlus(string $string, int $length, string $pad_string=" ", $pad_type=STR_PAD_RIGHT): string
-    {
+    static function strPadPlus(string $string, int $length, string $pad_string=" ", $pad_type=STR_PAD_RIGHT): string{
         //探测字符里的中文
 		preg_match_all('/[\x7f-\xff]+/', $string, $matches);
 		if(!empty($matches[0])){
