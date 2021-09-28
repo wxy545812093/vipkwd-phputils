@@ -273,15 +273,14 @@ class Validate{
 		return self::exec("/^([0-9]+|[0-9]{1,3}(,[0-9]{3})*)(.[0-9]{".$minPointPlace.",".$maxPointPlace."})?$/",$number);
 	}
 
-
 	/**
 	 * 执行自定义正则
 	 *
 	 * @param string $regexp
 	 * @param string $str
 	 * 
-     * @return boolean
-     * @throws Exception
+	 * @return boolean
+	 * @throws Exception
 	 */
     static function exec(string $regexp, string $str){
         $str = urldecode($str);
