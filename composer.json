@@ -4,24 +4,28 @@
     "description": "PHP常用函数集合",
     "type": "library",
     "homepage": "https://www.vipkwd.com",
-    "require": {
-        "symfony/console": "^5.3",
-        "php": ">=7.0",
-        "phpmailer/phpmailer": "6.1.6",
-        "phpoffice/phpspreadsheet": "*"
-    },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Vipkwd\\Utils\\": "src/"
-        }
-    },
     "authors": [
         {
             "name": "Vipkwd",
             "email": "service@vipkwd.com"
         }
     ],
+    "version": "dev-master",
+    "license": "MIT",
+    "require": {
+        "php": ">=7.0",
+        "phpmailer/phpmailer": "6.1.6",
+        "phpoffice/phpspreadsheet": "*",
+        "symfony/console": "^5.3"
+    },
+    "require-dev": {
+    },
+    "autoload": {
+        "psr-4": {
+            "Vipkwd\\Utils\\": ["src/"]
+        },
+        "files": []
+    },
     "minimum-stability": "dev",
     "scripts": {
       "post-install-cmd": [

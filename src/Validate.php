@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @name (regexp)验证类
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0

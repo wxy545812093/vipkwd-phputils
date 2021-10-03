@@ -16,12 +16,17 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Dev;
 
 class Console extends Command {
+	
+	private static function getConsoleName(){
+		return "dump";
+	}
 
 	protected function configure(){
 		// return $this->__default_configure();
-		$this->setName('dump:class')
+		$this->setName( self::getConsoleName() )
 			->setDescription('Show the class list of <info>Vipkwd-Utils</info> package')
 			->setHelp('This command allow you to View/Show the doc of class methods list')
 			//->addArgument('name', InputArgument::REQUIRED, 'what\'s model you want to create?')
@@ -38,11 +43,11 @@ class Console extends Command {
 		if ($class_argument){
 			if($class_argument == "--help"){
 				$output->writeln("");
-				$output->writeln("<info> dump:class --help</info>");
+				$output->writeln("<info> ".self::getConsoleName() ." --help</info>");
 				$output->writeln("");
-				$output->writeln("<info> dump:class list</info> -- Show the Classes in Package");
+				$output->writeln("<info> ".self::getConsoleName() ." list</info> -- Show the Classes in Package");
 				$output->writeln("");
-				$output->writeln("<info> dump:class [<className>]</info> -- Show the methods of \"className\"");
+				$output->writeln("<info> ".self::getConsoleName() ." [<className>]</info> -- Show the methods of \"className\"");
 				$output->writeln("");
 				return 1;
 			}
@@ -74,22 +79,29 @@ class Console extends Command {
 		$output->writeln(self::createTRLine("+", "-"));
 
 		foreach(glob($path ."/*.php") as $index => $classFile){
+			$classDescript= "#";
+			$classFile = str_replace('\\','/', $classFile);
 			if($showList === false){
 				if( substr($classFile, 0 - strlen("{$cmd}.php") ) != "{$cmd}.php" ){
 					continue;
 				}
+			}else{
+				preg_match("/@name\ ?(.*)".PHP_EOL."/", file_get_contents($classFile), $match);
+				if(isset($match[1])){
+					$classDescript = $match[1];//preg_replace("/@name\ ?/", "", $match[0]);
+				}
+				// Dev::console($match);
 			}
-			$classFile = str_replace('\\','/', $classFile);
 			$classFile = explode("/", $classFile);
 			$filename=array_pop($classFile);
 			unset($classFile);
-			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $showList);
+			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $showList, $classDescript);
 		};
 		$output->writeln(self::createTRLine("+", "-"));
 		return 1;
 	}
 
-	private static function parseClass($class, &$input, &$output, $index, $showList){
+	private static function parseClass($class, &$input, &$output, $index, $showList, $classDescript=null){
 		$class = str_replace('Libs', $class, __NAMESPACE__);
 		$class = new \ReflectionClass($class);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
@@ -102,13 +114,13 @@ class Console extends Command {
 		}
 		if( $showList === true){
 			$output->writeln(self::createTRLine("|", [
-				"No." => ($index+1)."",
+				"Idx" => ($index+1)."",
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
-				"Method" => count($methods)." (s)",
+				"Method" => "M:".count($methods),
 				"Type" => "#",
 				"Arguments" => "#",
-				"Comment" => "#",
+				"Comment" => $classDescript,
 			]));
 			return;
 		}
@@ -163,7 +175,7 @@ class Console extends Command {
 				$args = ltrim($args, ', ');
 			}
 			$output->writeln(self::createTRLine("|", [
-				"No." => ($index+1)."",
+				"Idx" => ($index+1)."",
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => $method->getName(),
@@ -177,9 +189,9 @@ class Console extends Command {
 
 	private static function createTRLine(string $septer, $data=" ", $isTitle=false){
 		$conf = [
-			"No." => 5,
-			"Namespace" => 18,
-			"Class" => 10,
+			"Idx" => 5,
+			"Namespace" => 14,
+			"Class" => 14,
 			"Method" => 25,
 			"Type" => 8,
 			"Arguments" => 72,

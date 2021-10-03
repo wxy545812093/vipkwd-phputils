@@ -1,5 +1,6 @@
 <?php
 /**
+ * @name Excel表格工具
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
@@ -326,7 +327,7 @@ class Excel{
             }
 
             $bulidFileName = function($fileName){
-                $fileName = !empty($fileName) ? preg_replace("/\.([A-Za-z0-9]+)$/",'', $fileName) : date('YmdHis');
+                $fileName = !empty($fileName) ? preg_replace("/(\.[A-Za-z0-9]+)$/",'', $fileName) : date('YmdHis');
                 return $fileName . '.xlsx';
             };
 
@@ -545,8 +546,8 @@ class Excel{
         $default = str_split("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         $code = $default;
         $deep = 3;// A ~ AZ ~ BZ (默认最大支持77列)
-        //数据列不大于26列则不构建扩展列名
-        if($columnTotals >=26){
+        if($columnTotals > 0){
+            //数据列不大于26列则不构建扩展列名
             $deep = ceil( $columnTotals / 26 );
         }
         for($i=0; $i<$deep-1; $i++){
