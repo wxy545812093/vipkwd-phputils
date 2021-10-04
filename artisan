@@ -53,7 +53,7 @@ function libcheck($lib){
     exit; 
 }
 if(!class_exists("Symfony\\Component\\Console\\Application")){
-    libcheck("ymfony/console");
+    libcheck("symfony/console");
 }
 if(!class_exists("Vipkwd\\Utils\\Libs\\Console")){
     libcheck("vipkwd/utils");
