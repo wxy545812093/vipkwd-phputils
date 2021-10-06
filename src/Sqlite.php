@@ -23,10 +23,10 @@ class Sqlite{
     {
         $this->dbFile = $dbname;
         try {
-            $this->dbh = new PDO('sqlite:' . $this->dbFile);
+            $this->dbh = new \PDO('sqlite:' . $this->dbFile);
         } catch (PDOException $e) {
             try {
-                $this->dbh = new PDO('sqlite2:' . $this->dbFile);
+                $this->dbh = new \PDO('sqlite2:' . $this->dbFile);
             } catch (PDOException $e) {
                 $this->outputError($e->getMessage());
             }
