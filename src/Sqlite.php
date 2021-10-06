@@ -380,7 +380,7 @@ class Sqlite{
     /**
      * destruct 关闭数据库连接
      */
-    private function __destruct()
+    public function __destruct()
     {
         $this->dbh = null;
     }

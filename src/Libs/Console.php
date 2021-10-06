@@ -127,6 +127,9 @@ class Console extends Command {
 
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
+			if($method->getName() == "__destruct" || $method->getName() == "__construct"){
+				continue;
+			}
 			$comment = $method->getDocComment();
 			//获取并解析方法注释
 			$doc = explode("\r\n", is_string($comment)? $comment : "");
