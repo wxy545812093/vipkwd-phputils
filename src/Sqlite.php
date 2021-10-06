@@ -9,7 +9,7 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
-
+use \PDO;
 class Sqlite{
 
     private $dbFile = '';
@@ -23,10 +23,10 @@ class Sqlite{
     {
         $this->dbFile = $dbname;
         try {
-            $this->dbh = new \PDO('sqlite:' . $this->dbFile);
+            $this->dbh = new PDO('sqlite:' . $this->dbFile);
         } catch (PDOException $e) {
             try {
-                $this->dbh = new \PDO('sqlite2:' . $this->dbFile);
+                $this->dbh = new PDO('sqlite2:' . $this->dbFile);
             } catch (PDOException $e) {
                 $this->outputError($e->getMessage());
             }
@@ -34,7 +34,7 @@ class Sqlite{
     }
 
     /**
-     * 单例模式
+     * 单例入口
      * @param string $dbname
      * @return object
      */
@@ -49,11 +49,11 @@ class Sqlite{
 
     /**
      * 新增数据
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param array $dataArr  需要插入的字段数组
      * @return int|void
      */
-    public function insert(string $tab_name, array $dataArr)
+    public function insert(string $tbName, array $dataArr)
     {
         if (is_array($dataArr) && count($dataArr) > 0) {
             $key_list = '';
@@ -64,7 +64,7 @@ class Sqlite{
             }
             $key_list = '(' . rtrim($key_list, ',') . ')';
             $value_list = '(' . rtrim($value_list, ',') . ')';
-            $sql = "insert into $tab_name $key_list values $value_list";
+            $sql = "insert into $tbName $key_list values $value_list";
             // echo $sql;
             $result = $this->dbh->exec($sql);
             $this->getPDOError();
@@ -76,12 +76,12 @@ class Sqlite{
 
     /**
      * 更新插入数据
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param array $dataArr   需要插入的字段数组
      * @param string $type    插入类型，1: 单条，2：批量
      * @return int|void
      */
-    public function replace($tab_name, $dataArr, $type = 1)
+    public function replace($tbName, $dataArr, $type = 1)
     {
         if (is_array($dataArr) && count($dataArr) > 0) {
 
@@ -120,7 +120,7 @@ class Sqlite{
                 $value_list = '(' . rtrim($value_list, ',') . ')';
             }
 
-            $sql = "replace into $tab_name $key_list values $value_list";
+            $sql = "replace into $tbName $key_list values $value_list";
             // echo $sql;
             $result = $this->dbh->exec($sql);
             $this->getPDOError();
@@ -131,20 +131,20 @@ class Sqlite{
     }
 
     /**
-     * Query 查询
+     * Query 通用查询
      *
-     * @param string $strSql SQL语句
+     * @param string $sql SQL语句
      * @param string $queryMode 查询方式(All or Row)
      * @param int $pdoMode 指定数据获取方式
      * @param boolean $debug
      * @return array
      */
-    public function query(string $strSql, string $queryMode = 'All', int $pdoMode = PDO::FETCH_ASSOC, bool $debug = false)
+    public function query(string $sql, string $queryMode = 'All', int $pdoMode = PDO::FETCH_ASSOC, bool $debug = false)
     {
         if ($debug === true)
-            $this->debug($strSql);
+            $this->debug($sql);
         
-        $recordset = $this->dbh->query($strSql);
+        $recordset = $this->dbh->query($sql);
         $this->getPDOError();
         if ($recordset) {
             $recordset->setFetchMode($pdoMode);
@@ -160,15 +160,15 @@ class Sqlite{
     }
 
     /**
-     * Query 查询单条
+     * Query 单条查询
      *
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param string $field  查询字段 支持数组或英文逗号分隔的字符串
      * @param string $whereStr  查询条件
      * @param boolean $debug
      * @return array
      */
-    public function getOne(string $tab_name, $field = "*", string $whereStr = null, bool $debug = false)
+    public function getOne(string $tbName, $field = "*", string $whereStr = null, bool $debug = false)
     {
         $inquire_list = $field;
         // print_r($field);
@@ -180,7 +180,7 @@ class Sqlite{
             $inquire_list = rtrim($inquire_list, ',');
         }
 
-        $sql = "SELECT $inquire_list FROM $tab_name $whereStr";
+        $sql = "SELECT $inquire_list FROM $tbName $whereStr";
         if ($debug === true) $this->debug($sql);
         $recordset = $this->dbh->query($sql);
         $this->getPDOError();
@@ -194,15 +194,15 @@ class Sqlite{
     }
 
     /**
-     * Query 查询多条
+     * Query 多条查询
      *
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param string $field 查询字段数组
      * @param string $whereStr  查询条件
      * @param boolean $debug
      * @return array
      */
-    public function getAll(string $tab_name, string $field = "*", string $whereStr = null, bool $debug = false)
+    public function getAll(string $tbName, string $field = "*", string $whereStr = null, bool $debug = false)
     {
         $inquire_list = $field;
         //        print_r($field);
@@ -214,7 +214,7 @@ class Sqlite{
             $inquire_list = rtrim($inquire_list, ',');
         }
 
-        $sql = "SELECT $inquire_list FROM $tab_name $whereStr";
+        $sql = "SELECT $inquire_list FROM $tbName $whereStr";
         if ($debug === true) $this->debug($sql);
         $recordset = $this->dbh->query($sql);
         $this->getPDOError();
@@ -230,12 +230,12 @@ class Sqlite{
     /**
      * 更新数据
      * 
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param array $dataArr  需要更新的字段数组
      * @param string $whereStr  更新条件
      * @return int|void
      */
-    public function update(string $tab_name, array $dataArr, string $whereStr)
+    public function update(string $tbName, array $dataArr, string $whereStr)
     {
         if (is_array($dataArr) && count($dataArr) > 0) {
 
@@ -244,7 +244,7 @@ class Sqlite{
                 $field_list .= $key . "='{$val}',";
             }
             $field_list = rtrim($field_list, ',');
-            $sql = "UPDATE $tab_name SET $field_list $whereStr";
+            $sql = "UPDATE $tbName SET $field_list $whereStr";
             $result = $this->dbh->exec($sql);
             $this->getPDOError();
             // $this->dbh->beginTransaction();//事务回gun
@@ -257,16 +257,16 @@ class Sqlite{
     /**
      * 删除数据
      * 
-     * @param string $tab_name  数据表名
+     * @param string $tbName  数据表名
      * @param string $whereStr 过滤条件
      * @return mixed
      */
-    public function delete(string $tab_name, string $whereStr = "")
+    public function delete(string $tbName, string $whereStr = "")
     {
         if($whereStr != ""){
             $whereStr = " WHERE ".$whereStr;
         }
-        $sql = "DELETE FROM {$tab_name}".$whereStr;
+        $sql = "DELETE FROM {$tbName}".$whereStr;
         $res = $this->dbh->exec($sql);
         return $res;
     }
@@ -279,7 +279,7 @@ class Sqlite{
      * $sql sql语句
      * $tbName 表名
      */
-    public function createTable(string $tbName, string $sql)
+    private function createTable(string $tbName, string $sql)
     {
         if (strlen(trim($tbName)) == 0)
             echo "table name is empty!";
@@ -295,13 +295,13 @@ class Sqlite{
     /**
      * 统计记录条数
      *
-     * @param string $tab_name
+     * @param string $tbName
      * @param string $whereStr
      * @return integer
      */
-    public function count(string $tab_name, string $whereStr = ''):int
+    public function count(string $tbName, string $whereStr = ''):int
     {
-        $sql = "SELECT COUNT(1) as __t__ FROM {$tab_name} $whereStr";
+        $sql = "SELECT COUNT(1) as __t__ FROM {$tbName} $whereStr";
         $rowsCountArr = $this->dbh->query($sql)->fetchAll();
         return $rowsCountArr[0]['__t__'];
     }
@@ -309,13 +309,13 @@ class Sqlite{
     /**
      * 统计记录条数(count方法的别名)
      *
-     * @param string $tab_name
+     * @param string $tbName
      * @param string $whereStr
      * @return integer
      */
-    public function total(string $tab_name, string $whereStr = ''):int
+    public function total(string $tbName, string $whereStr = ''):int
     {
-        return $this->count($tab_name, $whereStr);
+        return $this->count($tbName, $whereStr);
     }
 
     /**
@@ -331,14 +331,14 @@ class Sqlite{
     /**
      * 清空数据表
      *
-     * @param string $tab_name
+     * @param string $tbName
      * @return array
      */
-    public function clearTab(string $tab_name):array
+    public function clearTab(string $tbName):array
     {
         // $res1 = $this->dbh->exec("VACUUM");//清空“空闲列表”，把数据库尺寸压缩到最小。
-        $res2 = $this->dbh->exec("DELETE FROM $tab_name");
-        $res3 = $this->dbh->exec("DELETE FROM sqlite_sequence WHERE name = '$tab_name'");
+        $res2 = $this->dbh->exec("DELETE FROM $tbName");
+        $res3 = $this->dbh->exec("DELETE FROM sqlite_sequence WHERE name = '$tbName'");
         $this->getPDOError();
         // return array($res1, $res2, $res3);
         return array($res2, $res3);
