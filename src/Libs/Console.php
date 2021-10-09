@@ -17,9 +17,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Vipkwd\Utils\Tools;
 use Vipkwd\Utils\Dev;
+// use \Exception;
 
 class Console extends Command {
 	
+	private static $showList = true;
 	private static function getConsoleName(){
 		return "dump";
 	}
@@ -62,7 +64,7 @@ class Console extends Command {
 	private static function buildMethodListDoc(&$input, &$output, $cmd){
 		
 		$path = realpath(__DIR__."/../");
-		$showList = true;
+		self::$showList = true;
 		if($cmd !="list"){
 			$cmd = ucfirst($cmd);
 			if(!file_exists($path.'/'.$cmd.".php")){
@@ -71,7 +73,7 @@ class Console extends Command {
 				$output->writeln('');
 				return 1;
 			}
-			$showList = false;
+			self::$showList = false;
 		}
 
 		$output->writeln(self::createTRLine("+", "-"));
@@ -79,9 +81,14 @@ class Console extends Command {
 		$output->writeln(self::createTRLine("+", "-"));
 
 		foreach(glob($path ."/*.php") as $index => $classFile){
+			$_classFile = preg_replace("|[A-Za-z0-9\._\-]+|",'',str_replace($path, '', $classFile));
+			if($_classFile != "/"){
+				continue;
+			}
+			unset($_classFile);
 			$classDescript= "#";
 			$classFile = str_replace('\\','/', $classFile);
-			if($showList === false){
+			if(self::$showList === false){
 				if( substr($classFile, 0 - strlen("{$cmd}.php") ) != "{$cmd}.php" ){
 					continue;
 				}
@@ -95,13 +102,13 @@ class Console extends Command {
 			$classFile = explode("/", $classFile);
 			$filename=array_pop($classFile);
 			unset($classFile);
-			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $showList, $classDescript);
+			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $classDescript);
 		};
 		$output->writeln(self::createTRLine("+", "-"));
 		return 1;
 	}
 
-	private static function parseClass($class, &$input, &$output, $index, $showList, $classDescript=null){
+	private static function parseClass($class, &$input, &$output, $index, $classDescript=null){
 		$class = str_replace('Libs', $class, __NAMESPACE__);
 		$class = new \ReflectionClass($class);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
@@ -112,7 +119,7 @@ class Console extends Command {
 			}
 			unset($k,$method);
 		}
-		if( $showList === true){
+		if( self::$showList === true){
 			$output->writeln(self::createTRLine("|", [
 				"Idx" => ($index+1)."",
 				"Namespace" => $class->getNamespaceName(),
@@ -167,11 +174,14 @@ class Console extends Command {
 				foreach($arguments as $idx => $field){
 					$args .=',$'.$field;
 					switch(strtolower(gettype($defaults[$idx]))){
-						case "null": break;
 						case "boolean": $args .= ('='.($defaults[$idx] === true ? "true" : "false")); break;
 						case "string": 	$args .= ('="'.$defaults[$idx].'"'); break;
 						case "array": 	$args .= ('=[]'); break;
 						case "object": 	$args .= ('={}'); break;
+						
+						case "null": 	break;
+						// case "null": 	$args .= ('=null'); break;
+
 						default: 		$args .= ('='.$defaults[$idx]); break;
 					}
 				}
@@ -194,10 +204,10 @@ class Console extends Command {
 		$conf = [
 			"Idx" => 5,
 			"Namespace" => 14,
-			"Class" => 14,
-			"Method" => 25,
+			"Class" => 16,
+			"Method" => self::$showList === true ? 20 : 25,
 			"Type" => 8,
-			"Arguments" => 72,
+			"Arguments" => self::$showList === true ? 11 : 86,
 			"Comment" => 40,
 		];
 		$list = [];

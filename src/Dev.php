@@ -13,7 +13,7 @@ namespace Vipkwd\Utils;
 
 class Dev{
     /**
-     * 网页打印 
+     * 网页打印 print_r
      *
      * @param mixed $data
      * @param boolean $exit
@@ -25,7 +25,19 @@ class Dev{
         echo "</pre>";
         $exit && exit;
     }
-
+    /**
+     * 网页打印var_dump 
+     *
+     * @param mixed $data
+     * @param boolean $exit
+     * @return void
+     */
+    static function vdump($data, $exit = false){
+        echo "<pre>";
+        var_dump($data);
+        echo "</pre>";
+        $exit && exit;
+    }
     /**
      * Console 打印
      *

@@ -13,6 +13,8 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use Vipkwd\Utils\Libs\QRcode;
+// use Vipkwd\Utils\Libs\Cookie;
+// use Vipkwd\Utils\Libs\Session;
 use PHPMailer\PHPMailer\PHPMailer;
 
 class Tools
@@ -778,6 +780,94 @@ class Tools
         }
         unset($key,$l);
         return $r;
+    }
+    
+    /**
+     * Cookie管理
+     * 
+     * @param string $name   cookie名称
+     * @param mixed  $value  cookie值
+     * @param int  $expires 有效期 （小于0：删除cookie, 大于0：设置cookie）
+     * @return mixed
+     */
+    static function cookie(string $name = null, $value = null, int $expires = 0){
+        
+        $name && $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
+        
+        $defaults = [
+            // cookie 保存时间
+            'expires'   => 86400 * 7,
+            // cookie 保存路径
+            'path'     => '/',
+            // cookie 有效域名
+            'domain'   => '',
+            //  cookie 启用安全传输
+            'secure'   => false,
+            // httponly设置
+            'httponly' => true,
+            // samesite 设置，支持 'strict' 'lax'
+            'samesite' => '',
+        ];
+
+        if($name && is_null($value) && $expires < 0 ){
+            //删除
+            return self::saveCookie(
+                $name,
+                "",
+                time() - 86400,
+                $defaults['path'],
+                $defaults['domain'],
+                $defaults['secure'],
+                $defaults['httponly'],
+                $defaults['samesite']
+            );
+        }else if($name && !is_null($value) ){
+            //设置
+            return self::saveCookie(
+                $name,
+                "$value",
+                $expires > 0 ? $expires : $defaults['expires'] + time(),
+                $defaults['path'],
+                $defaults['domain'],
+                $defaults['secure'],
+                $defaults['httponly'],
+                $defaults['samesite']
+            );
+        }
+        if($name){
+            return $_COOKIE[$name] ?? null;
+        }
+        return $_COOKIE;
+    }
+
+    /**
+     * 保存Cookie
+     * 
+     * @access public
+     * @param  string $name cookie名称
+     * @param  string $value cookie值
+     * @param  int    $expire cookie过期时间
+     * @param  string $path 有效的服务器路径
+     * @param  string $domain 有效域名/子域名
+     * @param  bool   $secure 是否仅仅通过HTTPS
+     * @param  bool   $httponly 仅可通过HTTP访问
+     * @param  string $samesite 防止CSRF攻击和用户追踪
+     * @return void
+     */
+    private static function saveCookie(string $name, string $value, int $expire, string $path, string $domain, bool $secure, bool $httponly, string $samesite): void
+    {
+        if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
+            setcookie($name, $value, [
+                'expires'  => $expire,
+                'path'     => $path,
+                'domain'   => $domain,
+                'secure'   => $secure,
+                'httponly' => $httponly,
+                'samesite' => $samesite,
+            ]);
+        } else {
+            setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+        }
     }
     
     /**

@@ -275,6 +275,40 @@ class Validate{
 	}
 
 	/**
+	 * 验证Ipv4
+	 *
+	 * ipv4("192.168.0.033") 		-> bool(false)
+	 * 
+	 * -- 私有IP不通过
+	 * ipv4("192.168.0.33",true) 	-> bool(false)
+	 * 
+	 * @param string $ip 
+	 * @param boolean $excludePrivIp 排除私有IP范围内 <false>
+	 * @param boolean $excludeResIp 排除保留IP范围内 <false>
+	 * @return string|boolean
+	 */
+	static function ipv4(string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+		return self::isIP(FILTER_FLAG_IPV4, $ip, $excludePrivIp, $excludeResIp);
+	}
+
+	/**
+	 * 验证Ipv6
+	 * 
+	 * ipv6("2001:0db8:85a3:1319:8a2e:0370:7330") -> 2001:...:7330
+	 * 
+	 * -- 16进制越界 -> bool(false)
+	 * ipv6("2001:0db8:85a3:1319:8a2g:0370:7330") -> bool(false)
+	 * 
+	 * @param string $ip
+	 * @param boolean $excludePrivIp 排除私有IP范围内 <false>
+	 * @param boolean $excludeResIp 排除保留IP范围内 <false>
+	 * @return string|boolean
+	 */
+	static function ipv6(string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+		return self::isIP(FILTER_FLAG_IPV6, $ip, $excludePrivIp, $excludeResIp);
+	}
+
+	/**
 	 * 执行自定义正则
 	 *
 	 * @param string $regexp
@@ -292,6 +326,32 @@ class Validate{
 			return false;
 		}
     }
+
+	/**
+	 * 验证是否为合法IP
+	 *
+	 *  FILTER_FLAG_NO_PRIV_RANGE
+     *    	无法验证以下私有IPv4范围：10.0.0.0/8 , 172.16.0.0/12 和 192.168.0.0/16
+	 * 		无法验证从FD或FC开始的IPv6地址。
+     *  FILTER_FLAG_NO_RES_RANGE
+     *    	无法验证以下保留的IPv4范围：0.0.0.0/8 , 169.254.0.0/16 , 127.0.0.0/8 和 240.0.0.0/4
+	 * 
+	 * 
+	 * @param mixed $ipFlag  FILTER_FLAG_IPV6 | FILTER_FLAG_IPV4 
+	 * @param string $ip
+	 * @param boolean $excludePrivIp 排除私有IP范围内 <false>
+	 * @param boolean $excludeResIp 排除保留IP范围内 <false>
+	 * @return string|boolean
+	 */
+	private static function isIP($ipFlag, string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+		$status = filter_var($ip, FILTER_VALIDATE_IP, $type);
+		if($status !== false && $excludePrivIp === true){
+			return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);
+		}else if($status !== false && $excludeResIp === true){
+			return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE);
+		}
+		return $status;
+	}
 
 
 	private static function parseMaxMinLength(int &$minLength, int &$maxLength, int $prefixLength=0){
