@@ -10,7 +10,7 @@
             "email": "service@vipkwd.com"
         }
     ],
-    "version": "dev-master",
+    "keywords": ["vipkwd", "utils","php"],
     "license": "MIT",
     "require": {
         "php": ">=7.0",
@@ -19,18 +19,22 @@
         "symfony/console": "^5.3",
         "php-amqplib/php-amqplib":"2.10.*"
     },
-    "require-dev": {
-    },
+    "require-dev": { },
     "autoload": {
         "psr-4": {
             "Vipkwd\\Utils\\": ["src/"]
         },
-        "files": []
+        "files": [
+            "files/VipkwdException.php"
+        ]
     },
     "minimum-stability": "dev",
     "scripts": {
       "post-install-cmd": [
         "chmod +x artisan"
+      ],
+      "post-root-package-install": [
+        "@php -r \"file_exists('vendor/vipkwd/utils/artisan') || copy('vendor/vipkwd/utils/artisan', 'vipkwdArtisan');\""
       ]
     }
 }

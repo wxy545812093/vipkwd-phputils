@@ -16,9 +16,10 @@ use Vipkwd\Utils\Libs\QRcode;
 // use Vipkwd\Utils\Libs\Cookie;
 // use Vipkwd\Utils\Libs\Session;
 use PHPMailer\PHPMailer\PHPMailer;
+use Vipkwd\Utils\Validate;
+use \Exception;
 
-class Tools
-{
+class Tools {
     /**
      * 获取系统类型
      *
@@ -325,91 +326,37 @@ class Tools
     }
 
     /**
-     * 文件打包下载
+     * 目录递归扫描
      *
-     * @param string $downloadZip 打包后下载的文件名
-     * @param array $list 打包文件组
-     * 
-     * @return void
+     * @param string $path
+     * @param callable|null $fileCallback  
+     *                      以匿名回调方式对扫描到的文件时处理；
+     *                      匿名函数接收俩个参数： function($scanFile, $scanPath);
+     *                      当匿名函数 return === false 时，将退出本函数所有层次的递归模式
+     * @return boolean|null
      */
-    static public function addZip(string $downloadZip, array $list){
-        try{
-            // 初始化Zip并打开
-            $zip = new \ZipArchive();
-
-            // 初始化
-            $bool = $zip->open($downloadZip, \ZipArchive::CREATE|\ZipArchive::OVERWRITE);
-
-            if($bool === TRUE)
-            {
-                foreach ($list as $key => $val) 
-                {
-                    // 把文件追加到Zip包并重命名  
-                    // $zip->addFile($val[0]);
-                    // $zip->renameName($val[0], $val[1]);
-
-                    // 把文件追加到Zip包
-                    $zip->addFile($val, basename($val));
+    static function dirScan(string $path, ?callable $fileCallback=null):?bool{
+        $return = null;
+        if(!is_dir($path)){
+            return $return;
+        }
+        $fd = opendir($path);
+        while(false !== ($file = readdir($fd))){
+            if($file != "." && $file != ".."){
+                if(is_dir($path."/".$file)){
+                    $return = self::dirScan($path."/".$file, $fileCallback);
+                }else{
+                    if(is_callable($fileCallback)){
+                        $return = $fileCallback($file, $path);
+                    }
+                }
+                if($return === false ){
+                    break;
                 }
             }
-        }catch(\Exception $e){
-            exit($e->getMessage());
         }
-
-        // 关闭Zip对象
-        $zip->close();
-
-        // 下载Zip包
-        header('Cache-Control: max-age=0');
-        header('Content-Description: File Transfer');            
-        header('Content-disposition: attachment; filename=' . basename($downloadZip)); 
-        header('Content-Type: application/zip');                     // zip格式的
-        header('Content-Transfer-Encoding: binary');                 // 二进制文件
-        header('Content-Length: ' . filesize($downloadZip));          // 文件大小
-        readfile($downloadZip);
-
-        exit();
-    }
-
-    /**
-     * 解压压缩包
-     * 
-     * @param string $zipName 要解压的压缩包
-     * @param string $dest 解压到指定目录
-     * 
-     * @return boolean
-     * @return Exception
-     */
-    static public function unZip(string $zipName, string $dest): bool{
-        //检测要解压压缩包是否存在
-        if(!is_file($zipName))
-        {
-            return false;
-        }
-
-        //检测目标路径是否存在
-        if(!is_dir($dest))
-        {
-            mkdir($dest, 0777, true);
-        }
-        try{
-            // 初始化Zip并打开
-            $zip = new \ZipArchive();
-
-            // 打开并解压
-            if($zip->open($zipName))
-            {
-                $zip->extractTo($dest);
-                $zip->close();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }catch(\Exception $e){
-            exit($e->getMessage());
-        }
+        @closedir($fd);
+        return $return;
     }
 
     /**
@@ -469,8 +416,7 @@ class Tools
             }
 
             fclose($file);
-        }   
-
+        }
         exit();
     }
 
@@ -495,7 +441,7 @@ class Tools
         $mail->Host = $form['host'];                            // SMTP 服务器
         $mail->Port = $form['port'];                            // SMTP服务器的端口号
         $mail->Username = $form['username'];                    // SMTP服务器用户名
-        $mail->Password = $form['password'];                    // SMTP服务器密码
+        $mail->Password = $form['password'];                    // SMTP服务器密码(授权码优先)
         $mail->SetFrom($form['address'], $form['title']);
 
         // 阿里云邮箱
@@ -519,44 +465,56 @@ class Tools
         // $mail->Password = "xxxxxxxxxxxxxxxx";                   // SMTP服务器密码
         // $mail->SetFrom('devkeep@skeep.cc', '管理系统');
 
-        // 收件人信息
-        $mail->Subject = $data['subject'];
-        $mail->MsgHTML($data['body']);
-        $mail->AddAddress($data['mail'], $data['name']);
+        // 设置发件人昵称 显示在收件人邮件的发件人邮箱地址前的发件人姓名
+        $mail->FromName =  $form['nickname'] ?? $form['address'];
+        // 设置发件人邮箱地址 同登录账号
+        $mail->From = $form['address'];
 
-        // $mail->Subject = $subject;
-        // $mail->MsgHTML($body);
-        // $mail->AddAddress($tomail, $name);
+        // 添加该邮件的主题
+        $mail->Subject = $data['subject'];
+        // 添加邮件正文
+        $mail->MsgHTML($data['body']);
+        // 收件人信息
+        // 设置收件人邮箱地址(添加多个收件人 则多次调用方法即可)
+        $mail->AddAddress($data['mail'], $data['name']);
+        // $mail->addAddress('xxxxxx@163.com');
 
         // 是否携带附件
-        if (isset($data['attachment'])) 
-        { 
-            foreach ($attachment as $file) 
+        if (isset($data['attachment']) && is_array($data['attachment'])){
+            foreach ($data['attachment'] as $file) 
             {
                 is_file($file) && $mail->AddAttachment($file);
             }
         }
-
-
         return $mail->Send() ? true : $mail->ErrorInfo;
     }
 
     /**
      * 生成二维码
      * 
-     * @param array  $text 二维码内容
-     * @param array  $outFile 文件
-     * @param array  $level 纠错级别 L:7% M:15% Q:25% H:30%
-     * @param array  $size 二维码大小
-     * @param array  $margin 边距
-     * @param array  $saveAndPrint
+     * outfile === false, header输出png
+     * outfile !== false && saveAndPrint === true, 保存到 outfile指向地址 并header输出
+     * outfile !== file && saveAndPrint !== true, 仅保存到 outfile指向地址
+     * 
+     * @param string  $text 二维码内容
+     * @param boolean|string  $outFile 文件
+     * @param string  $level 纠错级别 L:7% M:15% Q:25% H:30%
+     * @param integer  $size 二维码大小
+     * @param integer  $margin 边距常量
+     * @param boolean  $saveAndPrint
      *
      * @return void
      */
     static public function qrcode(string $text, $outFile = false, string $level = "7%", int $size = 6, int $margin = 2, bool $saveAndPrint = false){
         QRcode::png($text, $outFile, $level, $size, $margin, $saveAndPrint);
-        exit();
+        exit;
     }
+
+ 
+    
+
+
+
     /**
      * 获取客户端IP
      *
@@ -663,11 +621,11 @@ class Tools
      *
      * @param string $string
      * @param integer $length
-     * @param string $pad_string
-     * @param const $pad_type
+     * @param string $padStr
+     * @param int $padType
      * @return string
      */
-    static function strPadPlus(string $string, int $length, string $pad_string=" ", $pad_type=STR_PAD_RIGHT): string{
+    static function strPadPlus(string $string, int $length, string $padStr=" ", $padType=STR_PAD_RIGHT): string{
         //探测字符里的中文
 		preg_match_all('/[\x7f-\xff]+/', $string, $matches);
 		if(!empty($matches[0])){
@@ -683,10 +641,10 @@ class Tools
 			//生成虚拟字符串
 			$tmp_txt = str_pad("^&.!",$rel_len, "#");
 			//实际字符串替换虚拟字符串（实现还原 外部字符）
-			$string = str_replace($tmp_txt, $string, str_pad($tmp_txt, $length, $pad_string,$pad_type));
+			$string = str_replace($tmp_txt, $string, str_pad($tmp_txt, $length, $padStr,$padType));
 			unset($rel_len, $zh_str_totals, $un_zh_str_totals, $tmp_txt);
 		}else{
-			$string = str_pad($string, $length, $pad_string, $pad_type);
+			$string = str_pad($string, $length, $padStr, $padType);
 		}
         return $string;
     }
@@ -753,18 +711,18 @@ class Tools
      * $key 支持“.”号深度访问数组 如："db.mysql.host"
      *
      * @param string $key
-     * @param string $conf_dir 配置文件所在目录
-     * @param string $conf_suffix 配置文件后缀 <.php>
+     * @param string $confDir 配置文件所在目录
+     * @param string $confSuffix 配置文件后缀 <.php>
      * 
      * @return mixed
      */
-    static function config(string $key, string $conf_dir, string $conf_suffix=".php"){
+    static function config(string $key, string $confDir, string $confSuffix=".php"){
         static $__config_;
         !is_array($__config_) && $__config_ = [];
         $key = trim($key, ".");
         $l = explode('.', $key);
         if(!isset($__config_[$l[0]])){
-            $f =  rtrim($conf_dir, "/") . "/{$l[0]}.".ltrim($conf_suffix, ".");
+            $f =  rtrim($confDir, "/") . "/{$l[0]}.".ltrim($confSuffix, ".");
             file_exists($f) && $__config_[$l[0]] = require_once($f);
             unset($f);
         }
@@ -841,6 +799,162 @@ class Tools
     }
 
     /**
+     * IPV4转长整型数字
+     *
+     * 注意：各数据库引擎或操作系统对于ip2long的计算结果要能有差异(超出 int类型的表示范围)。
+     *      所以：建议以 bigint类型存储本函数结果
+     * @param string $ipv4
+     * @param boolean $useNormal 是不使用内置函数
+     * @return integer
+     */
+    static function ip2long(string $ipv4, bool $useNormal = false):int{
+        if(Validate::ipv4($ipv4) === false){
+            //ipv4不合法
+            return Null;
+        }
+        $int = 0;
+        if(function_exists('ip2long') && $useNormal){
+            $int = ip2long($ipv4);
+        }else{
+            $ipv4 = explode(".", $ipv4);
+            for($i=0;$i<4; $i++){
+                $int += $ipv4[$i] * pow(256, 4 -$i -1); 
+            }
+            unset($ipv4);
+        }
+        return sprintf("%u", $int) * 1;
+    }
+
+    /**
+     * IPv4长整型转IP地址
+     *
+     * @param integer $bigint
+     * @param boolean $useNormal
+     * @return string
+     */
+    static function long2ip(int $bigint, bool $useNormal = true):string{
+        if(function_exists('long2ip') && $useNormal){
+            return long2ip($bigint);
+        }else{
+            //FFFFFF最大为4294967295
+            $bigint = $bigint > 4294967295 ? 4294967295 : $bigint;
+            $dec = dechex($bigint); //讲十进制转为十六进制
+            //十六进制默认会忽略最左边的0，毕竟是0了，怎么算都是0，留着也没用
+            //但中间的0会保留，而IP的十六进制最大为 FFFFFF
+            //所有为防止7位IP的出现，我们只能手动补0，才能成双成对（2个一对）
+            if(strlen($dec) < 8) {
+                $dec = '0'.$dec; //如果长度小于8，最自动补0
+            }
+            $aIp=[];
+            for($i = 0; $i < 8; $i += 2){
+                $hex = substr($dec, $i, 2);
+                //截取十六进制的第一位
+                $ippart = substr($hex, 0, 1);
+                if($ippart === '0') {
+                    $hex = substr($hex, 1, 1);//如果第一位为0，说明原始数值只有1位，还是要拆散
+                }
+                $aIp[] = hexdec($hex); //将每段十六进制数转换我为十进制，即每个ip段的值
+                unset($hex,$ippart);
+            }
+            return implode('.',$aIp);
+        }
+    }
+
+    /**
+     * 根据掩码计算IP区间（起始IP~结束IP）
+     *
+     * @param string $ipv4
+     * @param integer $mask
+     * @return array
+     */
+    static function getIpRangeWithMask(string $ipv4, int $mask = 24):array{
+        $ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
+        if(!isset($ipv4[1]) || !$ipv4[1]){
+            $ipv4[1] = $mask;
+        }
+        if($ipv4[1] >32 || $ipv4[1] < 0 || false === Validate::ipv4($ipv4[0])){
+            return [];
+        }
+        $base = self::ip2long('255.255.255.255');
+        $ipv4[0] = self::ip2long($ipv4[0]);
+        $mask = pow(2,32-intval($ipv4[1]))-1;//mask=0.0.0.255(int)
+        $smask = $mask ^ $base;//smask=255.255.255.0(int)
+         
+        $min = $ipv4[0] & $smask;
+        $max = $ipv4[0] | $mask;
+        return [
+            self::long2ip($min),
+            self::long2ip($max)
+        ];
+    }
+
+    /**
+     * 检测IP是否在某个掩码子网里
+     *
+     * @param string $ipv4  "192.168.1.115"
+     * @param string $maskArea 支持携带掩码("192.168.1.1/24")
+     * @param integer $mask 0-32
+     * @return void
+     */
+    static function ipv4InArea(string $ipv4, string $maskArea, int $mask = 24){
+        $maskArea = explode('/', preg_replace("/[^0-9\.\/]/","", $maskArea));
+        if(!isset($maskArea[1]) || !$maskArea[1]){
+            //默认授权254台主机
+            $maskArea[1] = $mask;
+        }
+        $maskArea[1] = 32 - $maskArea[1] * 1;
+        return (self::ip2long($ipv4) >> $maskArea[1]) == (self::ip2long($maskArea[0]) >> $maskArea[1]);
+    }
+
+    /**
+     * mt_rand增强版（支持js Math.random)
+     *
+     * @param integer $min
+     * @param integer $max
+     * @param boolean $decimal
+     * @return string
+     */
+    static function mathRandom(int $min=0, int $max=1, bool $decimal= false){
+
+        if($max < $min){
+            throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
+            return null;
+        }
+        $range = mt_rand($min, $max);
+        if($decimal && $min < $max){
+            $_ = lcg_value(); 
+            while($_ < 0.1){
+                $_ *= 10;
+            }
+            $range += $_;
+            if($range > $max){
+                $range -=1;
+            }
+        }
+        return $range;
+    }
+
+    /**
+     * 生成随机MAC地址
+     *
+     * @param string $sep 分隔符
+     * @return string
+     */
+    static function macAddr(string $sep=":"):string{
+        $list = [];
+        for($i=0;$i<6;$i++){
+            $list[] = strtoupper(
+                dechex(
+                    floor(
+                        self::mathRandom(0,1,true) * 256
+                    )
+                )
+            );
+        }
+        return implode($sep, $list);
+    }
+
+    /**
      * 保存Cookie
      * 
      * @access public
@@ -892,7 +1006,31 @@ class Tools
         return self::vipkwdCrypt($string, "D", $key);
     }
 
-
+    /**
+     * 格式化单位
+     *
+     * 1 Byte  =  8 Bit
+     * 1 KB  =  1,024 Bytes
+     * 1 MB  =  1,024 KB  =  1,048,576 Bytes
+     * 1 GB  =  1,024 MB  =  1,048,576 KB  =  1,073,741,824 Bytes
+     * 1 TB  =  1,024 GB  =  1,048,576 MB  =  1,073,741,824 KB  =  1,099,511,627,776 Bytes
+     * 1 PB  =  1,024 TB  =  1,048,576 GB  =  1,125,899,906,842,624 Bytes
+     * 1 EB  =  1,024 PB  =  1,048,576 TB  =  1,152,921,504,606,846,976 Bytes
+     * 1 ZB  =  1,024 EB  =  1,180,591,620,717,411,303,424 Bytes
+     * 1 YB  =  1,024 ZB  =  1,208,925,819,614,629,174,706,176 Bytes
+     * @param integer $size
+     * @param integer $pointLength
+     * @return string
+     */
+    static public function byteFormat(int $size, $pointLength = 2 ):string{
+        $a = array ( "Byte" , "KB" , "MB" , "GB" , "TB" , "PB" , "EB" , "ZB" , "YB" , "DB" , "NB");
+        $pos = 0;
+        while ( $size >= 1024 ) {
+            $size /= 1024;
+            $pos ++;
+        }
+        return round( $size, $dec ) . " " . $a[$pos];
+    }
 
 
 
@@ -905,7 +1043,7 @@ class Tools
      * Discuz 经典加解密函数
      * 
      * ---------------------------------------------------
-     * --          特申：本函数版权归原作者方所有            --
+     *  --        致敬经典:本函数版权归原作者方所有          --
      * ---------------------------------------------------
      * 
      * 注意：建议使用时设置 discuz_auth_key 通用密钥

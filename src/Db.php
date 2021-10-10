@@ -12,6 +12,7 @@ namespace Vipkwd\Utils;
 use \PDO;
 use \Exception;
 use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Error;
 use Vipkwd\Utils\Libs\Medoo;
 
 class Db{
@@ -93,6 +94,7 @@ class Db{
                 'SET SQL_MODE=ANSI_QUOTES'
             ]
         ],$options);
+        
         self::toRealPath($options, 'socket');
         self::toRealPath($options, 'database');
         //https://medoo.in/api/new
@@ -244,43 +246,12 @@ class Db{
      * @param callable|null $callback
      * @return array
      */
-    public function select(callable $callback = null):array{
+    public function select(callable $callback = null){
         $this->checkTable();
         return $this->watchException(function($that)use($callback){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->select(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where,
-                    $callback
-                );
-            }
-            return $that->_medoo->select(
-                $that->_table,
-                $that->_fields,
-                $that->_where,
-                $callback
-            );
+            return $that->_cmd("select", true, $callback);
         });
     }
-
-    private function checkTable():void{
-        if(!$this->_table){
-            $this->outputError("Missing Table");
-        }
-    }
-
-    private function watchException(callable $function){
-        try{
-            return $function($this);
-        }
-        catch(Exception $e){
-            return $this->outputError($e->getMessage());
-        }
-    }
-
 
     /**
      * 返回条件内的一行数据
@@ -291,20 +262,7 @@ class Db{
         $this->checkTable();
 
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->get(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->get(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("get", true);
         });
     }
 
@@ -434,18 +392,7 @@ class Db{
     public function has():bool{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->has(
-                    $that->_table,
-                    $that->_join,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->has(
-                $that->_table,
-                $that->_where
-            );
+            return $that->_cmd("has", false);
         });
     }
 
@@ -457,20 +404,7 @@ class Db{
     public function random():array{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->rand(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->rand(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("rand", true);
         });
     }
 
@@ -482,18 +416,7 @@ class Db{
     public function count():int{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->count(
-                    $that->_table,
-                    $that->_join,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->count(
-                $that->_table,
-                $that->_where
-            );
+            return $that->_cmd("count", false);
         });
     }
 
@@ -505,20 +428,7 @@ class Db{
     public function max():int{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->max(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->max(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("max", true);
         });
     }
 
@@ -530,20 +440,7 @@ class Db{
     public function min():int{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->min(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->min(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("min", true);
         });
     }
 
@@ -555,20 +452,7 @@ class Db{
     public function avg():int{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->avg(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->avg(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("avg", true);
         });
     }
 
@@ -580,20 +464,7 @@ class Db{
     public function sum():int{
         $this->checkTable();
         return $this->watchException(function($that){
-            $that->buildWhereCondition();
-            if($that->_join){
-                return $that->_medoo->sum(
-                    $that->_table,
-                    $that->_join,
-                    $that->_fields,
-                    $that->_where
-                );
-            }
-            return $that->_medoo->sum(
-                $that->_table,
-                $that->_fields,
-                $that->_where
-            );
+            return $that->_cmd("sum", true);
         });
     }
 
@@ -691,6 +562,53 @@ class Db{
     private function outputError(string $message){
         throw new Exception($message);
         exit;
+    }
+
+    private function checkTable():void{
+        if(!$this->_table){
+            $this->outputError("Missing Table");
+        }
+    }
+
+    private function watchException(callable $function){
+        try{
+            return $function($this);
+        }
+        catch(Exception $e){
+            return $this->outputError($e->getMessage());
+        }
+    }
+
+    private function _cmd(string $command, bool $fieldsEnable=true, ?callable $callback=null){
+        $this->buildWhereCondition();
+        if($this->_join){
+            if(!$fieldsEnable){
+                return $this->_medoo->$command(
+                    $this->_table,
+                    $this->_join,
+                    $this->_where
+                );
+            }
+            return $this->_medoo->$command(
+                $this->_table,
+                $this->_join,
+                $this->_fields,
+                $this->_where,
+                $callback
+            );
+        }
+        if(!$fieldsEnable){
+            return $this->_medoo->$command(
+                $this->_table,
+                $this->_where
+            );
+        }
+        return $this->_medoo->$command(
+            $this->_table,
+            $this->_fields,
+            $this->_where,
+            $callback
+        );
     }
 
     /**

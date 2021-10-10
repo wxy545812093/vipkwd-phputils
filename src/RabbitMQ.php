@@ -280,7 +280,7 @@ trait _trait__MQ {
      * @param int $delaySec  延迟秒数 0表无延迟（即时推送）
      * @return bool
      */
-    public function pushToFanout(string $msg="", string $exchange="", int $delaySec = 0)
+    public function pushToFanout(string $msg, string $exchange, int $delaySec = 0)
     {
         $channel = $this->getChannel();
         $channel->exchange_declare(
@@ -333,7 +333,7 @@ trait _trait__MQ {
      * @param int $delaySec 延迟秒数 0表无延迟（即时推送）
      * @return bool
      */
-    public function pushToDirect(string $msg="", string $exchange="", string $routingKey="", int $delaySec = 0)
+    public function pushToDirect(string $msg, string $exchange, string $routingKey, int $delaySec = 0)
     {
         $channel = $this->getChannel();
         $msgObj = new AMQPMessage();
@@ -391,7 +391,7 @@ trait _trait__MQ {
      * @param int $delaySec   延迟秒数 0表无延迟（即时推送）
      * @return bool
      */
-    public function pushToTopic(string $msg="",  string $exchange="", string $routingKey="", int $delaySec = 0)
+    public function pushToTopic(string $msg,  string $exchange, string $routingKey, int $delaySec = 0)
     {
         $channel = $this->getChannel();
         $channel->exchange_declare(
@@ -444,7 +444,7 @@ trait _trait__MQ {
      * @param string $failedQueue 最大次数重试消费失败后，失败消息将会投递到的队列名称
      * @return bool
      */
-    public function get(string $queue="", string $exchange="", string $bindingKey="", $callback = null, string $failedQueue = 'v@failed')
+    public function get(string $queue, string $exchange, string $bindingKey, $callback = null, string $failedQueue = 'v@failed')
     {
         $ret = true;
         $channel = $this->getChannel();
@@ -493,8 +493,8 @@ trait _trait__MQ {
     }
 
     /**
-     * 
      * 订阅模式下的可靠消费
+     * 
      * @param string $queue 订阅的队列名称
      * @param string $tag 消费标记
      * @param string $exchange 交换机名称
@@ -503,7 +503,7 @@ trait _trait__MQ {
      * @param string $failedQueue 最大次数重试消费失败后，失败消息将会投递到的队列名称
      * @throws \ErrorException
      */
-    public function consume(string $queue="",string $tag="", string $exchange="", string $bindingKey="", $callback = null, string $failedQueue = "v@failed")
+    public function consume(string $queue,string $tag, string $exchange, string $bindingKey, $callback = null, string $failedQueue = "v@failed")
     {
         $channel = $this->getChannel();
 

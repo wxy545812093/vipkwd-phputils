@@ -344,7 +344,7 @@ class Validate{
 	 * @return string|boolean
 	 */
 	private static function isIP($ipFlag, string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
-		$status = filter_var($ip, FILTER_VALIDATE_IP, $type);
+		$status = filter_var($ip, FILTER_VALIDATE_IP, $ipFlag);
 		if($status !== false && $excludePrivIp === true){
 			return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);
 		}else if($status !== false && $excludeResIp === true){

@@ -1600,7 +1600,6 @@ class Medoo{
                 while ($data = $statement->fetch(PDO::FETCH_ASSOC)) {
                     $callback($data);
                 }
-
                 return null;
             }
 
