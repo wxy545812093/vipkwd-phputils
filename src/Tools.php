@@ -17,7 +17,9 @@ use Vipkwd\Utils\Libs\QRcode;
 // use Vipkwd\Utils\Libs\Session;
 use PHPMailer\PHPMailer\PHPMailer;
 use Vipkwd\Utils\Validate;
+use Vipkwd\Utils\Libs\AsyncCallback;
 use \Exception;
+use \Closure;
 
 class Tools {
     /**
@@ -357,67 +359,6 @@ class Tools {
         }
         @closedir($fd);
         return $return;
-    }
-
-    /**
-     * 文件下载
-     * 
-     * @param string $filename 要下载的文件
-     * @param string $reFilename 下载后的命名
-     * 
-     * @return void
-     */
-    static public function download(string $filename, $reFilename = null){
-        // 验证文件
-        if(!is_file($filename)||!is_readable($filename)) 
-        {
-            return false;
-        }
-
-        // 获取文件大小
-        $fileSize = filesize($filename);
-
-        // 重命名
-        !isset($reFilename) && $reFilename = $filename;
-
-        // 字节流
-        header('Content-Type:application/octet-stream');
-        header('Accept-Ranges: bytes');
-        header('Accept-Length: ' . $fileSize);
-        header('Content-Disposition: attachment;filename='.basename($reFilename));
- 
-        // 校验是否限速(超过1M自动限速,同时下载速度设为1M)
-        $limit = 1 * 1024 * 1024;
-
-        if( $fileSize <= $limit )
-        {
-            readfile($filename);
-        }
-        else
-        {
-            // 读取文件资源
-            $file = fopen($filename, 'rb');
-
-            // 强制结束缓冲并输出
-            ob_end_clean();
-            ob_implicit_flush();
-            header('X-Accel-Buffering: no');
-
-            // 读取位置标
-            $count = 0;
-
-            // 下载
-            while (!feof($file) && $fileSize - $count > 0) 
-            {
-                $res = fread($file, $limit);
-                $count += $limit;
-                echo $res;
-                sleep(1);
-            }
-
-            fclose($file);
-        }
-        exit();
     }
 
     /**
@@ -801,8 +742,8 @@ class Tools {
     /**
      * IPV4转长整型数字
      *
-     * 注意：各数据库引擎或操作系统对于ip2long的计算结果要能有差异(超出 int类型的表示范围)。
-     *      所以：建议以 bigint类型存储本函数结果
+     * 注意：各数据库引擎或操作系统对于ip2long的计算结果可能有差异(超出 int类型的表示范围)。
+     *      所以：建议以 bigint类型 存储本函数结果
      * @param string $ipv4
      * @param boolean $useNormal 是不使用内置函数
      * @return integer
@@ -894,9 +835,9 @@ class Tools {
      * @param string $ipv4  "192.168.1.115"
      * @param string $maskArea 支持携带掩码("192.168.1.1/24")
      * @param integer $mask 0-32
-     * @return void
+     * @return boolean
      */
-    static function ipv4InArea(string $ipv4, string $maskArea, int $mask = 24){
+    static function ipv4InMaskArea(string $ipv4, string $maskArea, int $mask = 24):bool{
         $maskArea = explode('/', preg_replace("/[^0-9\.\/]/","", $maskArea));
         if(!isset($maskArea[1]) || !$maskArea[1]){
             //默认授权254台主机
@@ -907,7 +848,7 @@ class Tools {
     }
 
     /**
-     * mt_rand增强版（支持js Math.random)
+     * mt_rand增强版（兼容js版Math.random)
      *
      * @param integer $min
      * @param integer $max
@@ -1007,37 +948,43 @@ class Tools {
     }
 
     /**
-     * 格式化单位
+     * Js版setTimeout的（PHP）简易实现
+     * 
+     * eg: 每隔3秒调用一次全局函数 funcName ，共调用2次, 耗时：(seconeds + funtion 耗时) * limits
+     * setTimeout("funcName", 3, 2)
+     * 
+     * eg: 每隔5秒调用一次全局函数 funcName ，仅调用1次
+     * setTimeout("funcName", 5)
      *
-     * 1 Byte  =  8 Bit
-     * 1 KB  =  1,024 Bytes
-     * 1 MB  =  1,024 KB  =  1,048,576 Bytes
-     * 1 GB  =  1,024 MB  =  1,048,576 KB  =  1,073,741,824 Bytes
-     * 1 TB  =  1,024 GB  =  1,048,576 MB  =  1,073,741,824 KB  =  1,099,511,627,776 Bytes
-     * 1 PB  =  1,024 TB  =  1,048,576 GB  =  1,125,899,906,842,624 Bytes
-     * 1 EB  =  1,024 PB  =  1,048,576 TB  =  1,152,921,504,606,846,976 Bytes
-     * 1 ZB  =  1,024 EB  =  1,180,591,620,717,411,303,424 Bytes
-     * 1 YB  =  1,024 ZB  =  1,208,925,819,614,629,174,706,176 Bytes
-     * @param integer $size
-     * @param integer $pointLength
-     * @return string
+     * @param string $funcName 全局函数名（不支持匿名函数)
+     * @param integer $seconds <10> 延时秒数
+     * @param array|integer 如果是一维数组，会原样传递到$funName指向的全局函数。否则
+     * @param integer $limits <1> 执行次数，默认执行1次
+     * @return void
      */
-    static public function byteFormat(int $size, $pointLength = 2 ):string{
-        $a = array ( "Byte" , "KB" , "MB" , "GB" , "TB" , "PB" , "EB" , "ZB" , "YB" , "DB" , "NB");
-        $pos = 0;
-        while ( $size >= 1024 ) {
-            $size /= 1024;
-            $pos ++;
-        }
-        return round( $size, $dec ) . " " . $a[$pos];
+    static function setTimeout(string $funcName, int $seconds = 10, $args = [], int $limits = 1){
+        (new AsyncCallback())->setTimeout($funcName, $seconds, $args, $limits);
     }
 
 
-
-
-
-
-
+    /**
+     * 获取Htpp头信息为数组
+     * 
+     * 获取 $_SERVER 所有以“HTTP_” 开头的 头信息
+     * 
+     * @return array
+     */
+    static function getHttpHeaders():array{
+        $headers = array();
+        foreach ($_SERVER as $key => $value) {
+            if('HTTP_' == substr($key,0,5)) {
+                $key = substr($key,5);
+                $key = strtolower($key);
+                $headers[$key] = $value;
+            }
+        }
+        return $headers;
+    }
 
     /**
      * Discuz 经典加解密函数

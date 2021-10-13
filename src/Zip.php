@@ -20,20 +20,28 @@ class Zip{
     /**
      * 文件打包（zipfile不存在将自动创建)
      *
+     * :-e-: Vipkwd\Utils\Zip::addZip();
+     * 
      * @param string $zipFile 打包后的文件名
      * @param string|array $fileOrPath 打包文件组
+     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
      * 
      * @return string|null
      */
-    static public function addZip(string $zipFile, $fileOrPath):?string{
+    static public function addZip(string $zipFile, $fileOrPath, ?string $password=""):?string{
 
-		return self::watchException(function()use($zipFile, &$fileOrPath){
+		return self::watchException(function()use($zipFile, &$fileOrPath, $password){
             $zip = new ZipArchive();
             // 初始化
             // OVERWRITE zip覆盖模式
             // CREATE 追加模式
             $bool = $zip->open($zipFile, ZipArchive::CREATE|ZipArchive::OVERWRITE);
 			if($bool === TRUE){
+                if($password){
+                    if(!$zip->setPassword($password)){
+                        throw new Exception('Set password failed');
+                    }
+                }
                 $zip->setArchiveComment('vipkwd/utils');
                 $zip->addFromString('zipPackage-from.txt', "
                     This zip package create by PHP utils with \"vipkwd/utils\"
@@ -79,21 +87,27 @@ class Zip{
      * 
      * @param string $zipFile 要解压的压缩包
      * @param string $dest 解压到指定目录
+     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
      * 
      * @return boolean|null
      */
-    static public function unZip(string $zipFile, string $dest): ?bool{
+    static public function unZip(string $zipFile, string $dest, ?string $password = ""): ?bool{
         //检测要解压压缩包是否存在
         if(!is_file($zipFile)){
             return false;
         }
-		return self::watchException(function()use(&$zipFile, &$dest){
+		return self::watchException(function()use(&$zipFile, &$dest, $password){
 			//检测目标路径是否存在
 			if(!is_dir($dest)){
 				mkdir($dest, 0777, true);
 			}
             $zip = new ZipArchive();
             if($zip->open($zipFile)){
+                if($password){
+                    if(!$zip->setPassword($password)){
+                        throw new Exception('Set password failed');
+                    }
+                }
                 $zip->extractTo($dest);
                 $zip->close();
 				unset($zipFile, $dest);
@@ -110,13 +124,19 @@ class Zip{
 	 * @param string $zipFile
 	 * @param string $appendFile
 	 * @param string $content
+     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
 	 * @return boolean|null
 	 */
-	static function appendFileContent(string $zipFile, string $appendFile, string $content=""):?bool{
+	static function appendFileContent(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{
 
-		return self::watchException(function()use(&$zipFile, &$appendFile, &$content){
+		return self::watchException(function()use(&$zipFile, &$appendFile, &$content, $password){
 			$zip = new ZipArchive;
 			if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
+                if($password){
+                    if(!$zip->setPassword($password)){
+                        throw new Exception('Set password failed');
+                    }
+                }
 				$zip->addFromString($appendFile, $content);
 				$zip->close();
 				unset($zipFile, $appendFile, $content);
