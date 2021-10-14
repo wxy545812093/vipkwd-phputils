@@ -12,6 +12,8 @@ namespace Vipkwd\Utils;
 
 use \Exception;
 
+// https://www.cnblogs.com/xiaoqiangink/p/14366099.html
+// https://www.cnblogs.com/xuey/p/8683100.html
 class Bit{
 	
 	/**

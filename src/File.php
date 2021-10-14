@@ -10,7 +10,10 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
+use PhpShardUpload\ShardUpload;
+// use PhpShardUpload\Components\FileDownload;
 use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
 
 class File{
 
@@ -116,11 +119,12 @@ class File{
      * 
      * @param string $filename 要下载的文件路径
      * @param string $rename <null>文件名称,为空则与下载的文件名称一样
-     * @param boolean $breakpoint <false> 是否开启断点续传
+     * @param integer $downloadSpeed <1>下载限速 单位MB，必须大于0
+     * @param boolean $breakpoint <true> 是否开启断点续传
      * 
      * @return void 
      */
-    static public function download(string $filename, $rename=null, bool $breakpoint = false){
+    static public function download(string $filename, $rename=null, int $downloadSpeed = 1, bool $breakpoint = true){
         // 验证文件
         if(!is_file($filename)||!is_readable($filename)) 
         {
@@ -158,8 +162,8 @@ class File{
         header('Content-Type:application/octet-stream');
         header('Content-Disposition: attachment;filename='.basename($rename));
  
-        // 校验是否限速(超过1M自动限速,同时下载速度设为1M)
-        $limit = 1 * 1024 * 1024;
+        // 校验是否限速(文件超过0.5M自动限速为 0.5Mb/s )
+        $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed,1) : 0.5) * 1024 * 1024;
 
         if( $fileSize <= $limit )
         {
@@ -236,7 +240,7 @@ class File{
     /**
      * filesize量化单位转 字节数
      *
-     * @param string $str 量化单位 如： 1.2GB
+     * @param string $str 已量化单位 如： 1.2GB
      * @param boolean $toInt <false> 是否进一法舍去字节小数（转换结果 可能存在 0.xxx字节的小数）
      * @return integer
      */
@@ -262,5 +266,69 @@ class File{
             return ceil($size);
         }
         return $size;
+    }
+
+
+    /**
+     * [分片/秒传组件]: 上传
+     *
+     * @param string $savePath 文件保存目录
+     * @return string
+     */
+    static function uploadHashFile(string $savePath = "./"):string{
+        $shard = new ShardUpload(
+            $_FILES['data'], 
+            $_POST['index'], 
+            $_POST['total'], 
+            $_POST['shardSize'], //分块大小
+            $_POST['size'], //总大小
+            $_POST['md5Hash'], 
+            $_POST['sha1Hash'], 
+            rtrim($savePath, "/")."/"
+        );
+        $response = $shard->upload();
+        header('Content-Type:application/json;charset=utf-8');
+        echo json_encode($response,JSON_UNESCAPED_UNICODE);
+    }
+    
+    /**
+     * [分片/秒传组件]: 查看上传状态
+     *
+     * @param string $savePath 文件保存目录
+     * @return string
+     */
+    static function hashFileUploadStatus(string $savePath = "./"):string{
+        $shard = new ShardUploadStatus(
+            $_POST['total'], 
+            $_POST['shardSize'], //文件分块大小
+            $_POST['size'], //文件总大小
+            $_POST['md5Hash'], 
+            $_POST['sha1Hash'], 
+            rtrim($savePath,"/")."/"
+        );
+        $response = $shard->getUploadStatus();
+        if($response['status'] == 1){
+        //$manage = new \PhpShardUpload\FileManage($md5Hash, $sha1Hash, $fileBaseDir);
+        //   var_dump($manage->getUploadSuccessFilePath()); //已成功上传的文件路径
+        }
+        header('Content-Type:application/json;charset=utf-8');
+        echo json_encode($response,JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * [分片/秒传组件]: 下载
+     *
+     * @return void
+     */
+    static function downloadHashFile(string $savePath = "./", string $saveName = ""){
+        $md5Hash = trim($_GET['md5Hash']);
+        $sha1Hash = trim($_GET['sha1Hash']);
+        //下载文件名称
+        $name= $saveName ? $saveName : (isset($_GET['name']) ? $_GET['name']:'');
+        
+        $savePath = rtrim($savePath, "/") . "/";
+
+        $manage = new \PhpShardUpload\FileManage($md5Hash, $sha1Hash, $savePath);
+        $manage->download($name);
     }
 }
