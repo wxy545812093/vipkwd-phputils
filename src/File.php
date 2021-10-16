@@ -14,6 +14,7 @@ use PhpShardUpload\ShardUpload;
 // use PhpShardUpload\Components\FileDownload;
 use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Libs\ImageEncrypt;
 
 class File{
 
@@ -331,4 +332,35 @@ class File{
         $manage = new \PhpShardUpload\FileManage($md5Hash, $sha1Hash, $savePath);
         $manage->download($name);
     }
+
+    /**
+     * 获取服务器支持最大上传文件大小（bytes)
+     * 
+     * response: -1 没有上传大小限制
+     *
+     * @return float
+     */
+    static function fileUploadMaxSize() {
+        $max1 = parseSize(ini_get('post_max_size'));
+        $max2 = parseSize(ini_get('upload_max_filesize'));
+        $max3 = parseSize(ini_get('memory_limit'));
+        if($max1>0 && ($max1<=$max2 || $max2==0) && ($max1<=$max3 || $max3==-1))
+            return $max1;
+        elseif($max2>0 && ($max2<=$max1 || $max1==0) && ($max2<=$max3 || $max3==-1))
+            return $max2;
+        elseif($max3>-1 && ($max3<=$max1 || $max1==0) && ($max3<=$max2 || $max2==0))
+            return $max3;
+        else
+            return -1; // no limit
+    }
+
+
+    protected function imgEncrypt($img, $str){
+        return ImageEncrypt::encrypt($img, $str);
+    }
+
+    protected function imgDecrypt($img){
+        return ImageEncrypt::decrypt($img);
+    }
+
 }

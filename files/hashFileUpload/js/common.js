@@ -181,6 +181,59 @@ var fileUploadPage = function(){
             return false;
     }
 
+    // 获取URL的查询参数 response: object
+    // formatUrl("http://www.baidu.com?a=2", true);
+
+    // 用数组 URL追加查询参数 response: string
+    // formatUrl("http://www.baidu.com?a=2", {a:3,b:2,c:false, d:true});
+
+    // 用obj URL追加查询参数 response: string
+    // formatUrl("http://www.baidu.com?a=2", ["a=333", "b=999","c=235"]);
+    function formatUrl(url, extendArgs) {
+        var _u, obj = {}, query = [], hash = "", l;
+        if (!url)
+            return;
+        _u = url.replace(/\ +/,"").replace(/(.*?)(\?+)/,"$1?").split("#");
+        hash = _u.length > 1 ? "#" + _u[1] : "";
+    
+        if ((l = _u[0].indexOf("?")) >= 0) {
+            url = _u[0].slice(0, l);
+            let _query = _u[0].slice(l + 1);
+            if (_query != "") {
+                query = _query.split("&");
+                if (extendArgs === true || extendArgs === false) {
+                    query.forEach((item)=>{
+                        item = item.split("=");
+                        obj[(item[0])] = item.length > 1 ? item[1] : "";
+                    }
+                    )
+                    query = _query = null;
+                    return obj;
+                }
+            } else {
+                if (extendArgs === true || extendArgs === false) {
+                    return obj;
+                }
+                query = [];
+            }
+        } else {
+            if (extendArgs === true || extendArgs === false) {
+                return obj;
+            }
+            url = _u[0];
+        }
+        _u = null;
+    
+        if (Object.prototype.toString.call(extendArgs) === "[object Array]") {
+            query = query.concat(extendArgs);
+        } else if (Object.prototype.toString.call(extendArgs) === "[object Object]") {
+            for (var k in extendArgs) {
+                query.push(k + "=" + (extendArgs[k] === true ? 1 : (extendArgs[k] === false ? 0 : extendArgs[k])));
+            }
+        }
+        return url + "?" + query.join("&") + hash;
+    }
+
     /**
      * 上传文件类
      * @constructor
@@ -324,11 +377,11 @@ var fileUploadPage = function(){
                     if (parseInt(data.status) === 1) {  //上传成功
                         fileUploadObj.uploadSuccess = true;
                         fileUploadObj.setProgress(fileUploadObj.shardCount);
-
-                        downUrl = fileUploadObj.options.api.download.replace(/(.*?)(\?+)$/, "$1") + '?md5Hash=' + fileUploadObj.md5Hash;
-                        downUrl+= '&sha1Hash=' + fileUploadObj.sha1Hash;
-                        downUrl+= '&name=' + encodeURIComponent(fileUploadObj.name);
-
+                        downUrl = formatUrl(fileUploadObj.options.api.download,{
+                            md5Hash: fileUploadObj.md5Hash,
+                            sha1Hash: fileUploadObj.sha1Hash,
+                            name: encodeURIComponent(fileUploadObj.name),
+                        });
                         document.querySelector(fileUploadObj.options.elem.output).innerHTML = (fileUploadObj.shardCount + " / " + fileUploadObj.shardCount + '（上传成功）<a href="' + downUrl + '" target="_blank">下载</a>');
                         fileUploadObj.debug && console.log('上传成功monitor');
                         document.querySelector(fileUploadObj.options.elem.uploadBtn).removeAttribute("disabled");

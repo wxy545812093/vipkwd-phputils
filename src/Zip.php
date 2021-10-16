@@ -23,20 +23,20 @@ class Zip{
      * :-e-: Vipkwd\Utils\Zip::addZip();
      * 
      * @param string $zipFile 打包后的文件名
-     * @param string|array $fileOrPath 打包文件组
-     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
+     * @param string|array $fileOrPaths 打包文件组
+     * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
      * 
      * @return string|null
      */
-    static public function addZip(string $zipFile, $fileOrPath, ?string $password=""):?string{
+    static public function addZip(string $zipFile, $fileOrPaths, ?string $password=""):?string{
 
-		return self::watchException(function()use($zipFile, &$fileOrPath, $password){
+		return self::watchException(function()use($zipFile, &$fileOrPaths, $password){
             $zip = new ZipArchive();
             // 初始化
             // OVERWRITE zip覆盖模式
             // CREATE 追加模式
             $bool = $zip->open($zipFile, ZipArchive::CREATE|ZipArchive::OVERWRITE);
-			if($bool === TRUE){
+			if($bool === true){
                 if($password){
                     if(!$zip->setPassword($password)){
                         throw new Exception('Set password failed');
@@ -53,10 +53,10 @@ class Zip{
                     --      Vipkwd\Utils\Tools::addZip(\"demo.zip\", \".\");
                     --      //And a zip package was created;
                 ");
-                if(is_string($fileOrPath)){
-                    $fileOrPath =[$fileOrPath];
+                if(is_string($fileOrPaths)){
+                    $fileOrPaths =[$fileOrPaths];
                 }
-                foreach ($fileOrPath as $file) {
+                foreach ($fileOrPaths as $file) {
                     if(is_dir($file)){
                         Tools::dirScan($file, function($_file, $_path) use(&$zip){
                             $zip->addFile($_path."/".$_file);
@@ -74,10 +74,10 @@ class Zip{
                 }
 				// 关闭Zip对象
 				$zip->close();
-				unset($fileOrPath);
+				unset($fileOrPaths);
 				return $zipFile;
             }
-			unset($zip, $zipFile, $fileOrPath);
+			unset($zip, $zipFile, $fileOrPaths);
 			return false;
 		});
     }
@@ -87,7 +87,7 @@ class Zip{
      * 
      * @param string $zipFile 要解压的压缩包
      * @param string $dest 解压到指定目录
-     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
+     * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
      * 
      * @return boolean|null
      */
@@ -124,7 +124,7 @@ class Zip{
 	 * @param string $zipFile
 	 * @param string $appendFile
 	 * @param string $content
-     * @param string|null $password 压缩包密码 不支持宽松等于(==)布尔False 的密码
+     * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
 	 * @return boolean|null
 	 */
 	static function appendFileContent(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{

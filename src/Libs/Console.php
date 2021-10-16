@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Str;
 use Vipkwd\Utils\Dev;
 // use \Exception;
 
@@ -42,7 +42,7 @@ class Console extends Command {
 
 		// 你想要做的任何操作
 		$className = trim($input->getArgument('className'));
-		$method = trim($input->getOption('method'));
+		$method = trim($input->getOption('method') ?? "");
 		//纠正短选项使用 长选项的 等于号 "=" 问题;
 		$method = str_replace('=',"", $method);
 		self::$showList = true;
@@ -264,7 +264,7 @@ class Console extends Command {
 			$septer = " ";
 			$len -= 2;
 		}
-		$txt = Tools::strPadPlus($txt, $len, $septer);
+		$txt = Str::strPadPlus($txt, $len, $septer);
 		if($setColor === true){
 			//$txt = str_pad($txt, $len, $septer, STR_PAD_BOTH);
 			$txt = "<info>" .$txt. "</info>";

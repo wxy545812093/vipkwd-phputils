@@ -26,7 +26,8 @@
             "Vipkwd\\Utils\\": ["src/"]
         },
         "files": [
-            "files/VipkwdException.php"
+            "files/VipkwdException.php",
+            "files/VipkwdPreload.php"
         ]
     },
     "minimum-stability": "dev",

@@ -309,6 +309,25 @@ class Validate{
     }
 
     /**
+     * 判断是否为手机端
+     *
+     * @return boolean
+     */
+    static function isMobileDevice():bool{
+        $result = false;
+        if (isset($_SERVER['HTTP_USER_AGENT'])) {
+            $clientkeywords = array('nokia', 'sony', 'ericsson', 'mot','samsung', 'htc', 'sgh', 'lg', 'sharp',
+                'sie-', 'philips', 'panasonic', 'alcatel','meizu', 'android', 'netfront', 'symbian',
+                'ucweb', 'windowsce', 'palm', 'operamini','operamobi', 'openwave', 'nexusone', 'cldc','midp', 'wap', 'mobile'
+            );
+            if (preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) {
+                $result = true;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * 执行自定义正则
      *
      * @param string $regexp

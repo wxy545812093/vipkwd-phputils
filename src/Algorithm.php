@@ -11,6 +11,7 @@ declare(strict_types = 1);
 
 
 namespace Vipkwd\Utils;
+use Vipkwd\Utils\Dev;
 class Algorithm {
 
     static $arrLen = 0;
@@ -260,30 +261,27 @@ class Algorithm {
      * @return array
      */
     static function radixSort(array $indexedArr):array{
-        $len = count($indexedArr);
-        if($len < 2){
+        if(count($indexedArr)<= 1){
             return $indexedArr;
         }
-        //获取最高位（最大）数字
-        $maxDigit = max($indexedArr);
-        $counter = [];
-        for($i=0; $i < $maxDigit; $i++){
-            for($j =0; $j < $len; $j++){
-                preg_match_all("|\d+|","{$indexedArr[$j]}", $matches);
-                $numArr = $matches[0];
-                $lenTmp = count($numArr);
-                $bucket = array_key_exists($lenTmp -$i -1, $numArr) ? intval($numArr[$lenTmp -$i -1]) : 0;
-                if(!array_key_exists($bucket, $counter)){
-                    $counter[$bucket] = [];
-                }
-                $counter[$bucket][] = $indexedArr[$j];
+        $max = max($indexedArr);
+        $maxLen = strlen("$max");
+        //由低位到高位比对
+        for($i = $maxLen; $i >=1; $i--){
+            $bucket = array_pad([], 10, []);
+            //生成相同长度的字符序列便于按位校值
+            array_walk($indexedArr, function(&$v)use($maxLen){
+                $v = str_pad("$v", $maxLen," ", STR_PAD_LEFT);
+            });
+            foreach($indexedArr as $v){
+                $n = $v[$i-1] == " " ? 0 : intval($v[$i-1]);
+                // 
+                $bucket[$n][] = trim($v) * 1;
             }
-            $pos = 0;
-            for($j =0; $j < count($counter); $j++){
-                while( ($val = array_shift($counter[$j])) !== null ){
-                    $indexedArr[$pos++] = $val;
-                }
-            }
+            $indexedArr = [];
+            array_map(function($v)use(&$indexedArr){
+                $indexedArr = array_merge($indexedArr, $v);
+            },$bucket);
         }
         return $indexedArr;
     }

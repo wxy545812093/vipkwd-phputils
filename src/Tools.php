@@ -27,14 +27,10 @@ class Tools {
      *
      * @return string
      */
-    static public function getOS(): string
-    {
-        if(PATH_SEPARATOR == ':')
-        {
+    static public function getOS(): string{
+        if(PATH_SEPARATOR == ':'){
             return 'Linux';
-        }
-        else
-        {
+        }else{
             return 'Windows';
         }
     }
@@ -47,8 +43,7 @@ class Tools {
      *
      * @return string
      */
-    static public function format($input, int $number = 2): string
-    {
+    static public function format($input, int $number = 2): string{
         return sprintf("%." . $number . "f", $input);
     }
 
@@ -76,50 +71,39 @@ class Tools {
     }
 
     /**
-     * 无限级归类
+     * 数组转无限级分类
      *
      * @param array $list 归类的数组
      * @param string $id 父级ID
      * @param string $pid 父级PID
      * @param string $child key
-     * @param string $root 顶级
+     * @param string $root 顶级ID(pid)
      *
      * @return array
      */
-    static public function tree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $root = 0): array
-    {
+    static public function arrayToTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $root = 0): array{
         $tree = [];
-
-        if(is_array($list))
-        {
+        if(is_array($list)){
             $refer = [];
-
             //基于数组的指针(引用) 并 同步改变数组
-            foreach ($list as $key => $val)
-            {
+            foreach ($list as $key => $val){
                 $list[$key][$child] = [];
                 $refer[$val[$pk]] = &$list[$key];
             }
 
-            foreach ($list as $key => $val)
-            {
+            foreach ($list as $key => $val){
                 //是否存在parent
                 $parentId = isset($val[$pid]) ? $val[$pid] : $root;
 
-                if ($root == $parentId)
-                {
+                if ($root == $parentId){
                     $tree[$val[$pk]] = &$list[$key];
-                }
-                else
-                {
-                    if (isset($refer[$parentId]))
-                    {
+                }else{
+                    if (isset($refer[$parentId])){
                         $refer[$parentId][$child][] = &$list[$key];
                     }
                 }
             }
         }
-
         return array_values($tree);
     }
 
@@ -160,18 +144,13 @@ class Tools {
      *
      * @return array
      */
-    static public function arrayMultiUnique(array $arr, string $key = 'id'): array
-    {
+    static public function arrayMultiUnique(array $arr, string $key = 'id'): array{
         $res = [];
-
-        foreach ($arr as $value)
-        {
-            if(!isset($res[$value[$key]]))
-            {
+        foreach ($arr as $value){
+            if(!isset($res[$value[$key]])){
                 $res[$value[$key]] = $value;
             }
         }
-
         return array_values($res);
     }
 
@@ -184,12 +163,10 @@ class Tools {
      *
      * @return array
      */
-    static public function arrayMultiSort(array $array, string $keys, string $sort = 'desc'): array
-    {
+    static public function arrayMultiSort(array $array, string $keys, string $sort = 'desc'): array{
         $keysValue = [];
 
-        foreach ($array as $k => $v)
-        {
+        foreach ($array as $k => $v){
             $keysValue[$k] = $v[$keys];
         }
 
@@ -210,8 +187,7 @@ class Tools {
      *
      * @return array
      */
-    static public function xmlToArray(string $xml): array
-    {
+    static public function xmlToArray(string $xml): array{
         //禁止引用外部xml实体
         libxml_disable_entity_loader(true);
         $xmlString = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -226,45 +202,121 @@ class Tools {
      *
      * @return string
      */
-    static public function arrayToXml(array $input): string
-    {
+    static public function arrayToXml(array $input): string{
         $str = '<xml>';
-
-        foreach ($input as $k => $v)
-        {
+        foreach ($input as $k => $v){
             $str .= '<' . $k . '>' . $v . '</' . $k . '>';
         }
-
         $str .= '</xml>';
-
         return $str;
     }
 
     /**
-     * 取两坐标距离
+     * 根据两点间的经纬度计算距离（单位为KM）
      *
-     * @param float $lng1 经度1
-     * @param float $lat1 纬度1
+     * 地球半径：6378.137 KM
+     * 
+     * Dev::dump(Tools::getDistance());
+     * Dev::dump(Tools::getDistance( 120.149911, 30.282324, 120.155428, 30.244007 ));
+     * Dev::dump(Tools::getDistance( 112.45972, 23.05116, 103.850070, 1.289670 ));
+     * 
+     * @param float $lng1 经度1  正负180度间
+     * @param float $lat1 纬度1  正负90度间
      * @param float $lng2 经度2
      * @param float $lat2 纬度2
      *
      * @return float
      */
-    static public function getDistance(float $lng1, float $lat1, float $lng2, float $lat2): float
-    {
+    static function getDistance(float $lng1=0, float $lat1=0, float $lng2=0, float $lat2=0): float{
+        if($lat1 > 90 || $lat1 < -90 || $lat2 > 90 || $lat2 < -90){
+            throw new Exception("经纬度参数无效");
+        }
         $radLat1 = deg2rad($lat1);
         $radLat2 = deg2rad($lat2);
         $radLng1 = deg2rad($lng1);
         $radLng2 = deg2rad($lng2);
-     
-        $a = $radLat1 - $radLat2;
-        $b = $radLng1 - $radLng2;
-     
-        $s = 2 * asin(sqrt(pow(sin($a / 2), 2) + cos($radLat1) * cos($radLat2) * pow(sin($b / 2), 2))) * 6378.137 * 1000;
-         
-        return $s;
+        $s = 2 
+            * asin(
+                min(1,
+                    sqrt(
+                        pow(
+                            sin(($radLat1 - $radLat2) / 2), 2
+                        )
+                        + cos($radLat1) 
+                        * cos($radLat2) 
+                        * pow(
+                            sin(($radLng1 - $radLng2) / 2), 2
+                        )
+                    )
+                )
+            ) * 6378.137;
+        return round( abs($s) , 6);
     }
 
+    /**
+     * 获取商户半径x公里的正方区域四个点
+     *
+     * @param float $lng 经度 
+     * @param float $lat 纬度 
+     * @param integer $distance 半径大小 单位km
+     * @return array
+     */
+    static function merchantRadiusAxies(float $lng, float $lat, float $distance = 3):array{   
+        // 球面(地球)半径：6378.137 KM
+        $half = 6378.137;
+        $dlng = rad2deg( 2 * asin(sin($distance / (2 * $half)) / cos(deg2rad($lat))));
+        $dlat = rad2deg( $distance / $half );
+
+        return [
+            'lt' => ['lng' => round($lng - $dlng, 10), 'lat' => round($lat + $dlat,10)],
+            'rt' => ['lng' => round($lng + $dlng, 10), 'lat' => round($lat + $dlat,10)],
+            'rb' => ['lng' => round($lng + $dlng, 10), 'lat' => round($lat - $dlat,10)],
+            'lb' => ['lng' => round($lng - $dlng, 10), 'lat' => round($lat - $dlat,10)],
+        ];
+    }
+
+
+    /**
+     * 计算平面坐标轴俩点{P1 与 P2}间的距离
+     *
+     *  -e-: Dev::dump(Tools::mathAxedDistance(1,2,4,6));
+     * @param float $x1
+     * @param float $y1
+     * @param float $x2
+     * @param float $y2
+     * @return float
+     */
+    static function mathAxedDistance(float $x1 =0, float $y1 =0, float $x2 =0, float $y2 =0):float{
+        return round( sqrt( pow($x2 - $x1, 2) + pow($y2 - $y1,2)), 6);
+    }
+
+    /**
+     * mt_rand增强版（兼容js版Math.random)
+     *
+     * @param integer $min
+     * @param integer $max
+     * @param boolean $decimal <false> 是否包含小数
+     * @return string
+     */
+    static function mathRandom(int $min=0, int $max=1, bool $decimal= false){
+
+        if($max < $min){
+            throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
+            return null;
+        }
+        $range = mt_rand($min, $max);
+        if($decimal && $min < $max){
+            $_ = lcg_value(); 
+            while($_ < 0.1){
+                $_ *= 10;
+            }
+            $range += $_;
+            if($range > $max){
+                $range -=1;
+            }
+        }
+        return $range;
+    }
     /**
      * get请求
      *
@@ -273,12 +325,10 @@ class Tools {
      *
      * @return mixed
      */
-    static public function get($url, $header =[])
-    {
+    static public function get(string $url, array $header =[]){
         $ch = curl_init();
 
-        if(!empty($header))
-        {
+        if(!empty($header)){
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         }
 
@@ -298,20 +348,26 @@ class Tools {
      * Post请求
      *
      * @param string $url URL地址
-     * @param string $param 参数
+     * @param string $param <""> 发送参数
+     * @param string $dataType <form> 设定发送的数据类型
      * @param array $header 请求头 <[]>
      *
      * @return mixed
      */
-    static public function post($url, $param, $header = [])
-    {
+    static public function post(string $url, string $param="", string $dataType = 'form', array $header = []){
         $ch = curl_init();
+        $dataTypeArr = [
+            'form' => ['content-type: application/x-www-form-urlencoded;charset=UTF-8'],
+            'json' => ['Content-Type: application/json;charset=utf-8'],
+        ];
+        if(isset($dataTypeArr[$dataType])){
+            $header[] = $dataTypeArr[$dataType][0];
+        }
 
-        if(!empty($header))
-        {
+        if(!empty($header)){
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         }
-    
+
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -328,28 +384,28 @@ class Tools {
     }
 
     /**
-     * 目录递归扫描
+     * 扫描目录（递归）
      *
-     * @param string $path
+     * @param string $dir
      * @param callable|null $fileCallback  
-     *                      以匿名回调方式对扫描到的文件时处理；
+     *                      以匿名回调方式对扫描到的文件处理；
      *                      匿名函数接收俩个参数： function($scanFile, $scanPath);
      *                      当匿名函数 return === false 时，将退出本函数所有层次的递归模式
      * @return boolean|null
      */
-    static function dirScan(string $path, ?callable $fileCallback=null):?bool{
-        $return = null;
-        if(!is_dir($path)){
+    static function dirScan(string $dir, ?callable $fileCallback=null):?bool{
+        if(!is_dir($dir)){
             return $return;
         }
-        $fd = opendir($path);
+        $return = null;
+        $fd = opendir($dir);
         while(false !== ($file = readdir($fd))){
             if($file != "." && $file != ".."){
-                if(is_dir($path."/".$file)){
-                    $return = self::dirScan($path."/".$file, $fileCallback);
+                if(is_dir($dir."/".$file)){
+                    $return = self::dirScan($dir."/".$file, $fileCallback);
                 }else{
                     if(is_callable($fileCallback)){
-                        $return = $fileCallback($file, $path);
+                        $return = $fileCallback($file, $dir);
                     }
                 }
                 if($return === false ){
@@ -359,6 +415,40 @@ class Tools {
         }
         @closedir($fd);
         return $return;
+    }
+
+    /**
+     * 打印目录
+     *
+     * @param string $dir
+     * @return void
+     */
+    static function dirTree(string $dir):array{
+        if(!is_dir($dir)){
+            return [];
+        }
+        $dir = rtrim($dir, "/");
+        $path = array();
+        $stack = array($dir);
+        while($stack){
+            $thisdir = array_pop($stack);
+            if($dircont = scandir($thisdir)){
+                $i=0;
+                while(isset($dircont[$i])){
+                    if($dircont[$i] !== '.' && $dircont[$i] !== '..'){
+                        $current_file = $thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
+                        if(is_file($current_file)){
+                            $path[] = "f:".$thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
+                        }elseif (is_dir($current_file)){
+                            $path[] = "d:".$thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
+                            $stack[] = $current_file;
+                        }
+                    }
+                    $i++;
+                }
+            }
+        }
+        return $path;
     }
 
     /**
@@ -476,119 +566,6 @@ class Tools {
         return $ip;
     }
 
-    /**
-     * (中/英/混合)字符串截取(加强版)
-     * 
-     * @param string $str 待截取字符串
-     * @param int $len 截取长度 [default=1]
-     * 
-     * @return string
-     */
-    static function substrPlus($str, $len = 1):string{
-        $rstr = '';//待返回字符串
-        $i = 0;
-        $n = 0;
-        $str_length = strlen ( $str ); //字符串的字节数
-        while ( ($n < $len) and ($i <= $str_length) ) {
-            $temp_str = substr ( $str, $i, 1 );
-            $ascnum = ord ( $temp_str ); //得到字符串中第$i位字符的ascii码
-            if ($ascnum >= 224) {//如果ASCII位高与224，
-                $rstr = $rstr . substr ( $str, $i, 3 ); //根据UTF-8编码规范，将3个连续的字符计为单个字符
-                $i += 3; //实际Byte计为3
-                $n ++; //字串长度计1
-            } elseif ($ascnum >= 192){ //如果ASCII位高与192，
-                $rstr = $rstr . substr ( $str, $i, 2 ); //根据UTF-8编码规范，将2个连续的字符计为单个字符
-                $i += 2; //实际Byte计为2
-                $n ++; //字串长度计1
-            } elseif ($ascnum >= 65 && $ascnum <= 90) {//如果是大写字母，
-                $rstr = $rstr . substr ( $str, $i, 1 );
-                $i += 1; //实际的Byte数仍计1个
-                $n ++; //但考虑整体美观，大写字母计成一个高位字符
-            }elseif ($ascnum >= 97 && $ascnum <= 122) {
-                $rstr = $rstr . substr ( $str, $i, 1 );
-                $i += 1; //实际的Byte数仍计1个
-                $n ++; //但考虑整体美观，大写字母计成一个高位字符
-            } elseif ($ascnum > 0){
-                $rstr = $rstr . substr ( $str, $i, 1 );
-                $i += 1;
-                $n ++;
-            }else {//其他情况下，半角标点符号，
-                $rstr = $rstr . substr ( $str, $i, 1 );
-                $i += 1;
-                $n += 0.5;  
-            }
-
-        }
-        return $rstr;
-    }
-
-    /**
-     * 统计字符长度(加强版)
-     *
-     * @param [type] $str
-     * @return int
-     */
-    static function strLenPlus($str): int{
-        $i = 0;
-        $n = 0;
-        $str_length = strlen ( $str ); //字符串的字节数
-        while ( $i <= $str_length ) {
-            $temp_str = substr ( $str, $i, 1 );
-            $ascnum = ord ( $temp_str ); //得到字符串中第$i位字符的ascii码
-            if ($ascnum >= 224) {//如果ASCII位高与224
-                $i += 3; //实际Byte计为3
-                $n++; //字串长度计1
-            } elseif ($ascnum >= 192){ //如果ASCII位高与192，
-                $i += 2; //实际Byte计为2
-                $n++; //字串长度计1
-            } elseif ($ascnum >= 65 && $ascnum <= 90) {//如果是大写字母，
-                $i += 1; //实际的Byte数仍计1个
-                $n++; //但考虑整体美观，大写字母计成一个高位字符
-            }elseif ($ascnum >= 97 && $ascnum <= 122) {
-                $i += 1; //实际的Byte数仍计1个
-                $n++; //但考虑整体美观，大写字母计成一个高位字符
-            } else if($ascnum > 0){//其他情况下，半角标点符号
-                $i += 1;
-                $n++;
-            }else{
-                $i += 1;
-            }
-        }
-        return $n;  
-    }
-
-    /**
-     * 字符串填充(加强版)
-     *
-     * @param string $string
-     * @param integer $length
-     * @param string $padStr
-     * @param int $padType
-     * @return string
-     */
-    static function strPadPlus(string $string, int $length, string $padStr=" ", $padType=STR_PAD_RIGHT): string{
-        //探测字符里的中文
-		preg_match_all('/[\x7f-\xff]+/', $string, $matches);
-		if(!empty($matches[0])){
-			$rel_len = self::strLenPlus($string);
-			//统计中文字的实际个数
-			$zh_str_totals = self::strLenPlus(implode("",$matches[0]));
-			//剩下的就是非中文字符个数
-			$un_zh_str_totals = $rel_len - $zh_str_totals;
-			//console下，一个中文处理为2个字符长度
-			$zh_str_totals *=2;
-			//虚拟实际字符长度
-			$rel_len = $un_zh_str_totals + $zh_str_totals;
-			//生成虚拟字符串
-			$tmp_txt = str_pad("^&.!",$rel_len, "#");
-			//实际字符串替换虚拟字符串（实现还原 外部字符）
-			$string = str_replace($tmp_txt, $string, str_pad($tmp_txt, $length, $padStr,$padType));
-			unset($rel_len, $zh_str_totals, $un_zh_str_totals, $tmp_txt);
-		}else{
-			$string = str_pad($string, $length, $padStr, $padType);
-		}
-        return $string;
-    }
 
     /**
      * session管理函数
@@ -848,34 +825,6 @@ class Tools {
     }
 
     /**
-     * mt_rand增强版（兼容js版Math.random)
-     *
-     * @param integer $min
-     * @param integer $max
-     * @param boolean $decimal
-     * @return string
-     */
-    static function mathRandom(int $min=0, int $max=1, bool $decimal= false){
-
-        if($max < $min){
-            throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
-            return null;
-        }
-        $range = mt_rand($min, $max);
-        if($decimal && $min < $max){
-            $_ = lcg_value(); 
-            while($_ < 0.1){
-                $_ *= 10;
-            }
-            $range += $_;
-            if($range > $max){
-                $range -=1;
-            }
-        }
-        return $range;
-    }
-
-    /**
      * 生成随机MAC地址
      *
      * @param string $sep 分隔符
@@ -966,7 +915,6 @@ class Tools {
         (new AsyncCallback())->setTimeout($funcName, $seconds, $args, $limits);
     }
 
-
     /**
      * 获取Htpp头信息为数组
      * 
@@ -1043,6 +991,24 @@ class Tools {
             return $keyc.str_replace('=', '', base64_encode($result));
         }
     }
+
+    /**
+     * 保密手机号码
+     *
+     * @param string $mobile
+     * @return string
+     */
+    static function encryptMobile(string $mobile):string{
+		return preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $mobile);
+	}
+
+
+
+
+
+
+
+
 
     private static function vipkwdCrypt(string $string, string $operation, string $key=''){
         $key=md5($key);
