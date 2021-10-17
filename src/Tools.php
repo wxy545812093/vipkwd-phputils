@@ -17,7 +17,6 @@ use Vipkwd\Utils\Libs\QRcode;
 // use Vipkwd\Utils\Libs\Session;
 use PHPMailer\PHPMailer\PHPMailer;
 use Vipkwd\Utils\Validate;
-use Vipkwd\Utils\Libs\AsyncCallback;
 use \Exception;
 use \Closure;
 
@@ -781,28 +780,38 @@ class Tools {
     /**
      * 根据掩码计算IP区间（起始IP~结束IP）
      *
-     * @param string $ipv4
+     * @param string $ipv4 格式：192.168.1.1 或 192.168.1.0/24
      * @param integer $mask
      * @return array
      */
     static function getIpRangeWithMask(string $ipv4, int $mask = 24):array{
-        $ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
+        $_ipv4 = $ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
+
         if(!isset($ipv4[1]) || !$ipv4[1]){
-            $ipv4[1] = $mask;
+            $_ipv4[1] = $ipv4[1] = $mask;
         }
-        if($ipv4[1] >32 || $ipv4[1] < 0 || false === Validate::ipv4($ipv4[0])){
+        if($ipv4[1] > 32 || false === Validate::ipv4($ipv4[0])){
             return [];
         }
         $base = self::ip2long('255.255.255.255');
         $ipv4[0] = self::ip2long($ipv4[0]);
-        $mask = pow(2,32-intval($ipv4[1]))-1;//mask=0.0.0.255(int)
-        $smask = $mask ^ $base;//smask=255.255.255.0(int)
-         
+        $mask = pow(2, 32-intval($ipv4[1]))-1; //mask=0.0.0.255(int)
+        $smask = $mask ^ $base; //smask=255.255.255.0(int)
         $min = $ipv4[0] & $smask;
         $max = $ipv4[0] | $mask;
         return [
-            self::long2ip($min),
-            self::long2ip($max)
+            "input"     => implode('/', $_ipv4),
+            "nat"       => self::long2ip($min),
+
+            // 一个IP地址一共有32(4段 8位)位，其中一部分为网络位，一部分为主机位。
+            // 网络位+主机位=32 子网掩码表示网络位的位数。如子网掩码为30位，那么主机位就为2位。 
+            // 因为2的2次方等于4，又因为每个子网中有2个IP地址(一个nat，一个broadcast)不能分配给主机，所以可以分配的IP地址为2个
+            "total"     => $mask +1,
+            "useful"    => $mask -1,
+            "first"     => self::long2ip($min+1),
+            "end"       => self::long2ip($max-1),
+            "broadcast" => self::long2ip($max),
+            "mask"      => self::long2ip($smask),
         ];
     }
 
@@ -894,25 +903,6 @@ class Tools {
      */
     static function decrypt(string $string, string $key=""):string{
         return self::vipkwdCrypt($string, "D", $key);
-    }
-
-    /**
-     * Js版setTimeout的（PHP）简易实现
-     * 
-     * eg: 每隔3秒调用一次全局函数 funcName ，共调用2次, 耗时：(seconeds + funtion 耗时) * limits
-     * setTimeout("funcName", 3, 2)
-     * 
-     * eg: 每隔5秒调用一次全局函数 funcName ，仅调用1次
-     * setTimeout("funcName", 5)
-     *
-     * @param string $funcName 全局函数名（不支持匿名函数)
-     * @param integer $seconds <10> 延时秒数
-     * @param array|integer 如果是一维数组，会原样传递到$funName指向的全局函数。否则
-     * @param integer $limits <1> 执行次数，默认执行1次
-     * @return void
-     */
-    static function setTimeout(string $funcName, int $seconds = 10, $args = [], int $limits = 1){
-        (new AsyncCallback())->setTimeout($funcName, $seconds, $args, $limits);
     }
 
     /**
