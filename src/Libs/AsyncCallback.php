@@ -184,7 +184,7 @@ class AsyncCallback {
             $data = http_build_query($data);
         }
         $data = urldecode($data)."&auth=".$this->auth;
-        return md5(Tools::encrypt($data));
+        return md5(Crypt::encryptRC4($data));
     }
 
     private function dataFormat(&$data){

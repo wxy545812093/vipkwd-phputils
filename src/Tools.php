@@ -884,28 +884,6 @@ class Tools {
     }
     
     /**
-     * 字符串加密函数
-     *
-     * @param string $string 字符明文
-     * @param string $key 密钥
-     * @return string
-     */
-    static function encrypt(string $string, string $key=""):string{
-        return self::vipkwdCrypt($string, "E", $key);
-    }
-
-    /**
-     * 字符串解密函数
-     *
-     * @param string $string 密文
-     * @param string $key 密钥
-     * @return string
-     */
-    static function decrypt(string $string, string $key=""):string{
-        return self::vipkwdCrypt($string, "D", $key);
-    }
-
-    /**
      * 获取Htpp头信息为数组
      * 
      * 获取 $_SERVER 所有以“HTTP_” 开头的 头信息
@@ -922,64 +900,6 @@ class Tools {
             }
         }
         return $headers;
-    }
-
-    /**
-     * Discuz 经典加解密函数
-     * 
-     * ---------------------------------------------------
-     *  --        致敬经典:本函数版权归原作者方所有          --
-     * ---------------------------------------------------
-     * 
-     * 注意：建议使用时设置 discuz_auth_key 通用密钥
-     *
-     * @param string $string 明文或密文
-     * @param string $operation DECODE表示解密,其它表示加密
-     * @param string $key 密匙
-     * @param integer $expiry 密文有效期 秒
-     * 
-     * @return string
-     */
-    static function authcode(string $string, string $operation = 'DECODE', string $key = '', int $expiry = 0):string {  
-        $ckey_length = 6;
-        $key = md5($key ? $key : $GLOBALS['discuz_auth_key'] ?? "@<<5G-H^0Ywz%.");
-        $decode = strtolower($operation) == "decode" ? true : false;
-        $keya = md5(substr($key, 0, 16));
-        $keyb = md5(substr($key, 16, 16));
-        $keyc = $ckey_length ? ($decode ? substr($string, 0, $ckey_length): substr(md5(microtime()), -$ckey_length)) : '';
-        $cryptkey = $keya.md5($keya.$keyc);
-        $key_length = strlen($cryptkey);
-        $string = $decode ? base64_decode(substr($string, $ckey_length)) : sprintf('%010d', $expiry ? $expiry + time() : 0).substr(md5($string.$keyb), 0, 16).$string;
-        $string_length = strlen($string);
-        $result = '';
-        $box = range(0, 255);
-        $rndkey = array();
-        for($i = 0; $i <= 255; $i++) {
-            $rndkey[$i] = ord($cryptkey[$i % $key_length]);
-        }
-        for($j = $i = 0; $i < 256; $i++) {
-            $j = ($j + $box[$i] + $rndkey[$i]) % 256;
-            $tmp = $box[$i];
-            $box[$i] = $box[$j];
-            $box[$j] = $tmp;
-        }
-        for($a = $j = $i = 0; $i < $string_length; $i++) {
-            $a = ($a + 1) % 256;
-            $j = ($j + $box[$a]) % 256;
-            $tmp = $box[$a];
-            $box[$a] = $box[$j];
-            $box[$j] = $tmp;
-            $result .= chr(ord($string[$i]) ^ ($box[($box[$a] + $box[$j]) % 256]));
-        }
-        if($decode) {
-            if((substr($result, 0, 10) == 0 || substr($result, 0, 10) - time() > 0) && substr($result, 10, 16) == substr(md5(substr($result, 26).$keyb), 0, 16)) {
-                return substr($result, 26);
-            } else {
-                return '';
-            }
-        } else {
-            return $keyc.str_replace('=', '', base64_encode($result));
-        }
     }
 
     /**
@@ -1000,39 +920,5 @@ class Tools {
 
 
 
-    private static function vipkwdCrypt(string $string, string $operation, string $key=''){
-        $key=md5($key);
-        $key_length=strlen($key);
-        $string=$operation=='D'?base64_decode($string):substr(md5($string.$key),0,8).$string;
-        $string_length=strlen($string);
-        $rndkey=$box=array();
-        $result='';
-        for($i=0;$i<=255;$i++){
-            $rndkey[$i]=ord($key[$i%$key_length]);
-            $box[$i]=$i;
-        }
-        for($j=$i=0;$i<256;$i++){
-            $j=($j+$box[$i]+$rndkey[$i])%256;
-            $tmp=$box[$i];
-            $box[$i]=$box[$j];
-            $box[$j]=$tmp;
-        }
-        for($a=$j=$i=0;$i<$string_length;$i++){
-            $a=($a+1)%256;
-            $j=($j+$box[$a])%256;
-            $tmp=$box[$a];
-            $box[$a]=$box[$j];
-            $box[$j]=$tmp;
-            $result.=chr(ord($string[$i])^($box[($box[$a]+$box[$j])%256]));
-        }
-        if($operation=='D'){
-            if(substr($result,0,8)==substr(md5(substr($result,8).$key),0,8)){
-                return substr($result,8);
-            }else{
-                return'';
-            }
-        }else{
-            return str_replace('=','',base64_encode($result));
-        }
-    }
+
 }

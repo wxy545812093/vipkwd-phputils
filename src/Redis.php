@@ -60,7 +60,7 @@ class Redis {
     }
 
     /**
-     * 实例化的Redis对象
+     * 单例入口
      * 
      * 为每个数据库建立一个连接
      * 如果连接超时，将会重新建立一个连接
@@ -69,7 +69,7 @@ class Redis {
      * @param int|array $attr <[]>
      * @return Vipkwd\Utils\Redis
      */
-    static function getInstance(array $config, $attr = array()) {
+    static function instance(array $config, $attr = array()) {
         //如果是一个字符串，将其认为是数据库的ID号。以简化写法。
         if(!is_array($attr)) {
             $dbId = $attr;
@@ -105,7 +105,7 @@ class Redis {
      * 
      * @return \Redis
      */
-    public function getRedis() {
+    public function redis() {
         return $this->redis;
     }
 
@@ -825,12 +825,15 @@ class Redis {
         public function getAuth() {
             return $this->auth;
         }
+
         public function getHost() {
             return $this->host;
         }
+
         public function getPort() {
             return $this->port;
         }
+
         public function getConnInfo() {
             return array(
             'host'=>$this->host,

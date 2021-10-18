@@ -16,6 +16,7 @@ use \Exception;
 class Async{
 	private static $instances = [];
 	private $config;
+
 	/**
 	 * Class constructor.
 	 */
@@ -38,13 +39,14 @@ class Async{
         ], $config);
 	}
 
+
 	/**
-	 * 单例入口
-	 *
-	 * @param array $config
-	 * @return void
-	 */
-	static function instance(array $config = []){
+     * 单例入口
+     * 
+     * @param array $config
+     * @return void
+     */
+    static function instance(array $config = []){
 		$k = md5(json_encode($config));
 		if(!isset(self::$instances[$k])){
 			self::$instances[$k] = new self($config);
@@ -52,13 +54,14 @@ class Async{
 		return self::$instances[$k];
 	}
 
+
 	/**
-	 * 创建任务（设定任务分类标识）
-	 *
-	 * @param string $tag 任务标识
-	 * @return void
-	 */
-	public function createTask(string $tag){
+     * 创建任务（设定任务分类标识）
+     * 
+     * @param string $tag 任务标识
+     * @return void
+     */
+    public function createTask(string $tag){
 		$this->config['taskTag'] = $tag;
 		return $this;
 	}

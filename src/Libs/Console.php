@@ -23,6 +23,13 @@ class Console extends Command {
 	
 	private static $showList = true;
 	private static $showMethod = false;
+	private static $shieldMethods = [
+		"__construct",
+		"__destruct",
+		"__set",
+		"__get",
+		"__call"
+	];
 
 	private static function getConsoleName(){
 		return "dump";
@@ -133,15 +140,16 @@ class Console extends Command {
 		$methodContinues = 0;
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
-			if($method->getName() == "__destruct" || $method->getName() == "__construct" || (self::$showMethod !== false && $method->getName() != self::$showMethod )){
+			$comment = $method->getDocComment();
+
+			if( self::shieldMethod($method->getName(), "$comment") || (self::$showMethod !== false && $method->getName() != self::$showMethod )){
 				$methodContinues ++;
 				continue;
 			}
-			$comment = $method->getDocComment();
 			//获取并解析方法注释
-			$doc = explode("\r\n", is_string($comment)? $comment : "");
+			$doc = explode("\r\n", is_string($comment)? $comment : "-");
 			if(count($doc) < 2){
-				$doc = explode("\n", is_string($comment)? $comment : "");
+				$doc = explode("\n", is_string($comment)? $comment : "\n--");
 			}
 			$doc = str_replace(["/**","*"," "],"", trim( $doc[1] ?? "" ));
 			//获取方法的类型
@@ -205,8 +213,15 @@ class Console extends Command {
 				}
 				// $output->writeln(self::createTDText(100));
 				// $output->writeln("");
-				$text = "<info>{$className}</info>".($method->isStatic() ? "::" : " -> ")."<info>".$method->getName()."</info>";
-
+				if($method->isStatic()){
+					$text = "<info>{$className}</info>::<info>".$method->getName()."</info>";
+				}else{
+					if($method->getName() == "__construct"){
+						$text = "<info>new {$className}</info></info>";
+					}else{
+						$text = "(<info> {$className}</info> Object )-><info>".$method->getName()."</info>";
+					}
+				}
 				if($args == ""){
 					$text .= "()";
 					$args = [];
@@ -273,6 +288,10 @@ class Console extends Command {
 		return $txt;
 	}
 
+	private static function shieldMethod(string $method, string $comment):bool{
+		$has = preg_match("/@type\ +public/i", $comment);
+		return in_array($method, self::$shieldMethods) && !$has;
+	}
 	/**
 	 * console的标准配置demo
 	 *
