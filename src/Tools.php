@@ -12,21 +12,39 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\Libs\QRcode;
 // use Vipkwd\Utils\Libs\Cookie;
 // use Vipkwd\Utils\Libs\Session;
-use PHPMailer\PHPMailer\PHPMailer;
-use Vipkwd\Utils\Validate;
-use \Exception;
-use \Closure;
+use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
+    Vipkwd\Utils\Libs\SmartParsePro\Address as ExpressAddressAI_V2,
+    PHPMailer\PHPMailer\PHPMailer,
+    Vipkwd\Utils\Libs\QRcode,
+    Vipkwd\Utils\Validate,
+    \Exception,
+    \Closure;
 
-class Tools {
+class Tools{
+    use \Vipkwd\Utils\Libs\Develop;
+    
+    /**
+     * 判断当前的运行环境是否是cli模式
+     * 
+     * -e.g: phpunit("Tools::isCli");
+     * 
+     * @return boolean
+     */
+    static function isCli(){
+        $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
+        return preg_match("/cli/i", $str ) ? true : false;
+    }
+
     /**
      * 获取系统类型
-     *
+     * 
+     * -e.g: phpunit("Tools::getOS");
+     * 
      * @return string
      */
-    static public function getOS(): string{
+    static function getOS(): string{
         if(PATH_SEPARATOR == ':'){
             return 'Linux';
         }else{
@@ -36,24 +54,34 @@ class Tools {
 
     /**
      * format 保留指定长度小数位
-     *
+     * 
+     * -e.g: phpunit("Tools::format", [ "10.1234" ]);
+     * -e.g: phpunit("Tools::format", [ 10.12 ]);
+     * -e.g: phpunit("Tools::format", [ 10.1 ]);
+     * -e.g: phpunit("Tools::format", [ 10 ]);
+     * -e.g: phpunit("Tools::format", [-10]);
+     * -e.g: phpunit("Tools::format", ["-10", 3]);
+     * 
      * @param int $input 数值
-     * @param int $number 小数位数
+     * @param int $number <2> 小数位数
      *
      * @return string
      */
-    static public function format($input, int $number = 2): string{
+    static function format($input, int $number = 2): string{
         return sprintf("%." . $number . "f", $input);
     }
 
     /**
      * 对象转数组
-     *
+     * 
+     * -e.g: $data=[ "a"=>50, "b"=>true, "c"=>null ];
+     * -e.g: phpunit("Tools::toArray", [$data]);
+     * 
      * @param object|array $object 对象
      * 
      * @return array
      */
-    static public function toArray($object): array {
+    static function toArray($object){
         if(is_object($object)){
             $arr = (array)$object;
         }else if(is_array($object)){
@@ -62,7 +90,7 @@ class Tools {
                 $arr[$k] = self::toArray($v);
             }
         }else{
-            return Null;
+            return $object;
         }
         unset($object);
         return $arr;
@@ -71,16 +99,26 @@ class Tools {
 
     /**
      * 数组转无限级分类
-     *
+     * 
+     * -e.g: $list=[];
+     * -e.g: $list[]=["id"=>1,    "pid"=>0,   "name"=>"中国大陆"];
+     * -e.g: $list[]=["id"=>2,    "pid"=>1,   "name"=>"北京"];
+     * -e.g: $list[]=["id"=>22,   "pid"=>1,   "name"=>"广东省"];
+     * -e.g: $list[]=["id"=>54,   "pid"=>2,   "name"=>"北京市"];
+     * -e.g: $list[]=["id"=>196,  "pid"=>22,  "name"=>"广州市"];
+     * -e.g: $list[]=["id"=>1200, "pid"=>54,  "name"=>"海淀区"];
+     * -e.g: $list[]=["id"=>3907, "pid"=>196, "name"=>"黄浦区"];
+     * -e.g: phpunit("Tools::arrayToTree", [$list, "id", "pid", "child", 0]);
+     * 
      * @param array $list 归类的数组
-     * @param string $id 父级ID
-     * @param string $pid 父级PID
-     * @param string $child key
-     * @param string $root 顶级ID(pid)
-     *
+     * @param string $pk <"id"> 父级ID
+     * @param string $pid <"pid"> 父级PID
+     * @param string $child <"child"> 子节点容器名称
+     * @param string $rootPid <0> 顶级ID(pid)
+     * 
      * @return array
      */
-    static public function arrayToTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $root = 0): array{
+    static function arrayToTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $rootPid = 0): array{
         $tree = [];
         if(is_array($list)){
             $refer = [];
@@ -89,12 +127,11 @@ class Tools {
                 $list[$key][$child] = [];
                 $refer[$val[$pk]] = &$list[$key];
             }
-
             foreach ($list as $key => $val){
                 //是否存在parent
-                $parentId = isset($val[$pid]) ? $val[$pid] : $root;
+                $parentId = isset($val[$pid]) ? $val[$pid] : $rootPid;
 
-                if ($root == $parentId){
+                if ($rootPid == $parentId){
                     $tree[$val[$pk]] = &$list[$key];
                 }else{
                     if (isset($refer[$parentId])){
@@ -107,81 +144,74 @@ class Tools {
     }
 
     /**
-     * 排列组合
+     * 排列组合（适用多规格SKU生成）
+     * 
+     * 
      * 
      * @param array $input 排列的数组
      * 
      * @return array
      */
-    static public function arrayArrange(array $input): array
-    {
+    static function arrayArrRange(array $input): array{
         $temp = [];
         $result = array_shift($input);
-
-        while($item = array_shift($input))
-        {
+        while($item = array_shift($input)){
            $temp = $result;
            $result = [];
-
-           foreach($temp as $v)
-           {
-                foreach($item as $val)
-                {
+           foreach($temp as $v){
+                foreach($item as $val){
                     $result[] = array_merge_recursive($v, $val);
                 }
            }
         }
-
         return $result;
     }
 
     /**
      * 二维数组去重
-     *
+     * 
+     * -e.g: $arr=[["id"=>1,"sex"=>"female"],["id"=>1,"sex"=>"male"],["id"=>2,"age"=>18]];
+     * -e.g: phpunit("Tools::arrayUnique",[$arr, "id"]);
+     * -e.g: phpunit("Tools::arrayUnique",[$arr, "id", false]);
+     * 
      * @param array $arr 数组
-     * @param string $key 字段
+     * @param string $filterKey <"id"> 字段
+     * @param boolean $cover <true> 是否覆盖（遇相同 “filterKey” 时，仅保留最后一个值）
      *
      * @return array
      */
-    static public function arrayMultiUnique(array $arr, string $key = 'id'): array{
+    static function arrayUnique(array $arr, string $filterKey = 'id', bool $cover=true): array{
         $res = [];
         foreach ($arr as $value){
-            if(!isset($res[$value[$key]])){
-                $res[$value[$key]] = $value;
-            }
+            ($cover || ( !$cover && !isset($res[($value[$filterKey])]) ) ) && $res[($value[$filterKey])] = $value;
         }
         return array_values($res);
     }
 
     /**
      * 二维数组排序
-     *
+     * 
+     * -e.g: $arr=[["age"=>19,"name"=>"A"],["age"=>20,"name"=>"B"],["age"=>18,"name"=>"C"],["age"=>16,"name"=>"D"]];
+     * -e.g: phpunit("Tools::arraySort", [$arr, "age", "asc"]);
+     * 
      * @param array $array 排序的数组
-     * @param string $keys 要排序的key
-     * @param string $sort 排序类型 ASC、DESC
+     * @param string $orderKey 要排序的key
+     * @param string $orderBy <"desc"> 排序类型 ASC、DESC
      *
      * @return array
      */
-    static public function arrayMultiSort(array $array, string $keys, string $sort = 'desc'): array{
-        $keysValue = [];
-
+    static public function arraySort(array $array, string $orderKey, string $orderBy = 'desc'): array{
+        $kv = [];
         foreach ($array as $k => $v){
-            $keysValue[$k] = $v[$keys];
+            $kv[$k] = $v[$orderKey];
         }
-
-        $orderSort = [
-            'asc'  => SORT_ASC,
-            'desc' => SORT_DESC,
-        ];
-
-        array_multisort($keysValue, $orderSort[$sort], $array);
-
+        array_multisort($kv, ($orderBy == "desc" ? SORT_DESC : SORT_ASC), $array);
         return $array;
     }
 
     /**
      * XML转数组
-     *
+     * 
      * @param string $xml xml
      *
      * @return array
@@ -196,9 +226,15 @@ class Tools {
 
     /**
      * 数组转XML
-     *
+     * 
+     * -e.g: $arr=[];
+     * -e.g: $arr[]=["name"=>"张叁","roomId"=> "2-2-301", "carPlace"=> ["C109","C110"] ];
+     * -e.g: $arr[]=["name"=>"李思","roomId"=> "9-1-806", "carPlace"=> ["H109"] ];
+     * -e.g: $arr[]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
+     * -e.g: phpunit("Tools::arrayToXml", [$arr]);
+     * 
      * @param array $input 数组
-     *
+     * 
      * @return string
      */
     static public function arrayToXml(array $input): string{
@@ -912,13 +948,47 @@ class Tools {
 		return preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $mobile);
 	}
 
-
-
-
-
-
-
-
-
+    /**
+     * 快递地址智能解析(提取)
+     * 
+     * -e.g: $list=[];
+     * -e.g: $list[]="北京市东城区宵云路36号国航大厦一层";
+     * -e.g: $list[]="甘肃省东乡族自治县布楞沟村1号";
+     * -e.g: $list[]="成都市双流区宵云路36号国航大厦一层";
+     * -e.g: $list[]="内蒙古自治区乌兰察布市公安局交警支队车管所";
+     * -e.g: $list[]="长春市朝阳区宵云路36号国航大厦一层";
+     * -e.g: $list[]="成都市高新区天府软件园B区科技大楼";
+     * -e.g: $list[]="双流区正通路社保局区52050号";
+     * -e.g: $list[]="岳阳市岳阳楼区南湖求索路碧灏花园A座1101";
+     * -e.g: $list[]="四川省 凉山州美姑县东方网肖小区18号院";
+     * -e.g: $list[]="四川攀枝花市东区机场路3中学校";
+     * -e.g: $list[]="渝北区渝北中学51200街道地址";
+     * -e.g: $list[]="13566892356天津天津市红桥区水木天成1区临湾路9-3-1101";
+     * -e.g: $list[]="苏州市昆山市青阳北路时代名苑20号311室";
+     * -e.g: $list[]="崇州市崇阳镇金鸡万人小区兴盛路105-107";
+     * -e.g: $list[]="四平市双辽市辽北街道";
+     * -e.g: $list[]="梧州市奥奇丽路10-9号A幢地层（礼迅贸易有限公司）卢丽丽";
+     * -e.g: $list[]="江西省抚州市东乡区孝岗镇恒安东路125号1栋3单元502室 13511112222 吴刚";
+     * -e.g: $list[]="清远市清城区石角镇美林湖大东路口佰仹公司 郑万顺 15345785872 0752-28112632";
+     * -e.g: $list[]="深圳市龙华区龙华街道1980科技文化产业园3栋317    张三    13800138000 518000 120113196808214821";
+     * 
+     * -e.g: phpunit("Tools::expressAddressParse",[$list, true]);
+     * 
+     * @param string|array $data 字符串
+     * @param boolean $parseUser <true> 是否提取收件人
+     * @return array
+     */
+    static function expressAddressParse($data, bool $parseUser = true):array{
+        $result = [];
+        if( is_string($data)){
+            $single= true;
+            $data = [$data];
+        }
+        $v2 = new ExpressAddressAI_V2;
+        foreach($data as $address){
+            $result[] = $v2->smart($address, $parseUser);
+        }
+        return isset($single) ? $result[0] : $result;
+    }
 
 }

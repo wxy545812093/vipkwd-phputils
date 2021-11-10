@@ -12,9 +12,8 @@ namespace Vipkwd\Utils;
 
 use PhpShardUpload\ShardUpload;
 // use PhpShardUpload\Components\FileDownload;
-use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Tools;
-use Vipkwd\Utils\Libs\ImageEncrypt;
+use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class File{
 
@@ -116,7 +115,21 @@ class File{
     }
 
     /**
-     * 文件下载
+     * 单文件上传
+     *
+     * @param string $uploadKey <file> $_FILES[?]
+     * @param array $options
+     *                  --max_size integer <10 * 1024 * 1024>  限制可上传文件大小(单位)
+     *                  --upload_dir string <"upfiles/"> 保存目录
+     *                  --type array <["jpg","gif","bmp","jpeg","png"]> 允许扩展
+     * @return array|null
+     */
+    static function upload($uploadKey = "file", $options = []):?array{
+        return (new VipkwdUpload)->upload($uploadKey, $options);
+    }
+
+    /**
+     * 文件下载(支持限速)
      * 
      * @param string $filename 要下载的文件路径
      * @param string $rename <null>文件名称,为空则与下载的文件名称一样
@@ -229,13 +242,13 @@ class File{
      * @param integer $pointLength <10> 小数点长度
      * @return string
      */
-    static public function byteFormat(int $size, int $pointLength = 10 ):string{
+    static public function bytesTo(int $size, int $pointLength = 10 ):string{
         $pos = 0;
         while ( $size >= 1024 ) {
             $size /= 1024;
             $pos ++;
         }
-        return round( $size, $pointLength ) . " " . self::$byteUnits[$pos];
+        return round( $size, $pointLength ) . self::$byteUnits[$pos];
     }
 
     /**
@@ -245,33 +258,33 @@ class File{
      * @param boolean $toInt <false> 是否进一法舍去字节小数（转换结果 可能存在 0.xxx字节的小数）
      * @return integer
      */
-    static function formatByte(string $str, bool $toInt=false){
+    static function toBytes(string $str, bool $toInt=false){
+        $str = str_replace(" ","", $str);
         $size = doubleval($str);
-        $unit = substr(str_replace(" ","",$str), strlen("$size"));
+        $unit = substr($str, strlen("$size"));
         $unit = strtoupper($unit);
         //没有单位，默认按字节处理;
-        if($unit == "" || $unit == "BYTE" || $unit == "B"){
+        if($unit == "" || $unit == 'BYTE' || $unit == 'B'){
             return $size;
         }
-        $unitIdx = array_search($unit, self::$byteUnits);
-        if($unitIdx === false){
+        (strlen($unit) == 1) && $unit .= "B";
+        if( false === ($pos = array_search($unit, self::$byteUnits) ) ) {
             //单位不能识别，默认按字节处理;
             return  $size;
         }
-        while($unitIdx > 0){
-            $size *= 1024;
-            $unitIdx --;
-        }
-        unset($unit, $unitIdx, $str);
+        $size *= pow(1024, $pos);
+        unset($unit, $str, $pos);
         if($toInt === true){
             return ceil($size);
         }
-        return $size;
+        return round($size);
     }
 
 
     /**
      * [分片/秒传组件]: 上传
+     * 
+     * 需配合 /support/hashFileUpload 组件使用
      *
      * @param string $savePath 文件保存目录
      * @return string
@@ -295,10 +308,11 @@ class File{
     /**
      * [分片/秒传组件]: 查看上传状态
      *
+     * 需配合 /support/hashFileUpload 组件使用
      * @param string $savePath 文件保存目录
      * @return string
      */
-    static function hashFileUploadStatus(string $savePath = "./"):string{
+    static function uploadHashFileStatus(string $savePath = "./"):string{
         $shard = new ShardUploadStatus(
             $_POST['total'], 
             $_POST['shardSize'], //文件分块大小
@@ -319,6 +333,7 @@ class File{
     /**
      * [分片/秒传组件]: 下载
      *
+     * 需配合 /support/hashFileUpload 组件使用
      * @return void
      */
     static function downloadHashFile(string $savePath = "./", string $saveName = ""){
@@ -341,9 +356,23 @@ class File{
      * @return float
      */
     static function fileUploadMaxSize() {
-        $max1 = parseSize(ini_get('post_max_size'));
-        $max2 = parseSize(ini_get('upload_max_filesize'));
-        $max3 = parseSize(ini_get('memory_limit'));
+
+        $parse_size = function($size) {
+            // Remove the non-unit characters from the size.
+            $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
+            // Remove the non-numeric characters from the size.
+            $size = preg_replace('/[^0-9\.]/', '', $size);
+            if ($unit) {
+                // Find the position of the unit in the ordered string which is the power of magnitude to multiply a kilobyte by.
+                return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
+            } else {
+                return round($size);
+            }
+        };
+
+        $max1 = $parse_size(ini_get('post_max_size'));
+        $max2 = $parse_size(ini_get('upload_max_filesize'));
+        $max3 = $parse_size(ini_get('memory_limit'));
         if($max1>0 && ($max1<=$max2 || $max2==0) && ($max1<=$max3 || $max3==-1))
             return $max1;
         elseif($max2>0 && ($max2<=$max1 || $max1==0) && ($max2<=$max3 || $max3==-1))
@@ -352,15 +381,6 @@ class File{
             return $max3;
         else
             return -1; // no limit
-    }
-
-
-    protected function imgEncrypt($img, $str){
-        return ImageEncrypt::encrypt($img, $str);
-    }
-
-    protected function imgDecrypt($img){
-        return ImageEncrypt::decrypt($img);
     }
 
 }

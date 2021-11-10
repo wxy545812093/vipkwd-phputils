@@ -11,6 +11,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
+// use Vipkwd\Utils\Dev;
 /**
 * redis操作类
 * 说明，任何为false的串，存在redis中都是空串。
@@ -18,7 +19,7 @@ namespace Vipkwd\Utils;
 * 这点可用于防止缓存穿透
 *
 */
-class Redis {
+class Redis{
     private $redis;
     //当前数据库ID号
     protected $dbId=0;
@@ -79,7 +80,7 @@ class Redis {
         $attr['db_id'] = $attr['db_id'] ?? 0;
         $k = md5(serialize($config).$attr['db_id']);
         if( empty(static::$_instance) || !(static::$_instance[$k] instanceof self)) {
-            var_dump("s2");
+            //var_dump("s2");
             static::$_instance[$k] = new self($config,$attr);
             static::$_instance[$k]->k = $k;
             static::$_instance[$k]->dbId = $attr['db_id'];

@@ -11,6 +11,7 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use Vipkwd\Utils\Libs\AsyncCallback;
+use Vipkwd\Utils\Tools;
 use \Exception;
 
 class Async{
@@ -32,10 +33,11 @@ class Async{
 			"desKey"	=> "settimeout.vipkwd.com",
 			"desIv"		=> "",
             "logFile"   => rtrim($logPath,'/').'/vipkwd-async.log',
-			"debug"		=> true,
+			"debug"		=> false,
+            "api"       => "",
 
 			//任务标识
-			"taskTag"	=> ""
+			"taskTag"	=> $_GET['taskTag'] ?? ""
         ], $config);
 	}
 
@@ -44,10 +46,10 @@ class Async{
      * 单例入口
      * 
      * @param array $config
-     * @return void
+     * @return self
      */
-    static function instance(array $config = []){
-		$k = md5(json_encode($config));
+    static function instance(array $config = []):self{
+		$k = md5(json_encode(array_merge(["_"=>0],$config)));
 		if(!isset(self::$instances[$k])){
 			self::$instances[$k] = new self($config);
 		}
@@ -59,9 +61,9 @@ class Async{
      * 创建任务（设定任务分类标识）
      * 
      * @param string $tag 任务标识
-     * @return void
+     * @return self
      */
-    public function createTask(string $tag){
+    public function createTask(string $tag):self{
 		$this->config['taskTag'] = $tag;
 		return $this;
 	}
@@ -103,6 +105,37 @@ class Async{
         return (new AsyncCallback($this->config))->setTimeout($funcName, $seconds, $args, $limits);
 		return $this;
     }
+    
+    /**
+     * 任务监听入口
+     * 
+     * @param string|array $taskTags 索引数组：执行批量监听
+     * @return boolean
+     */
+    public function taskWatch($taskTags = "") {
 
+        return 400;
+        
+        /*
+        if(is_string($taskTags)){
+            $taskTags = [$taskTags];
+        }
+        $result = false;
+        foreach($taskTags as $_ => $taskTag){
+            $taskTag = strval($taskTag);
+            if(true === self::checkHeaderTaskTag($taskTag) && $taskTag == @$_GET['taskTag']){
+                $this->config['taskTag'] = $taskTag;
+                new AsyncCallback($this->config);
+                $result = true;
+                break; 
+            }
+        }
+        return $result;*/
+    }
+
+    private static function checkHeaderTaskTag(string $tagName ): bool{
+        $headers = Tools::getHttpHeaders();
+        return ($headers['tasktag'] ?? null) == $tagName;
+    }
 
 }

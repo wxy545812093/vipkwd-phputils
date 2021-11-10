@@ -11,7 +11,6 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 use \PDO;
 use \Exception;
-use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Error;
 use Vipkwd\Utils\Libs\Medoo;
 

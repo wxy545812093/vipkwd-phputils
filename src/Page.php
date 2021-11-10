@@ -11,21 +11,38 @@ declare(strict_types = 1);
 /*
 $page = new Vipkwd\Utils\Page([
 	"total" => 231,
-	"var" => 'oo',
+	"var" => 'pg',
+
+    //生成带有默认值并监听页面参数的变量
+    // 如：href=xxxx/memberList.html?uid=101&age=28&ip=127.0.0.1    ==> xxx/memberList.html?pg=1&uid=101&age=28
+    // 如：href=xxxx/memberList.html?uid=101&age=                   ==> xxx/memberList.html?pg=1&uid=101&age=
+    // 如：href=xxxx/memberList.html?uid=101                        ==> xxx/memberList.html?pg=1&uid=101&age=18
+    // 如：href=xxxx/memberList.html                                ==> xxx/memberList.html?pg=1&uid=100&age=18
 	"query" => [
 		"uid" => "100",
-		"city" => "shanghai",
 		"age" => 18,
-		"sex" => "male"
-	]
+    ],
+
+    //生成不带默认值，并监听页面参数的变量
+    // 如：href=xxxx/memberList.html?uid=101&age=28&ip=127.0.0.1    ==> xxx/memberList.html?pg=1&uid=101&age=28
+    // 如：href=xxxx/memberList.html?uid=101&age=                   ==> xxx/memberList.html?pg=1&uid=101&age=
+    // 如：href=xxxx/memberList.html?uid=101                        ==> xxx/memberList.html?pg=1&uid=101
+    // 如：href=xxxx/memberList.html                                ==> xxx/memberList.html?pg=1
+    "query" => [
+        "uid"=>"",
+        "age"=>""
+    ],
+
+    //不监听参数（生成的连接仅有页码“var”参数 ！！！）
+    "query" => [],
 ]);
 echo $page->fpage();
 */
 
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Str;
 
-class Page {
+class Page{
 
     private static $_instance = [];
 
@@ -69,9 +86,11 @@ class Page {
      * @param array $options
      *                  -- total <0> 计算分页的总记录数
      *                  -- limit <20> 设置每页需要显示的记录数
-     *                  -- fields <""> 指定要监听外部查询字段,多字段英文逗号(,)分隔
      *                  -- viewLast <false> 是否初始化显示到最后一页
      *                  -- var <page> 指定$_GET捕获页码的变量名
+     *                  -- query <[]> 一维关联数组,指定要监听外部查询字段；
+     *                      - field1 => "default value" //携带默认值
+     *                      - field2 => "" //不带默认值
      * @type public
      * @return object
      */
@@ -83,6 +102,7 @@ class Page {
             "var"   => "page",
             "viewLast" => false
         ], $options);
+
         $this->uri = $this->getUri($this->options['query']);
 		$this->total = intval($this->options['total']);
 		$this->listRows = intval($this->options['limit']);
@@ -178,9 +198,21 @@ class Page {
         if(self::$field === false){
 		    $url .= "?".http_build_query($query);
             $arr = parse_url($url);
+
             if(isset($arr["query"])) {
                 parse_str($arr["query"], $arrs);
-                
+
+                foreach($arrs as $k => $v){
+                    //GET 覆盖预定义变量
+                    if(isset($_GET[ $k ]) ){
+                        $arrs[$k] = Str::htmlEncode( trim($_GET[$k]) );
+                    }else{
+                        //如果预定义变量 为空，则丢弃参数
+                        if($v == ""){
+                            unset($arrs[$k]);
+                        }
+                    }
+                }
                 if(isset($arrs[$this->options['var']])){
                     unset($arrs[$this->options['var']]);
                 }
@@ -200,8 +232,7 @@ class Page {
 		} else {
 			$url = $url.'?';
 		}
-        Dev::dump($url);
-		return $url;
+        return $url;
 	}
 
     /**

@@ -23,6 +23,7 @@ class Console extends Command {
 	
 	private static $showList = true;
 	private static $showMethod = false;
+	private static $testMethod = false;
 	private static $shieldMethods = [
 		"__construct",
 		"__destruct",
@@ -42,6 +43,7 @@ class Console extends Command {
 			->setHelp('This command allow you to View/Show the doc of class methods list')
 			->addArgument('className', InputArgument::OPTIONAL, 'Show the method list of "className".',"")
 			->addOption("method", "m", InputOption::VALUE_OPTIONAL,'Show the "method" method in "className" class.',"")
+			->addOption("eg", "", InputOption::VALUE_OPTIONAL,'Test the method in "className" class.',"-")
 		;
 
 	}
@@ -50,8 +52,11 @@ class Console extends Command {
 		// 你想要做的任何操作
 		$className = trim($input->getArgument('className'));
 		$method = trim($input->getOption('method') ?? "");
-		//纠正短选项使用 长选项的 等于号 "=" 问题;
+		$eg = trim($input->getOption('eg') ?? "");
+
+		//纠正短选项使用了 长选项的等于号("=") 问题;
 		$method = str_replace('=',"", $method);
+		$eg = str_replace('=',"", $eg);
 		self::$showList = true;
 		self::$showMethod = false;	
 		if($className == ""){
@@ -69,6 +74,7 @@ class Console extends Command {
 
 			if($method != ""){
 				self::$showMethod = $method;
+				self::$testMethod = $eg != "-";
 				self::parseClass($className, $input, $output, 0, $classDescript=null);
 				return 1;
 			}
@@ -128,9 +134,10 @@ class Console extends Command {
 				"Idx" => ($index+1)."",
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
-				"Method" => "M:".count($methods),
+				"Method" => "Total: ".count($methods),
 				"Type" => "#",
 				"Arguments" => "#",
+				"Eg" => "#",
 				"Comment" => $classDescript,
 			]));
 			return;
@@ -151,7 +158,20 @@ class Console extends Command {
 			if(count($doc) < 2){
 				$doc = explode("\n", is_string($comment)? $comment : "\n--");
 			}
+			if( self::phpunit($doc) ){
+				break;
+			}
+			//检测 测试用例支持情况
+			$eg = "<info>[x]</info>";
+			foreach($doc as $_eg){
+				$_eg = trim($_eg);
+				if( ($pos = stripos($_eg, "-e.g:")) > 0 ){
+					$eg = "[√]";
+					break;
+				}
+			}
 			$doc = str_replace(["/**","*"," "],"", trim( $doc[1] ?? "" ));
+
 			//获取方法的类型
 			//$method_flag = $method->isProtected();//还可能是public,protected类型的
 			//获取方法的参数
@@ -200,6 +220,7 @@ class Console extends Command {
 				"Method" => $method->getName(),
 				"Type" => $method->isStatic() ? "static" : "public",
 				"Arguments" => $args,
+				"Eg" => $eg,
 				"Comment" => $doc,
 			]));
 			
@@ -219,7 +240,7 @@ class Console extends Command {
 					if($method->getName() == "__construct"){
 						$text = "<info>new {$className}</info></info>";
 					}else{
-						$text = "(<info> {$className}</info> Object )-><info>".$method->getName()."</info>";
+						$text = "(<info>{$className}</info> Object)-><info>".$method->getName()."</info>";
 					}
 				}
 				if($args == ""){
@@ -242,22 +263,71 @@ class Console extends Command {
 				break;
 			}
 		}
-		//类中没有(或级别不是 public|static )枚举到指定方法；
+		//类中没有枚举到指定方法(或级别不是 public|static)；
 		if(count($methods) == $methodContinues && self::$showMethod !== false){
 			$output->writeln( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
 		}
 		return ;
 	}
 
+	/**
+	 * 执行测试用例
+	 *
+	 * @param [type] $doc
+	 * @return void
+	 */
+	private static function phpunit($doc){
+		if(self::$testMethod){
+			$_console = true;
+			$idx = 1;
+			foreach($doc as $_eg){
+				$_eg = trim($_eg);
+				if( ($pos = stripos($_eg, "-e.g:")) > 0 ){
+					$_eg = trim( substr($_eg, $pos+5 ));
+					if( $_eg[0] == "'" || $_eg[0] == '"'){
+						eval("$_eg");
+					}else{
+						if($_console === true){
+							$_console = (str_pad("", 100, "-") )." \r\n";
+							echo $_console;
+							echo "\r\n";
+						}
+						if(substr($_eg, 0, 1) == '$'){
+							$_eg = "echo '[•] {$_eg}';{$_eg}";
+						}
+
+						if( preg_match("/(echo ['\"])/i", $_eg)){
+							$_eg = preg_replace("/(echo ['\"])/i","$1 ", $_eg);
+						}else if(preg_match("/phpunit\(/", $_eg)){
+							$_eg = "\\Vipkwd\\Utils\\Dev::${_eg}";
+						}
+
+						echo "[". str_pad("$idx", 2, "0", STR_PAD_LEFT). "]";
+						\Vipkwd\Utils\Dev::console(eval("$_eg"), false, false);
+						$idx++;
+					}
+				}
+			}
+			if($_console !== true){
+				echo $_console;
+			}else{
+				echo " -- [x] 没有提供测试用例或 “".self::$showMethod."” 方法不支持静态调用。\r\n";
+			}
+			return true;
+		}
+		return false;
+	}
+
 	private static function createTRLine(string $septer, $data=" ", $isTitle=false){
 		$conf = [
-			"Idx" => 5,
+			"Idx" 		=> 5,
 			"Namespace" => 14,
-			"Class" => 16,
-			"Method" => self::$showList === true ? 20 : 25,
-			"Type" => 8,
+			"Class" 	=> 16,
+			"Method" 	=> self::$showList === true ? 20 : 25,
+			"Type" 		=> 8,
 			"Arguments" => self::$showList === true ? 11 : 76,
-			"Comment" => 40,
+			"Eg"		=> 5,
+			"Comment" 	=> 40,
 		];
 		$list = [];
 		$list[] ="";

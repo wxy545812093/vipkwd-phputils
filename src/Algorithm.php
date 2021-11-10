@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @name 经典排序/查找算法
  * @author vipkwd <service@vipkwd.com>
@@ -8,11 +7,8 @@
  * @copyright The PHP-Tools
  */
 declare(strict_types = 1);
-
-
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Dev;
-class Algorithm {
+class Algorithm{
 
     static $arrLen = 0;
     // 顺序查找

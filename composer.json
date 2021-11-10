@@ -27,8 +27,7 @@
         },
         "files": [
             "support/VipkwdException.php",
-            "support/VipkwdPreload.php",
-            "support/VipkwdComposerScripts.php"
+            "support/VipkwdPreload.php"
         ]
     },
     "minimum-stability": "dev",

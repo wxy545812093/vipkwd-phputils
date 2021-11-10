@@ -17,7 +17,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Vipkwd\Utils\Dev;
 
-trait _trait__MQ {
+trait _trait__MQ{
     /**
      * @var
      */

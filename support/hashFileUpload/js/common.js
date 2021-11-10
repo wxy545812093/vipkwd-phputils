@@ -21,7 +21,7 @@ var fileUploadPage = function(){
             spark = new SparkMD5();
 
         fileReader.onload = function (e) {
-            console.log("read chunk md5 ", currentChunk + 1, "of", chunks);
+            //console.log("read chunk md5 ", currentChunk + 1, "of", chunks);
             spark.appendBinary(e.target.result); // append binary string
             currentChunk++;
 
@@ -141,7 +141,7 @@ var fileUploadPage = function(){
 
                     hash = sha1(block, hash);
                     file.sha1_hash = Crypto.util.bytesToHex(Crypto.util.wordsToBytes(hash));
-                    console.log(file.sha1_hash)
+                    //console.log(file.sha1_hash)
                     currentChunk++;
                     callback(file.sha1_hash)
                 }
@@ -184,10 +184,10 @@ var fileUploadPage = function(){
     // 获取URL的查询参数 response: object
     // formatUrl("http://www.baidu.com?a=2", true);
 
-    // 用数组 URL追加查询参数 response: string
+    // 用obj URL追加查询参数 response: string
     // formatUrl("http://www.baidu.com?a=2", {a:3,b:2,c:false, d:true});
 
-    // 用obj URL追加查询参数 response: string
+    // 用array URL追加查询参数 response: string
     // formatUrl("http://www.baidu.com?a=2", ["a=333", "b=999","c=235"]);
     function formatUrl(url, extendArgs) {
         var _u, obj = {}, query = [], hash = "", l;
@@ -427,6 +427,7 @@ var fileUploadPage = function(){
     };
 
     var page = {
+        
         init: function (options) {
             var that = this;
             document.querySelector(options.elem.uploadBtn).addEventListener("click", function(){

@@ -16,33 +16,12 @@ class Rsa{
 
     private static $_instance = [];
 
-    private $_pubkey = '-----BEGIN PUBLIC KEY-----
-    MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmkANmC849IOntYQQdSgLvMMGm
-    8V/u838ATHaoZwvweoYyd+/7Wx+bx5bdktJb46YbqS1vz3VRdXsyJIWhpNcmtKhY
-    inwcl83aLtzJeKsznppqMyAIseaKIeAm6tT8uttNkr2zOymL/PbMpByTQeEFlyy1
-    poLBwrol0F4USc+owwIDAQAB
-    -----END PUBLIC KEY-----';
-
-    private $_prikey = '-----BEGIN PRIVATE KEY-----
-    MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKaQA2YLzj0g6e1h
-    BB1KAu8wwabxX+7zfwBMdqhnC/B6hjJ37/tbH5vHlt2S0lvjphupLW/PdVF1ezIk
-    haGk1ya0qFiKfByXzdou3Ml4qzOemmozIAix5ooh4Cbq1Py6202SvbM7KYv89syk
-    HJNB4QWXLLWmgsHCuiXQXhRJz6jDAgMBAAECgYAIF5cSriAm+CJlVgFNKvtZg5Tk
-    93UhttLEwPJC3D7IQCuk6A7Qt2yhtOCvgyKVNEotrdp3RCz++CY0GXIkmE2bj7i0
-    fv5vT3kWvO9nImGhTBH6QlFDxc9+p3ukwsonnCshkSV9gmH5NB/yFoH1m8tck2Gm
-    BXDj+bBGUoKGWtQ7gQJBANR/jd5ZKf6unLsgpFUS/kNBgUa+EhVg2tfr9OMioWDv
-    MSqzG/sARQ2AbO00ytpkbAKxxKkObPYsn47MWsf5970CQQDIqRiGmCY5QDAaejW4
-    HbOcsSovoxTqu1scGc3Qd6GYvLHujKDoubZdXCVOYQUMEnCD5j7kdNxPbVzdzXll
-    9+p/AkEAu/34iXwCbgEWQWp4V5dNAD0kXGxs3SLpmNpztLn/YR1bNvZry5wKew5h
-    z1zEFX+AGsYgQJu1g/goVJGvwnj/VQJAOe6f9xPsTTEb8jkAU2S323BG1rQFsPNg
-    jY9hnWM8k2U/FbkiJ66eWPvmhWd7Vo3oUBxkYf7fMEtJuXu+JdNarwJAAwJK0YmO
-    LxP4U+gTrj7y/j/feArDqBukSngcDFnAKu1hsc68FJ/vT5iOC6S7YpRJkp8egj5o
-    pCcWaTO3GgC5Kg==
-    -----END PRIVATE KEY-----';
+    private $_pubkey = 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAMTJt8J/o//FSTCZqsyqO/knnAtuC3+tk0fxthsRclIbnt1RNfDLZWwoq0/+G56K9/7WYVcP9oWZnmzXEyydhqkCAwEAAQ==';
+    private $_prikey = 'MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAxMm3wn+j/8VJMJmqzKo7+SecC24Lf62TR/G2GxFyUhue3VE18MtlbCirT/4bnor3/tZhVw/2hZmebNcTLJ2GqQIDAQABAkAH2JcYDSjHyODrLCVQNbVgcMDa/887jvshUjTVjXOGbHuW5EecYAo3zUvBpeIu9PIizDvnhFzaAesEQ1VFh12VAiEA6Qjmhi0JyhqcoLmDOQDU7113xvODV+qsp94Xn5iAWQMCIQDYLl4Y0vnh36dSHNWfnntwA/2j6qBGlyCXgeEZ8rEz4wIhAKQxATvIv/0GgxU7oJmpXF7LHHmxWfm3/67HbR2l9cjBAiAAjC2E1pP3dH+R/6yy2M3rPLdZwPBi/WMBvzx4ulqkjQIgEUf5c6jboLbEUmzew+4yv6FhEAseP0ZQJ6k7ZoGBCJU=';
  
     private function __construct(string $pub, string $pri) {
-        $pub && $this->_pubkey = $this->fileToKey($pub,"pub");
-        $pri && $this->_prikey = $this->fileToKey($pri,"pri");
+        ($pub && $pub != "your pub key") && $this->_pubkey = $this->fileToKey($pub,"pub");
+        ($pri && $pri != "your pri key") && $this->_prikey = $this->fileToKey($pri,"pri");
     }
 
     /**
@@ -67,7 +46,7 @@ class Rsa{
      * @return void
      */
     public function setPriKey(string $prikey){
-        $this->fileToKey($prikey,"pri");
+        ($prikey && $prikey != "your pri key") && $this->fileToKey($prikey,"pri");
         return $this;
     }
 
@@ -78,7 +57,7 @@ class Rsa{
      * @return void
      */
     public function setPubKey(string $pubkey){
-        $this->fileToKey($pubkey,"pub");
+        ($pubkey && $pubkey != "your pub key") && $this->fileToKey($pubkey,"pub");
         return $this;
     }
 
@@ -177,7 +156,13 @@ class Rsa{
     }
 
     private function validateKey($pubkey = true){
-        return $pubkey ? openssl_pkey_get_public($this->_pubkey) : openssl_pkey_get_private($this->_prikey);
+        if($pubkey){
+            $this->fileToKey($this->_pubkey,"pub");
+            return openssl_pkey_get_public($this->_pubkey);
+        }else{
+            $this->fileToKey($this->_prikey,"pri");
+            return openssl_pkey_get_private($this->_prikey);
+        }
     }
 
     /**
@@ -189,11 +174,21 @@ class Rsa{
      */
     private function fileToKey(string $keytext, string $type):string{
         if(is_file($keytext)){
-            $keytext = realpath($keytext);
-            if($type == "pub"){
-                return $this->_pubkey = file_get_contents($keytext);
-            }
-            return $this->_prikey = file_get_contents($keytext);
+            $keytext = file_get_contents( realpath($keytext) );
+        }
+        $keytext = str_ireplace(['-----BEGIN PUBLIC KEY-----', "-----BEGIN PRIVATE KEY-----"],"", $keytext);
+        $keytext = trim(str_ireplace(['-----END PUBLIC KEY-----', "-----END PRIVATE KEY-----"],"", $keytext));
+        $keytext = str_replace(["\r\n", "\n"],"", $keytext);
+        $keytext = ltrim(wordwrap($keytext, 64, "\n", true));
+
+        if($type == "pub"){
+            $keytext ="-----BEGIN PUBLIC KEY-----\n".$keytext."\n";
+            $keytext.= "-----END PUBLIC KEY-----";
+            $this->_pubkey = $keytext;
+        }else{
+            $keytext ="-----BEGIN PRIVATE KEY-----\n".$keytext."\n";
+            $keytext.= "-----END PRIVATE KEY-----";
+            $this->_prikey = $keytext;
         }
         return $keytext;
     }

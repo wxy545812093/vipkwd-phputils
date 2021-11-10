@@ -18,7 +18,9 @@ class Crypt{
     
     /**
      * [A组]-DES. 加密
-     *
+     * 
+     * -e.g: phpunit("Crypt::encryptDes", ["待加密字符串", "key", "iv_len_8"]);
+     * 
      * @param string $data
      * @param string $key
      * @param string $iv8
@@ -30,7 +32,11 @@ class Crypt{
 
     /**
      * [A组]-DES. 解密
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptDes("待加密字符串", "key", "iv_len_8");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptDes("待加密字符串", "key", "iv_len_8");// '.$hash;
+     * -e.g: phpunit("Crypt::decryptDes", [$hash, "key", "iv_len_8"]);
+     * 
      * @param string $data
      * @param string $key
      * @param string $iv8
@@ -42,7 +48,9 @@ class Crypt{
 
     /**
      * [B组]-AES. 加密
-     *
+     * 
+     * -e.g: phpunit("Crypt::encryptAes", ["待加密字符串", "key", "ivChar_length_16"]);
+     * 
      * @param string $data
      * @param string $key
      * @param string $iv16
@@ -54,7 +62,11 @@ class Crypt{
 
     /**
      * [B组]-AES. 解密
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptAes("待加密字符串", "key", "ivChar_length_16");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptAes("待加密字符串", "key", "ivChar_length_16");// '.$hash;
+     * -e.g: phpunit("Crypt::decryptAes", [$hash, "key", "ivChar_length_16"]);
+     * 
      * @param string $data
      * @param string $key
      * @param string $iv16
@@ -66,7 +78,9 @@ class Crypt{
 
     /**
      * [C组]-RSA. 公钥加密
-     *
+     * 
+     * -e.g: phpunit("Crypt::encryptRsaPub", ["待加密字符串", "your pub key"]);
+     * 
      * @param string $data
      * @param string $pubkey
      * @return void
@@ -77,7 +91,11 @@ class Crypt{
 
     /**
      * [C组]-RSA. 私钥解密
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRsaPub("待加密字符串", "your pub key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRsaPub("待加密字符串", "your pub key");// '.$hash;
+     * -e.g: phpunit("Crypt::decryptRsaPri", [$hash, "your pri key"]);
+     * 
      * @param string $data
      * @param string $prikey
      * @return void
@@ -88,7 +106,9 @@ class Crypt{
 
     /**
      * [D组]-RSA. 私钥加密
-     *
+     * 
+     * -e.g: phpunit("Crypt::encryptRsaPri", ["待加密字符串", "your pri key"]);
+     * 
      * @param string $data
      * @param string $prikey
      * @return void
@@ -99,7 +119,11 @@ class Crypt{
 
     /**
      * [D组]-RSA. 公钥解密
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRsaPri("待加密字符串", "your pri key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRsaPri("待加密字符串", "your pri key");// '.$hash;
+     * -e.g: phpunit("Crypt::decryptRsaPub", [$hash, "your pub key"]);
+     * 
      * @param string $data
      * @param string $pubkey
      * @return void
@@ -110,7 +134,9 @@ class Crypt{
 
     /**
      * [R组]-RSA. 私钥签名
-     *
+     * 
+     * -e.g: phpunit("Crypt::signRsa", ["待加密字符串", "your pri key"]);
+     * 
      * @param string $data 待加签数据
      * @param string $prikey
      * @return void
@@ -121,30 +147,40 @@ class Crypt{
 
     /**
      * [R组]-RSA. 公钥验签
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::signRsa("待加密字符串", "your pri key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::signRsa("待加密字符串", "your pri key");// '.$hash;
+     * -e.g: phpunit("Crypt::verifySignRsa", ["待加密字符串", $hash, "your pub key"]);
+     * 
      * @param string $data 待验签数据
      * @param string $sign 待验证签名条
      * @param string $pubkey
      * @return void
      */
-    static function verifyRsa(string $data, string $sign, string $pubkey){
+    static function verifySignRsa(string $data, string $sign, string $pubkey){
         return Rsa::instance()->setPubKey($pubkey)->verify($data, $sign);
     }
     
     /**
      * [F组]-RC4. 字符串加密
-     *
+     * 
+     * -e.g: phpunit("Crypt::encryptRc4", ["待加密字符串", "your key"]);
+     * 
      * @param string $string 字符明文
      * @param string $key 密钥
      * @return string
      */
-    static function encryptRC4(string $string, string $key=""):string{
+    static function encryptRc4(string $string, string $key=""):string{
         return self::cryptRC4($string, "E", $key);
     }
 
     /**
      * [F组]-RC4. 字符串解密
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRc4("待加密字符串", "your key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRc4("待加密字符串", "your key");// '.$hash;
+     * -e.g: phpunit("Crypt::decryptRc4", [$hash, "your key"]);
+     * 
      * @param string $string 密文
      * @param string $key 密钥
      * @return string
@@ -159,6 +195,8 @@ class Crypt{
      *
      * @response 返回的字符长度：恒定60个字符
      * 
+     * -e.g: phpunit("Crypt::passwordHash", ["your password"]);
+     * 
      * @param string $password
      * @return string
      */
@@ -168,12 +206,16 @@ class Crypt{
 
     /**
      * [P组]-验证密码有效性
-     *
+     * 
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::passwordHash("your password");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::passwordHash("your password");// '.$hash;
+     * -e.g: phpunit("Crypt::passwordHashVerify", ["your password", $hash]);
+     * 
      * @param string $password
      * @param string $hash
      * @return boolean
      */
-    static function passwordVerify(string $password, string $hash):bool{
+    static function passwordHashVerify(string $password, string $hash):bool{
         return password_verify($password, $hash);
     }
 
@@ -185,7 +227,24 @@ class Crypt{
      * ---------------------------------------------------
      * 
      * 注意：建议使用时设置 discuz_auth_key 通用密钥($GLOBALS['discuz_auth_key'])
-     *
+     * 
+     * -e.g: echo '//使用默认KEY';$hash=\Vipkwd\Utils\Crypt::authcode("your data","encode");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::authcode("your data","encode");// '.$hash;
+     * -e.g: phpunit("Crypt::authcode", [$hash, "decode"]);
+     * 
+     * -e.g: echo '//使用自定义key';$hash=\Vipkwd\Utils\Crypt::authcode("your data","encode", "your key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::authcode("your data","encode", "your key");// '.$hash;
+     * -e.g: phpunit("Crypt::authcode", [$hash, "decode", "your key"]);
+     * 
+     * -e.g: echo '//设定过期时间(3s)'; $hash=\Vipkwd\Utils\Crypt::authcode("your data","encode", "your key", 3);
+     * -e.g: echo 'Vipkwd\Utils\Crypt::authcode("your data","encode", "your key", 3);// '.$hash;
+     * 
+     * -e.g: sleep(1); echo '// 1: sleep(1)预期：可解密';
+     * -e.g: phpunit("Crypt::authcode", [$hash, "decode", "your key"]);
+     * -e.g: sleep(1);echo '// 2: sleep(1)预期：可解密';
+     * -e.g: sleep(1);echo '// 3: sleep(1)预期：解密失败(响应空)';
+     * -e.g: phpunit("Crypt::authcode", [$hash, "decode", "your key"]);
+     * 
      * @param string $string 明文或密文
      * @param string $operation <DECODE> DECODE表示解密,其它表示加密
      * @param string $key <''> 密匙
@@ -235,11 +294,28 @@ class Crypt{
         }
     }
 
-    static function password(int $maxLen = 16, bool $specialChar = true):string{
+    /**
+     * 生成随机密码
+     * 
+     * -e.g: phpunit("Crypt::randomPassword");
+     * -e.g: phpunit("Crypt::randomPassword", [6]);
+     * -e.g: phpunit("Crypt::randomPassword", [6, false]);
+     * 
+     * @param integer $maxLen <16> 生成的密码长度
+     * @param boolean $specialChar <true> 是不包含特殊字符
+     * @return string
+     * 
+     */
+    static function randomPassword(int $maxLen = 16, bool $specialChar = true):string{
         $default = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         $specialChar && $default.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
-
-
+        $password = "";
+        $len = strlen($default);
+        while( $maxLen > 0){
+            $password .= substr(str_shuffle($default), mt_rand(0, $len-1), 1);
+            $maxLen--;
+        }
+        return $password;
     }
     private static function cryptRC4(string $string, string $operation, string $key=''){
         $key=md5($key);
