@@ -972,21 +972,21 @@ class Tools{
      * -e.g: $list[]="清远市清城区石角镇美林湖大东路口佰仹公司 郑万顺 15345785872 0752-28112632";
      * -e.g: $list[]="深圳市龙华区龙华街道1980科技文化产业园3栋317    张三    13800138000 518000 120113196808214821";
      * 
-     * -e.g: phpunit("Tools::expressAddressParse",[$list, true]);
+     * -e.g: phpunit("Tools::expressAddrParse",[$list, true]);
      * 
-     * @param string|array $data 字符串
+     * @param string|array $data 地址字符串
      * @param boolean $parseUser <true> 是否提取收件人
      * @return array
      */
-    static function expressAddressParse($data, bool $parseUser = true):array{
+    static function expressAddrParse($data, bool $parseUser = true, int $version=2):array{
         $result = [];
         if( is_string($data)){
             $single= true;
             $data = [$data];
         }
-        $v2 = new ExpressAddressAI_V2;
+        $Api = $version === 1 ? new ExpressAddressAI_V1 : new ExpressAddressAI_V2;
         foreach($data as $address){
-            $result[] = $v2->smart($address, $parseUser);
+            $result[] = $Api->smart($address, $parseUser);
         }
         return isset($single) ? $result[0] : $result;
     }

@@ -64,6 +64,10 @@ class Address {
         $obj = [];
         $copyAddress = explode(' ', $addrString);
         $familyNameList = RandomName::getFamilyNameList();
+
+        $remarks = [];
+        $names = [];
+        $remarkIndex = 0;
         foreach($copyAddress as $res){
             $res = trim($res);
             if( $res != "" ){
@@ -72,26 +76,38 @@ class Address {
                 }
                 $addressObj = $this->smartAddress($res);
                 $obj = array_merge($obj, $addressObj);
-                if(empty($addressObj)){
 
+                if(empty($addressObj)){
                     $likeName=  (
                         mb_strlen($res) >=2 && mb_strlen($res) <= 4
                     ) && (
                         /*单姓*/in_array(mb_substr($res,0,1), $familyNameList['sin']) ||
                         /*复姓*/in_array(mb_substr($res,0,2), $familyNameList['sur'])
                     );
-                    if(!isset($obj['name']) && $likeName ){
-                        $obj['name'] = str_replace('XX','', mb_substr($res, 0));
+                    if($likeName){
+                        $names[$remarkIndex] = str_replace('XX','', mb_substr($res, 0));
                     }else{
-                        if(isset($obj['remark'])){
-                            $obj['remark'] .= " ".$res;
-                        }else{
-                            $obj['remark'] = $res;
-                        }
+                        $remarks[$remarkIndex] = str_replace('XX','', mb_substr($res, 0));
                     }
+                    $remarkIndex++;
                 }
             }
         }
+
+        if(!empty($names)){
+            //
+            $obj['name'] = array_pop($names);
+            if(!empty($names)){
+                foreach( $names as $k => $v){
+                    $remarks[$k] = $v;
+                }
+            }
+        }
+        if(!empty($remarks)){
+            ksort($remarks);
+            $obj['remark'] = implode(" ", $remarks);
+        }
+
         // ksort($obj);
         if (!isset($obj['phone']) && $_phone) {
             foreach($_phone as $phone){

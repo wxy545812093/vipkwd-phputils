@@ -14,6 +14,8 @@ use Vipkwd\Utils\Libs\ExpressAI\Data\Province,
     Vipkwd\Utils\Libs\ExpressAI\Data\County;
 
 class Address{
+    
+    public function __construct(){ }
 
     /**
      * 智能解析
@@ -22,7 +24,7 @@ class Address{
      * @param boolean $user
      * @return array
      */
-    static function smart(string $string, bool $user = true, bool $debug = true):array{
+    public function smart(string $string, bool $user = true, bool $debug = true):array{
 
         $re = [];
         $fuzz = self::fuzz($string);
@@ -65,7 +67,7 @@ class Address{
      * @param string $string
      * @return array
      */
-    static function decompose(string $string):array{
+    private static function decompose(string $string):array{
         $compose = array();
         $string = str_replace(["（","）"], ["(",")"], $string);
         $search = array(
@@ -152,7 +154,7 @@ class Address{
      * @param string $addr
      * @return array
      */
-    static function fuzz(string $addr):array{
+    private static function fuzz(string $addr):array{
         $addr_origin = $addr;
         $addr = str_replace([' ', ','], ['', ''], $addr);
         $addr = str_replace('自治区', '省', $addr);
@@ -261,7 +263,7 @@ class Address{
      * @param string $a3
      * @return array
      */
-    static function parse(string $a1, string $a2, string $a3):array{
+    private static function parse(string $a1, string $a2, string $a3):array{
         $r = array();
         if ($a3 != '') {
             $provinceList = Province::list();

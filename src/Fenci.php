@@ -9,7 +9,7 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Libs\PhpAnalysis\PhpAnalysis,\Exception;
+use Vipkwd\Utils\Libs\PhpFenci\PhpFenci,\Exception;
 
 // https://www.cnblogs.com/xiaoqiangink/p/14366099.html
 // https://www.cnblogs.com/xuey/p/8683100.html
@@ -18,6 +18,16 @@ class Fenci {
     private $options = [];
     private static $_instance = [];
     private $_textOptimize = false;
+
+    private function __construct($options){
+        $this->options = array_merge([
+            "pri_dict" => false, //是否预载全部词条
+            "do_multi" => false, //多元切分
+            "do_unit" => true, //新词识别
+            "do_fork" => true, //岐义处理
+            "do_prop" => false, //词性标注
+        ], $options);
+    }
 
     /**
      * 单例入口
@@ -120,22 +130,11 @@ class Fenci {
         ];
     }
 
-
-    private function __construct($options){
-        $this->options = array_merge([
-            "pri_dict" => false, //是否预载全部词条
-            "do_multi" => false, //多元切分
-            "do_unit" => true, //新词识别
-            "do_fork" => true, //岐义处理
-            "do_prop" => false, //词性标注
-        ], $options);
-    }
-
     private function phpAnalysis(string $str):void{
         //关闭自动载入词典
-        PhpAnalysis::$loadInit = false;
+        PhpFenci::$loadInit = false;
 
-        $this->pa = new PhpAnalysis('utf-8', 'utf-8', $this->options['pri_dict']);
+        $this->pa = new PhpFenci('utf-8', 'utf-8', $this->options['pri_dict']);
 
         // 手动载入词典
         $this->pa->LoadDict();
