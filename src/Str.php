@@ -11,7 +11,7 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use \Exception;
-use Vipkwd\Utils\Libs\RandomName;
+use Vipkwd\Utils\Libs\{RandomName,ZhToPy};
 class Str{
 
     /**
@@ -359,4 +359,83 @@ class Str{
         return $output;
     }
 
+    /**
+     * 检查字符串中是否包含某些字符串
+     * 
+     * -e.g: phpunit("Str::contains", ["你好阿","你阿"]);
+     * -e.g: phpunit("Str::contains", ["你好阿","你你"]);
+     * -e.g: phpunit("Str::contains", ["你好阿","你好"]);
+     * -e.g: phpunit("Str::contains", ["你好阿",["好","你"]]);
+     * 
+     * @param string       $haystack
+     * @param string|array $needles
+     * 
+     * @return bool
+     */
+    static function contains(string $haystack, $needles): bool{
+        foreach ((array) $needles as $needle) {
+            if ('' != $needle && mb_strpos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 检查字符串是否以某些字符串结尾
+     * 
+     * -e.g: phpunit("Str::endsWith", ["你好阿","阿"]);
+     * -e.g: phpunit("Str::endsWith", ["你好阿","好阿"]);
+     * -e.g: phpunit("Str::endsWith", ["你好阿","你好阿"]);
+     * -e.g: phpunit("Str::endsWith", ["你好阿","你好俊阿"]);
+     * -e.g: phpunit("Str::endsWith", ["你好阿","你好俊"]);
+     * @param  string       $haystack
+     * @param  string|array $needles
+     * @return bool
+     */
+    static function endsWith(string $haystack, $needles): bool{
+        foreach ((array) $needles as $needle) {
+            if ((string) $needle === mb_substr($haystack, -mb_strlen($needle))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 检查字符串是否以某些字符串开头
+     * 
+     * -e.g: phpunit("Str::startsWith", ["你好阿","你好"]);
+     * -e.g: phpunit("Str::startsWith", ["你好阿","你"]);
+     * -e.g: phpunit("Str::startsWith", ["你好阿","你你你"]);
+     * 
+     * @param  string       $haystack
+     * @param  string|array $needles
+     * @return bool
+     */
+    static function startsWith(string $haystack, $needles): bool{
+        foreach ((array) $needles as $needle) {
+            if ('' != $needle && mb_strpos($haystack, $needle) === 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 汉字转拼音
+     *
+     * -e.g: phpunit("Str::zhToPy", ["你好阿"]);
+     * -e.g: phpunit("Str::zhToPy", ["你好阿","head"]);
+     * -e.g: phpunit("Str::zhToPy", ["你好阿","all"]);
+     * -e.g: phpunit("Str::zhToPy", ["你好阿","one"]);
+     * 
+     * @param string $text
+     * @param string $type [head:首字母|all:全拼音]
+     * @return string
+     */
+    static function zhToPy(string $text, string $type = 'head'):string{
+        $result = ZhToPy::encode($text, $type);
+        return strtolower($result);//返回结果转小写
+    }
 }

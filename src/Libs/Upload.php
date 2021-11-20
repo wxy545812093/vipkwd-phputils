@@ -86,8 +86,11 @@ class Upload{
                     $msg= "上传成功";
                     $ret_code=0;
                     $data = [
+                        "size" => $this->file['size'],
+                        "ext"  => $this->file['ext'],
+                        "mime" => $this->file['type'],
                         "path" => $uploadfile,
-                        "hash" =>hash_file("md5", $uploadfile),
+                        "hash" => hash_file("md5", $uploadfile),
                         "name" => $name
                     ];
                 }
@@ -103,9 +106,9 @@ class Upload{
             case 1: return true; $msg="文件大小超出了服务器的空间大小"; break;
             case 2: return true; $msg="文件大小超出浏览器限制"; break;
             case 3: $msg="文件仅部分被上传"; break;
-            case 4: $msg="没有找到要上传的文件"; break;
-            case 5: $msg="服务器临时文件夹丢失"; break;
-            case 6: $msg="文件写入到临时文件夹出错"; break;
+            case 4: $msg="文件不能为空"; break;//没有找到要上传的文件
+            case 5: $msg="上传服务异常"; break;//服务器临时文件夹丢失
+            case 6: $msg="文件写入出错"; break;//文件写入到临时文件夹出错
             default: return true;
         }
         return [
@@ -115,7 +118,10 @@ class Upload{
     }
 
     private function _checkExtension(){
-        if(!in_array( strtolower( self::fileext($this->file['name'])), $this->options['type']) ) {
+
+        $this->file['ext'] = strtolower( self::fileext($this->file['name']));
+
+        if(!in_array( $this->file['ext'], $this->options['type']) ) {
             $text=implode(",", $this->options['type'] );
             //文件类型错误
             $page_result=$text;

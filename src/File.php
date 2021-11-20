@@ -166,7 +166,7 @@ class File{
         }
 
         // 重命名
-        !isset($rename) && $rename = $filename;
+        (!isset($rename) || !$rename) && $rename = $filename;
 
         // 字节流
         header('HTTP/1.1 200 OK');
@@ -223,7 +223,7 @@ class File{
             }
             ($file!=null) && fclose($file);
         }
-        exit();
+        exit;
     }
 
     /**

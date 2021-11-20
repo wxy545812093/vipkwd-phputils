@@ -757,10 +757,10 @@ class Tools{
      * 注意：各数据库引擎或操作系统对于ip2long的计算结果可能有差异(超出 int类型的表示范围)。
      *      所以：建议以 bigint类型 存储本函数结果
      * @param string $ipv4
-     * @param boolean $useNormal 是不使用内置函数
+     * @param boolean $useNormal 是否使用内置函数
      * @return integer
      */
-    static function ip2long(string $ipv4, bool $useNormal = false):int{
+    static function ip2long(string $ipv4, bool $useNormal = true){
         if(Validate::ipv4($ipv4) === false){
             //ipv4不合法
             return Null;
@@ -826,7 +826,8 @@ class Tools{
         if(!isset($ipv4[1]) || !$ipv4[1]){
             $_ipv4[1] = $ipv4[1] = $mask;
         }
-        if($ipv4[1] > 32 || false === Validate::ipv4($ipv4[0])){
+
+        if( $ipv4[1] > 32 || $ipv4[1] < 0 || false === Validate::ipv4($ipv4[0]) ){
             return [];
         }
         $base = self::ip2long('255.255.255.255');
@@ -865,6 +866,10 @@ class Tools{
             //默认授权254台主机
             $maskArea[1] = $mask;
         }
+        if( $maskArea[1] > 32 || $maskArea[1] < 0  || false === Validate::ipv4($ipv4)  || false === Validate::ipv4($maskArea[0]) ){
+            return [];
+        }
+
         $maskArea[1] = 32 - $maskArea[1] * 1;
         return (self::ip2long($ipv4) >> $maskArea[1]) == (self::ip2long($maskArea[0]) >> $maskArea[1]);
     }

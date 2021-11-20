@@ -52,16 +52,17 @@ class Address {
 
         $event = $addrString;
         $_phone = [];
+        $obj = [];
+        // $obj['_str'] = $addrString;
         //TODO 
         if(preg_match_all("/((\d{2,4}[-_－—])\d{3,8}([-_－—]?\d{3,8})?([-_－—]?\d{1,7})?)|(0?1[3-9]\d{9})/", $addrString, $match ,PREG_SET_ORDER)){
             if( strlen($match[0][0]) ){
-                $_phone = $match[0];
-                $addrString = str_replace($match[0][0], '', $addrString);
+                //$_phone = $match[0];
+                //$addrString = str_replace($match[0][0], '', $addrString);
             }
         }
         //过滤特殊字符
         $addrString = preg_replace("/\ +/"," ", $this->stripscript($addrString));
-        $obj = [];
         $copyAddress = explode(' ', $addrString);
         $familyNameList = RandomName::getFamilyNameList();
 
@@ -93,7 +94,6 @@ class Address {
                 }
             }
         }
-
         if(!empty($names)){
             //
             $obj['name'] = array_pop($names);
@@ -109,14 +109,15 @@ class Address {
         }
 
         // ksort($obj);
-        if (!isset($obj['phone']) && $_phone) {
-            foreach($_phone as $phone){
-                if(mb_strlen($phone) >=8){
-                    $obj['phone'] = $phone;
-                    break;
-                }
-            }
-        }
+        // if (!isset($obj['phone']) && $_phone) {
+        //     foreach($_phone as $phone){
+        //         if(mb_strlen($phone) >=8 && !isset($obj['phone'])){
+        //             $obj['phone'] = $phone;
+        //         }else{
+        //             $obj['address'] .= " ".$phone;
+        //         }
+        //     }
+        // }
         $obj['__text'] = $event;
         return $obj;
     }
