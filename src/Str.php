@@ -16,7 +16,7 @@ class Str{
 
     /**
      * Hash对比（hash_equals函数)
-     *
+     *  
      * @param string $str1
      * @param string $str2
      * @return boolean
@@ -38,6 +38,11 @@ class Str{
     }
     /**
      * HTML转实体符
+     * 
+     * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
+     * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
+     * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES]);
+     * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES,"utf-8"]);
      *
      * @param string $value
      * @param mixed $flags
@@ -50,6 +55,9 @@ class Str{
 
     /**
      * 字符XSS过滤
+     * 
+     * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script>javascript</script> </div>"]);
+     * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script >javascript</script> </div>",true]);
      *
      * @param string|array $str 待检字符 或 索引数组
      * @param boolean $DPI <false> 除常规过滤外，是否深度(额外使用正则)过滤。默认false仅常规过滤
@@ -80,7 +88,9 @@ class Str{
 
     /**
      * 获取纯文本内容(移除一切HTML元素)
-     *
+     * 
+     * -e.g: phpunit("Str::getContentText",["wa haha<div > div> <script>javascript</script> </div>"]);
+     * 
      * @param string $str
      * @return string
      */
@@ -120,6 +130,14 @@ class Str{
     /**
      * 生成随机字符(验证码)
      *
+     * -e.g: phpunit("Str::randomCode");
+     * -e.g: phpunit("Str::randomCode");
+     * -e.g: phpunit("Str::randomCode",[1]);
+     * -e.g: phpunit("Str::randomCode",[4]);
+     * -e.g: phpunit("Str::randomCode",[5]);
+     * -e.g: phpunit("Str::randomCode",[5,true]);
+     * -e.g: phpunit("Str::randomCode",[5,true]);
+     * 
      * @param integer $len
      * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
      * @return string
@@ -135,6 +153,10 @@ class Str{
     /**
      * 随机生成马甲昵称
      *
+     * -e.g: phpunit("Str::randomNickName");
+     * -e.g: phpunit("Str::randomNickName");
+     * -e.g: phpunit("Str::randomNickName");
+     * 
      * @return string
      */
     static function randomNickName():string{
@@ -144,27 +166,39 @@ class Str{
     /**
      * 随机生成女名
      *
+     * -e.g: phpunit("Str::randomFemaleName");
+     * -e.g: phpunit("Str::randomFemaleName",[false]);
+     * 
      * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
      * @return string
      */
     static function randomFemaleName(bool $surName = true):string{
-        return RandomName::getFemaleName();
+        return RandomName::getFemaleName($surName);
     }   
 
     /**
      * 随机生成男名
+     * 
+     * -e.g: phpunit("Str::randomMaleName");
+     * -e.g: phpunit("Str::randomMaleName",[false]);
      *
-     * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
+     * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
      * @return string
      */
     static function randomMaleName(bool $surName = true):string{
-        return RandomName::getMaleName();
+        return RandomName::getMaleName($surName);
     }
 
     /**
      * (中/英/混合)字符串截取(加强版)
      * 
-     * :e: Vipkwd\Utils\Str::substrPlus('$omitted 末尾]】省略符 默认', 0, 13, "...")
+     * -e.g: phpunit("Str::substrPlus",['$omitted 末尾]】省略符 默认', 0, 14]);
+     * -e.g: phpunit("Str::substrPlus",['$&3张三李】四王麻子', 0, 11, "..."]);
+     * -e.g: phpunit("Str::substrPlus",['$&3张三】李四王麻子', 0, 10, "..."]);
+     * -e.g: phpunit("Str::substrPlus",['$&3张】三李四王麻子', 0, 9, "..."]);
+     * -e.g: phpunit("Str::substrPlus",['$&3】张三李四王麻子', 0, 8, ">"]);
+     * -e.g: phpunit("Str::substrPlus",['$&】3张三李四王麻子', 6, 2, ""]);
+     * 
      * @param string $str 待截取字符串
      * @param int $start <0> 从第几个字符(包含)开始截取
      * @param int $len <1> 截取长度
@@ -437,5 +471,18 @@ class Str{
     static function zhToPy(string $text, string $type = 'head'):string{
         $result = ZhToPy::encode($text, $type);
         return strtolower($result);//返回结果转小写
+    }
+
+    /**
+     * MD5值16位
+     *
+     * -e.g: echo 'md5("admin"); // string(32) "'.\md5('admin').'"';
+     * -e.g: phpunit("Str::md5_16",["admin"]);
+     * 
+     * @param string $str
+     * @return string
+     */
+    static function md5_16(string $str):string{
+        return substr(md5($str), 8, 16);
     }
 }
