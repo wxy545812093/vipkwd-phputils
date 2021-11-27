@@ -40,6 +40,7 @@ class Excel{
      *                          "db_field2" => ["列显示标题2"],
      *                          "db_fiild3" => "列显示标题3"
      *                       ];
+     *                  -- index          bool <true>     是否显示数据行号
      *                  -- print          bool <false>    设置打印格式
      *                  -- setBorder      bool <true>     设置单元格边框
      *                  //-- formula        array <null>    设置公式，例如['F2' => '=IF(D2>0,E42/D2,0)']
@@ -62,6 +63,7 @@ class Excel{
      * @return Exception
      */
     static function export($datas, $fileName = '', $options = []){
+        // Dev::dump($options,1);
         try {
             if (empty($datas)) {
                 return false;
@@ -74,7 +76,7 @@ class Excel{
             //计算实际数据行数（即：不含标题、合计行等）
             $dataRows = count($datas);
 
-            $header = self::parseHeaderSettings($options['filterTitle'], $options['largeTitle']);
+            $header = self::parseHeaderSettings($options);
             
             //预定义列名
             self::$sheetColumnNames = self::buildSheetColumnName(-1);
@@ -257,6 +259,29 @@ class Excel{
 
             //合并行列处理
             if (isset($options['mergeCells']) && is_array($options['mergeCells']) && !empty($options['mergeCells'])) {
+                if(!$options['index']){
+                    $mergeCells = [];
+                    foreach($options['mergeCells'] as $v){
+                        $vv = explode(":",preg_replace("/\d+/","", $v));
+                        foreach(self::$sheetColumnNames as $ck => $cv){
+                            if(strtoupper($vv[0]) == "A"){
+                                $vv[3] = "A";
+                            }elseif($cv == $vv[0]){
+                                $vv[3] = self::$sheetColumnNames[$ck-1];
+                            }
+                            if(strtoupper($vv[1]) == "A"){
+                                $vv[4] = "A";
+                            }elseif($cv == $vv[1]){
+                                $vv[4] = self::$sheetColumnNames[$ck-1];
+                            }
+                        }
+                        $v = str_replace([$vv[0], $vv[1]], [$vv[3], $vv[4]], $v);
+                        $mergeCells[$v] = $v;
+                        unset($vv,$v);
+                    }
+                    $options['mergeCells'] = $mergeCells;
+                    unset($mergeCells);
+                }
                 $activeSheet->setMergeCells($options['mergeCells']);
                 unset($options['mergeCells']);
             }
@@ -570,7 +595,9 @@ class Excel{
      * @param string $h1_txt 大标题内容 默认空不显示大标题
      * @return array
      */
-    static function parseHeaderSettings(array $titles, $h1_txt = ""){
+    static function parseHeaderSettings(array $options){
+        $titles = $options['filterTitle'];
+        $h1_txt = $options['largeTitle'] ?? "";
         $___index = self::buildDataBufferSerialKey();
         $h1 = [];
         $width=[];
@@ -581,13 +608,17 @@ class Excel{
         $f = 0;
         foreach($titles as $key => $title){
             $i = 0;
-            $titles[$key] = $title = array_merge([
+            $options['index'] && $titles[$key] = $title = array_merge([
                 "$___index" => ["No.",6]
             ], $title);
             foreach($title as $field => $name){
                 //通栏大标题
                 if($h1_txt && $f === 0){
-                    $h1[$field] = ($field == $___index) ? $h1_txt : "";
+                    if($options['index']){
+                        $h1[$field] = ($field == $___index) ? $h1_txt : "";
+                    }else{
+                        $h1[$field] = ($field == array_key_first($title)) ? $h1_txt : "";
+                    }
                 }
                 //如果筛选标题的值是数组，说明有配置标题列宽度
                 if(is_array($name)){
@@ -769,6 +800,7 @@ class Excel{
             $options['mergeCells'] = [];
         }
         $options['setBorder'] = (!isset($options['setBorder']) || $options['setBorder']) ? true : false; 
-        $options['print'] = (isset($options['print']) && $options['print']) ? true : false; 
+        $options['print'] = (isset($options['print']) && $options['print']) ? true : false;
+        $options['index'] = (isset($options['index']) && $options['index']) ? true : false;
     }
 }
