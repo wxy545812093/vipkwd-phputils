@@ -122,6 +122,7 @@ class File{
      *                  --max_size integer <10 * 1024 * 1024>  限制可上传文件大小(单位)
      *                  --upload_dir string <"upfiles/"> 保存目录
      *                  --type array <["jpg","gif","bmp","jpeg","png"]> 允许扩展
+     *                  --file_name_prefix string <''> 文件名前缀
      * @return array|null
      */
     static function upload($uploadKey = "file", $options = []):?array{

@@ -60,22 +60,22 @@ class Upload{
             if( true !== ($error = $this->_checkUploadFileSize())){
                 return $error;
             }
-
-            //生成目标文件的文件名 else {
-            $filename = str_split($this->file['name'], strrpos( $this->file['name'], "."));
-
+            
             if( !is_dir($this->options['upload_dir'])){
                 @mkdir($this->options['upload_dir'], 0777, true);
             }
-
+            
+            //生成目标文件的文件名 else {
+            $filename = str_split($this->file['name'], strrpos( $this->file['name'], "."));
             do {
                 //设置随机数长度 
                 $filename[0] = $this->random(16);
                 $name = implode("",$filename);
                 if(isset($this->options['file_name_prefix']) && $this->options['file_name_prefix']){
-                    $name = $this->options['file_name_prefix'].$name;
+                    $file_name_prefix = str_replace(["\\",'/'],"", $this->options['file_name_prefix']);
+                    $name = $file_name_prefix.$name;
                 }
-                $uploadfile= $this->options['upload_dir'] . $name;
+                $uploadfile= rtrim($this->options['upload_dir'],"/") .'/'. $name;
 
             }while(file_exists($uploadfile));
 
@@ -151,7 +151,7 @@ class Upload{
 
 	//生成随机文件名函数 
 	private static function random($length) {
-		$hash = 'CR-';
+		$hash = '';
 		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
 		$max = strlen($chars) - 1;
 		mt_srand( (int)((double)microtime() * 1000000 ));
