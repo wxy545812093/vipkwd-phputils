@@ -142,8 +142,12 @@ class Db{
      */
     public function field($fields ="*"):Object{
         if($fields !="*" && is_string($fields)){
-            $fields = explode(',', str_replace(' ',"", $fields));
+            $fields = preg_replace("/\ +/", " ",$fields);
+            $fields = explode(',', $fields);
         }
+        array_walk($fields, function(&$value, $key){
+            $value = trim($value);
+        });
         $this->_fields = $fields;
         return $this;
     }
