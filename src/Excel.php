@@ -359,7 +359,7 @@ class Excel{
             if(isset($options['savePath']) && @is_readable($options['savePath'])){
                 $savePath = $bulidFileName($options['savePath']);
             }else{
-                $fileName = $bulidFileName($fileName);
+                $fileName = $bulidFileName($fileName ?? ($options['sheetName'] ?? ""));
                 //直接导出Excel，无需保存到本地，输出07Excel文件
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 header(
