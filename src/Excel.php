@@ -801,6 +801,6 @@ class Excel{
         }
         $options['setBorder'] = (!isset($options['setBorder']) || $options['setBorder']) ? true : false; 
         $options['print'] = (isset($options['print']) && $options['print']) ? true : false;
-        $options['index'] = (isset($options['index']) && $options['index']) ? true : false;
+        $options['index'] = (!isset($options['index']) || $options['index']) ? true : false;
     }
 }
