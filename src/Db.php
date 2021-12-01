@@ -549,6 +549,10 @@ class Db{
         return $this->_medoo->info();
     }
 
+    public function query($sql){
+        return $this->_medoo->query($sql)->fetchAll();
+    }
+
     private function _dataArrayToJson(array $data){
         $list = [];
         foreach($data as $k => $v){

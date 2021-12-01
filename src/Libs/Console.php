@@ -11,12 +11,13 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils\Libs;
 
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Vipkwd\Utils\Str;
-use Vipkwd\Utils\Dev;
+use Symfony\Component\Console\Input\{
+	InputOption,
+	InputArgument,
+	InputInterface
+};
+use Vipkwd\Utils\{Str,Dev};
 // use \Exception;
 
 class Console extends Command {
@@ -162,11 +163,11 @@ class Console extends Command {
 				break;
 			}
 			//检测 测试用例支持情况
-			$eg = "<info>[x]</info>";
+			$eg = "[x]";
 			foreach($doc as $_eg){
 				$_eg = trim($_eg);
 				if( ($pos = stripos($_eg, "-e.g:")) > 0 ){
-					$eg = "[√]";
+					$eg = "<info>[√]</info>";
 					break;
 				}
 			}

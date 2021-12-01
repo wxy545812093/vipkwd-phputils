@@ -10,9 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\Libs\Crypt\Des;
-use Vipkwd\Utils\Libs\Crypt\Aes;
-use Vipkwd\Utils\Libs\Crypt\Rsa;
+use Vipkwd\Utils\Libs\Crypt\{Des,Aes,Rsa};
 
 class Crypt{
     

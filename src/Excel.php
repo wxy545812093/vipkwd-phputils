@@ -776,7 +776,7 @@ class Excel{
      */
     private static function optionsDefaultSettings(array &$options){
         $options['setSize'] = [];
-        $options['sheetIndex'] = 0;
+        $options['sheetIndex'] = (!isset($options['sheetIndex']) || $options['sheetIndex'] < 0) ? 0 : intval($options['sheetIndex']);
     
         if( !isset($options['bold']) || $options['bold'] === true ){
             $options['bold'] = [];

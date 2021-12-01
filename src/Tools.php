@@ -946,6 +946,8 @@ class Tools{
     /**
      * 保密手机号码
      *
+     * -e.g: phpunit("Tools::encryptMobile", ["13844638829"]);
+     * 
      * @param string $mobile
      * @return string
      */
@@ -1110,4 +1112,24 @@ class Tools{
         }
         return $CN_SYMBOL . $outputCharacters;
     }
+
+    /**
+     * 检测字符串是否为JSON串
+     *
+     * -e.g: phpunit("Tools::isJson",['[{"url":"10musume.com"}]']);
+     * -e.g: phpunit("Tools::isJson",['[]']);
+     * -e.g: phpunit("Tools::isJson",['[{}]']);
+     * -e.g: phpunit("Tools::isJson",['{"site":"91.com"}']);
+     * -e.g: phpunit("Tools::isJson",['{}']);
+     * -e.g: phpunit("Tools::isJson",['{<>}']);
+     * -e.g: phpunit("Tools::isJson",['{{}}']);
+     * 
+     * @param string $str
+     * @return boolean
+     */
+    static function isJson(string $str):bool{
+        json_decode($str);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+
 }
