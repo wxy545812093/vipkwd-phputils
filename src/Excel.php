@@ -20,7 +20,6 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 class Excel{
@@ -40,6 +39,7 @@ class Excel{
      *                          "db_field2" => ["列显示标题2"],
      *                          "db_fiild3" => "列显示标题3"
      *                       ];
+     *                  -- hideTitle      bool <false>    是否隐藏筛选表头
      *                  -- index          bool <true>     是否显示数据行号
      *                  -- print          bool <false>    设置打印格式
      *                  -- setBorder      bool <true>     设置单元格边框
@@ -71,8 +71,10 @@ class Excel{
 
             set_time_limit(0);
 
+
             self::optionsDefaultSettings($options);
 
+            $datas = array_values($datas);
             //计算实际数据行数（即：不含标题、合计行等）
             $dataRows = count($datas);
 
@@ -85,21 +87,34 @@ class Excel{
             $options['setWidth'] = $header['width'];
 
             //筛选标题 置入队列首位
-            array_unshift($datas, $header['title'][0]);
-            // $firstDataRowIndex = $_firstRowIndex = count($header['title']) + 1;
-            $firstDataRowIndex = $_firstRowIndex = 1 + 1;
-            
-            // 默认将紧挨firstDataRowIndex 的前一行理解为字段最全的表头配置(暂不支持多行筛选表头)
-            // 而 firstDataRowIndex 是DB数据行，如果没有特殊处理的情况下，DB数据行字段一般是多余表头字段，故不能使用fristDataRowIndex DB数据行字段多少来判定sheet列多少的依据
-            $filterTitle = $datas[$firstDataRowIndex-2];
- 
+            if($options['hideTitle']){
+                //array_unshift($datas, $header['title'][0]);
+                // $firstDataRowIndex = $_firstRowIndex = count($header['title']) + 1;
+                $firstDataRowIndex = $_firstRowIndex = 1;
+                $filterTitle = $options["filterTitle"];
+            }else{
+                array_unshift($datas, $header['title'][0]);
+                // $firstDataRowIndex = $_firstRowIndex = count($header['title']) + 1;
+                $firstDataRowIndex = $_firstRowIndex = 1 + 1;
+
+                // 默认将紧挨firstDataRowIndex 的前一行理解为字段最全的表头配置(暂不支持多行筛选表头)
+                // 而 firstDataRowIndex 是DB数据行，如果没有特殊处理的情况下，DB数据行字段一般是多余表头字段，故不能使用fristDataRowIndex DB数据行字段多少来判定sheet列多少的依据
+                $filterTitle = $datas[$firstDataRowIndex-2];
+            }
+
             // 获取最大列序号
             self::$sheetMaxColumnName = self::buildSheetColumnName(count(array_keys($filterTitle)));
 
             // 置入大标题文字
             if(is_array($header['largeTitle']) && !empty($header['largeTitle'])){
-                $firstDataRowIndex += 1;
-                array_unshift($datas, $header['largeTitle']);
+                $totals = ( isset($header['largeTitle'][0]) ? count($header['largeTitle']) : 1 );
+                $firstDataRowIndex += $totals;
+                if( $totals > 1){
+                    krsort($header['largeTitle']);
+                }
+                foreach($header['largeTitle'] as $v){
+                    array_unshift($datas, $v);
+                }
             }
             $options['firstDataRowIndex'] = $firstDataRowIndex;
 
@@ -111,6 +126,8 @@ class Excel{
         
             //计算冻结单元格
             self::checkFreezePane($options, $filterTitle, $firstDataRowIndex);
+
+            // return $options;
 
             unset(
                 $header,
@@ -256,32 +273,40 @@ class Excel{
 
                 unset($options['formula']);
             }*/
+            // return $options;
 
             //合并行列处理
             if (isset($options['mergeCells']) && is_array($options['mergeCells']) && !empty($options['mergeCells'])) {
                 if(!$options['index']){
                     $mergeCells = [];
+                    $h1_area = ["A1:".self::$sheetMaxColumnName."1","A2:".self::$sheetMaxColumnName."2","A3:".self::$sheetMaxColumnName."3"];
                     foreach($options['mergeCells'] as $v){
-                        $vv = explode(":",preg_replace("/\d+/","", $v));
-                        foreach(self::$sheetColumnNames as $ck => $cv){
-                            if(strtoupper($vv[0]) == "A"){
-                                $vv[3] = "A";
-                            }elseif($cv == $vv[0]){
-                                $vv[3] = self::$sheetColumnNames[$ck-1];
+                        if(!in_array($v, $h1_area)){
+                            $vv = explode(":",preg_replace("/\d+/","", $v));
+                            foreach(self::$sheetColumnNames as $ck => $cv){
+                                if(strtoupper($vv[0]) == "A"){
+                                    $vv[3] = "A";
+                                }elseif($cv == $vv[0]){
+                                    $vv[3] = self::$sheetColumnNames[$ck-1];
+                                }
+                                if(strtoupper($vv[1]) == "A"){
+                                    $vv[4] = "A";
+                                }elseif($cv == $vv[1]){
+                                    $vv[4] = self::$sheetColumnNames[$ck-1];
+                                }
                             }
-                            if(strtoupper($vv[1]) == "A"){
-                                $vv[4] = "A";
-                            }elseif($cv == $vv[1]){
-                                $vv[4] = self::$sheetColumnNames[$ck-1];
-                            }
+                            // $h1_area ="A1:".self::$sheetMaxColumnName."1";
+                            $v = str_replace([$vv[0], $vv[1]], [$vv[3], $vv[4]], $v);
                         }
-                        $v = str_replace([$vv[0], $vv[1]], [$vv[3], $vv[4]], $v);
                         $mergeCells[$v] = $v;
                         unset($vv,$v);
                     }
                     $options['mergeCells'] = $mergeCells;
                     unset($mergeCells);
                 }
+
+                // return $options['mergeCells'];
+
                 $activeSheet->setMergeCells($options['mergeCells']);
                 unset($options['mergeCells']);
             }
@@ -567,7 +592,7 @@ class Excel{
      * @param integer $columnTotals 有效数据总列数
      * @return string|array
      */
-    static function buildSheetColumnName(int $columnTotals){
+    private static function buildSheetColumnName(int $columnTotals){
         $default = str_split("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         $code = $default;
         $deep = 3;// A ~ AZ ~ BZ (默认最大支持77列)
@@ -595,7 +620,7 @@ class Excel{
      * @param string $h1_txt 大标题内容 默认空不显示大标题
      * @return array
      */
-    static function parseHeaderSettings(array $options){
+    private static function parseHeaderSettings(array $options){
         $titles = $options['filterTitle'];
         $h1_txt = $options['largeTitle'] ?? "";
         $___index = self::buildDataBufferSerialKey();
@@ -612,12 +637,23 @@ class Excel{
                 "$___index" => ["No.",6]
             ], $title);
             foreach($title as $field => $name){
+
                 //通栏大标题
                 if($h1_txt && $f === 0){
-                    if($options['index']){
-                        $h1[$field] = ($field == $___index) ? $h1_txt : "";
+                    if(is_array($h1_txt)){
+                        foreach($h1_txt as $h1_key => $h1_item){
+                            if($options['index']){
+                                $h1[$h1_key][$field] = ($field == $___index) ? $h1_item["text"] : "";
+                            }else{
+                                $h1[$h1_key][$field] = ($field == array_key_first($title)) ? $h1_item['text'] : "";
+                            }
+                        }
                     }else{
-                        $h1[$field] = ($field == array_key_first($title)) ? $h1_txt : "";
+                        if($options['index']){
+                            $h1[0][$field] = ($field == $___index) ? $h1_item["text"] : "";
+                        }else{
+                            $h1[0][$field] = ($field == array_key_first($title)) ? $h1_item['text'] : "";
+                        }
                     }
                 }
                 //如果筛选标题的值是数组，说明有配置标题列宽度
@@ -734,10 +770,12 @@ class Excel{
 
         // 通栏大标题字号
         if($firstDataRowIndex > $_firstRowIndex){
-            $h1_area ="A1:".self::$sheetMaxColumnName."1";
-            $options['setSize'][$h1_area] = $options['largeTitleFontSize'];
-            //通栏合并
-            $options['mergeCells'][$h1_area] = $h1_area;
+            for($i =1; $i <= ($firstDataRowIndex - $_firstRowIndex); $i++){
+                $h1_area =  "A{$i}:".self::$sheetMaxColumnName.$i;
+                $options['setSize'][$h1_area] = $options['largeTitleFontSize'];
+                //通栏合并
+                $options['mergeCells'][$h1_area] = $h1_area;
+            }
         }
         return $sumActionStatus;
     }
@@ -776,7 +814,7 @@ class Excel{
      */
     private static function optionsDefaultSettings(array &$options){
         $options['setSize'] = [];
-        $options['sheetIndex'] = (!isset($options['sheetIndex']) || $options['sheetIndex'] < 0) ? 0 : intval($options['sheetIndex']);
+        $options['sheetIndex'] = 0;
     
         if( !isset($options['bold']) || $options['bold'] === true ){
             $options['bold'] = [];
@@ -802,5 +840,6 @@ class Excel{
         $options['setBorder'] = (!isset($options['setBorder']) || $options['setBorder']) ? true : false; 
         $options['print'] = (isset($options['print']) && $options['print']) ? true : false;
         $options['index'] = (!isset($options['index']) || $options['index']) ? true : false;
+        $options['hideTitle'] = (isset($options['hideTitle']) && $options['hideTitle']) ? true : false;
     }
 }
