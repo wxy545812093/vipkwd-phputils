@@ -27,6 +27,7 @@ class Excel{
     private static $sheetMaxColumnName;
     private static $sheetColumnNames;
     private static $currentSerialKey;
+    private static $maxColumnDeep = 10;
     /**
      * Excel导出
      *
@@ -595,7 +596,7 @@ class Excel{
     private static function buildSheetColumnName(int $columnTotals){
         $default = str_split("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         $code = $default;
-        $deep = 3;// A ~ AZ ~ BZ (默认最大支持77列)
+        $deep = self::$maxColumnDeep;// A ~ AZ ~ BZ (默认最大支持77列)
         if($columnTotals > 0){
             //数据列不大于26列则不构建扩展列名
             $deep = ceil( $columnTotals / 26 );
