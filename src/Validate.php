@@ -239,7 +239,7 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function  isDomain(string $str):bool{
+    static function isDomain(string $str):bool{
         return self::exec("/^(?=^.{3,255}$)[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+\.([a-z]{1,6})$/i", $str);
     }
 

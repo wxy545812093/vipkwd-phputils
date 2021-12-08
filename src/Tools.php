@@ -72,262 +72,14 @@ class Tools{
     }
 
     /**
-     * 对象转数组
-     * 
-     * -e.g: $data=[ "a"=>50, "b"=>true, "c"=>null ];
-     * -e.g: phpunit("Tools::toArray", [$data]);
-     * 
-     * @param object|array $object 对象
-     * 
-     * @return array
-     */
-    static function toArray($object){
-        if(is_object($object)){
-            $arr = (array)$object;
-        }else if(is_array($object)){
-            $arr = [];
-            foreach($object as $k => $v){
-                $arr[$k] = self::toArray($v);
-            }
-        }else{
-            return $object;
-        }
-        unset($object);
-        return $arr;
-        //return json_decode(json_encode($object), true);
-    }
-
-    /**
-     * 数组转无限级分类
-     * 
-     * -e.g: $list=[];
-     * -e.g: $list[]=["id"=>1,    "pid"=>0,   "name"=>"中国大陆"];
-     * -e.g: $list[]=["id"=>2,    "pid"=>1,   "name"=>"北京"];
-     * -e.g: $list[]=["id"=>22,   "pid"=>1,   "name"=>"广东省"];
-     * -e.g: $list[]=["id"=>54,   "pid"=>2,   "name"=>"北京市"];
-     * -e.g: $list[]=["id"=>196,  "pid"=>22,  "name"=>"广州市"];
-     * -e.g: $list[]=["id"=>1200, "pid"=>54,  "name"=>"海淀区"];
-     * -e.g: $list[]=["id"=>3907, "pid"=>196, "name"=>"黄浦区"];
-     * -e.g: phpunit("Tools::arrayToTree", [$list, "id", "pid", "child", 0]);
-     * 
-     * @param array $list 归类的数组
-     * @param string $pk <"id"> 父级ID
-     * @param string $pid <"pid"> 父级PID
-     * @param string $child <"child"> 子节点容器名称
-     * @param string $rootPid <0> 顶级ID(pid)
-     * 
-     * @return array
-     */
-    static function arrayToTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $rootPid = 0): array{
-        $tree = [];
-        if(is_array($list)){
-            $refer = [];
-            //基于数组的指针(引用) 并 同步改变数组
-            foreach ($list as $key => $val){
-                $list[$key][$child] = [];
-                $refer[$val[$pk]] = &$list[$key];
-            }
-            foreach ($list as $key => $val){
-                //是否存在parent
-                $parentId = isset($val[$pid]) ? $val[$pid] : $rootPid;
-
-                if ($rootPid == $parentId){
-                    $tree[$val[$pk]] = &$list[$key];
-                }else{
-                    if (isset($refer[$parentId])){
-                        $refer[$parentId][$child][] = &$list[$key];
-                    }
-                }
-            }
-        }
-        return array_values($tree);
-    }
-
-    /**
-     * 排列组合（适用多规格SKU生成）
-     * 
-     * 
-     * 
-     * @param array $input 排列的数组
-     * 
-     * @return array
-     */
-    static function arrayArrRange(array $input): array{
-        $temp = [];
-        $result = array_shift($input);
-        while($item = array_shift($input)){
-           $temp = $result;
-           $result = [];
-           foreach($temp as $v){
-                foreach($item as $val){
-                    $result[] = array_merge_recursive($v, $val);
-                }
-           }
-        }
-        return $result;
-    }
-
-    /**
-     * 二维数组去重
-     * 
-     * -e.g: $arr=[["id"=>1,"sex"=>"female"],["id"=>1,"sex"=>"male"],["id"=>2,"age"=>18]];
-     * -e.g: phpunit("Tools::arrayUnique",[$arr, "id"]);
-     * -e.g: phpunit("Tools::arrayUnique",[$arr, "id", false]);
-     * 
-     * @param array $arr 数组
-     * @param string $filterKey <"id"> 字段
-     * @param boolean $cover <true> 是否覆盖（遇相同 “filterKey” 时，仅保留最后一个值）
-     *
-     * @return array
-     */
-    static function arrayUnique(array $arr, string $filterKey = 'id', bool $cover=true): array{
-        $res = [];
-        foreach ($arr as $value){
-            ($cover || ( !$cover && !isset($res[($value[$filterKey])]) ) ) && $res[($value[$filterKey])] = $value;
-        }
-        return array_values($res);
-    }
-
-    /**
-     * 二维数组排序
-     * 
-     * -e.g: $arr=[["age"=>19,"name"=>"A"],["age"=>20,"name"=>"B"],["age"=>18,"name"=>"C"],["age"=>16,"name"=>"D"]];
-     * -e.g: phpunit("Tools::arraySort", [$arr, "age", "asc"]);
-     * 
-     * @param array $array 排序的数组
-     * @param string $orderKey 要排序的key
-     * @param string $orderBy <"desc"> 排序类型 ASC、DESC
-     *
-     * @return array
-     */
-    static public function arraySort(array $array, string $orderKey, string $orderBy = 'desc'): array{
-        $kv = [];
-        foreach ($array as $k => $v){
-            $kv[$k] = $v[$orderKey];
-        }
-        array_multisort($kv, ($orderBy == "desc" ? SORT_DESC : SORT_ASC), $array);
-        return $array;
-    }
-
-    /**
-     * XML转数组
-     * 
-     * @param string $xml xml
-     *
-     * @return array
-     */
-    static public function xmlToArray(string $xml): array{
-        //禁止引用外部xml实体
-        libxml_disable_entity_loader(true);
-        $xmlString = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $result = json_decode(json_encode($xmlString), true);
-        return $result;
-    }
-
-    /**
-     * 数组转XML
-     * 
-     * -e.g: $arr=[];
-     * -e.g: $arr[]=["name"=>"张叁","roomId"=> "2-2-301", "carPlace"=> ["C109","C110"] ];
-     * -e.g: $arr[]=["name"=>"李思","roomId"=> "9-1-806", "carPlace"=> ["H109"] ];
-     * -e.g: $arr[]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
-     * -e.g: phpunit("Tools::arrayToXml", [$arr]);
-     * 
-     * @param array $input 数组
-     * 
-     * @return string
-     */
-    static public function arrayToXml(array $input): string{
-        $str = '<xml>';
-        foreach ($input as $k => $v){
-            $str .= '<' . $k . '>' . $v . '</' . $k . '>';
-        }
-        $str .= '</xml>';
-        return $str;
-    }
-
-    /**
-     * 根据两点间的经纬度计算距离（单位为KM）
-     *
-     * 地球半径：6378.137 KM
-     * 
-     * Dev::dump(Tools::getDistance());
-     * Dev::dump(Tools::getDistance( 120.149911, 30.282324, 120.155428, 30.244007 ));
-     * Dev::dump(Tools::getDistance( 112.45972, 23.05116, 103.850070, 1.289670 ));
-     * 
-     * @param float $lng1 经度1  正负180度间
-     * @param float $lat1 纬度1  正负90度间
-     * @param float $lng2 经度2
-     * @param float $lat2 纬度2
-     *
-     * @return float
-     */
-    static function getDistance(float $lng1=0, float $lat1=0, float $lng2=0, float $lat2=0): float{
-        if($lat1 > 90 || $lat1 < -90 || $lat2 > 90 || $lat2 < -90){
-            throw new Exception("经纬度参数无效");
-        }
-        $radLat1 = deg2rad($lat1);
-        $radLat2 = deg2rad($lat2);
-        $radLng1 = deg2rad($lng1);
-        $radLng2 = deg2rad($lng2);
-        $s = 2 
-            * asin(
-                min(1,
-                    sqrt(
-                        pow(
-                            sin(($radLat1 - $radLat2) / 2), 2
-                        )
-                        + cos($radLat1) 
-                        * cos($radLat2) 
-                        * pow(
-                            sin(($radLng1 - $radLng2) / 2), 2
-                        )
-                    )
-                )
-            ) * 6378.137;
-        return round( abs($s) , 6);
-    }
-
-    /**
-     * 获取商户半径x公里的正方区域四个点
-     *
-     * @param float $lng 经度 
-     * @param float $lat 纬度 
-     * @param integer $distance 半径大小 单位km
-     * @return array
-     */
-    static function merchantRadiusAxies(float $lng, float $lat, float $distance = 3):array{   
-        // 球面(地球)半径：6378.137 KM
-        $half = 6378.137;
-        $dlng = rad2deg( 2 * asin(sin($distance / (2 * $half)) / cos(deg2rad($lat))));
-        $dlat = rad2deg( $distance / $half );
-
-        return [
-            'lt' => ['lng' => round($lng - $dlng, 10), 'lat' => round($lat + $dlat,10)],
-            'rt' => ['lng' => round($lng + $dlng, 10), 'lat' => round($lat + $dlat,10)],
-            'rb' => ['lng' => round($lng + $dlng, 10), 'lat' => round($lat - $dlat,10)],
-            'lb' => ['lng' => round($lng - $dlng, 10), 'lat' => round($lat - $dlat,10)],
-        ];
-    }
-
-
-    /**
-     * 计算平面坐标轴俩点{P1 与 P2}间的距离
-     *
-     *  -e-: Dev::dump(Tools::mathAxedDistance(1,2,4,6));
-     * @param float $x1
-     * @param float $y1
-     * @param float $x2
-     * @param float $y2
-     * @return float
-     */
-    static function mathAxedDistance(float $x1 =0, float $y1 =0, float $x2 =0, float $y2 =0):float{
-        return round( sqrt( pow($x2 - $x1, 2) + pow($y2 - $y1,2)), 6);
-    }
-
-    /**
      * mt_rand增强版（兼容js版Math.random)
      *
+     * -e.g: phpunit("Tools::mathRandom",[0,1]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,false]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
+     * 
      * @param integer $min
      * @param integer $max
      * @param boolean $decimal <false> 是否包含小数
@@ -337,7 +89,6 @@ class Tools{
 
         if($max < $min){
             throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
-            return null;
         }
         $range = mt_rand($min, $max);
         if($decimal && $min < $max){
@@ -420,6 +171,8 @@ class Tools{
 
     /**
      * 扫描目录（递归）
+     * 
+     * -e.g: phpunit("Tools::dirScan", ["../vipkwd-utils/src/Libs/Image/", function($file){ var_dump($file);}]);
      *
      * @param string $dir
      * @param callable|null $fileCallback  
@@ -430,7 +183,7 @@ class Tools{
      */
     static function dirScan(string $dir, ?callable $fileCallback=null):?bool{
         if(!is_dir($dir)){
-            return $return;
+            return null;
         }
         $return = null;
         $fd = opendir($dir);
@@ -453,8 +206,10 @@ class Tools{
     }
 
     /**
-     * 打印目录
+     * 打印目录文件列表
      *
+     * -e.g: phpunit("Tools::dirTree", ["../vipkwd-utils/src/Libs/Image"]);
+     * 
      * @param string $dir
      * @return void
      */
@@ -581,25 +336,7 @@ class Tools{
 
 
 
-    /**
-     * 获取客户端IP
-     *
-     * @return string
-     */
-    static function getClientIp():string {
-        $unknown = 'unknown';
-        if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] && strcasecmp($_SERVER['HTTP_X_FORWARDED_FOR'], $unknown) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } elseif ( isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], $unknown) ) {
-            $ip = $_SERVER['REMOTE_ADDR'];
-        }
-        /*
-        处理多层代理的情况
-        或者使用正则方式：$ip = preg_match("/[\d\.]{7,15}/", $ip, $matches) ? $matches[0] : $unknown;
-        */
-        if (false !== strpos($ip, ',')) $ip = reset(explode(',', $ip));
-        return $ip;
-    }
+
 
 
     /**
@@ -751,131 +488,14 @@ class Tools{
         return $_COOKIE;
     }
 
-    /**
-     * IPV4转长整型数字
-     *
-     * 注意：各数据库引擎或操作系统对于ip2long的计算结果可能有差异(超出 int类型的表示范围)。
-     *      所以：建议以 bigint类型 存储本函数结果
-     * @param string $ipv4
-     * @param boolean $useNormal 是否使用内置函数
-     * @return integer
-     */
-    static function ip2long(string $ipv4, bool $useNormal = true){
-        if(Validate::ipv4($ipv4) === false){
-            //ipv4不合法
-            return Null;
-        }
-        $int = 0;
-        if(function_exists('ip2long') && $useNormal){
-            $int = ip2long($ipv4);
-        }else{
-            $ipv4 = explode(".", $ipv4);
-            for($i=0;$i<4; $i++){
-                $int += $ipv4[$i] * pow(256, 4 -$i -1); 
-            }
-            unset($ipv4);
-        }
-        return sprintf("%u", $int) * 1;
-    }
-
-    /**
-     * IPv4长整型转IP地址
-     *
-     * @param integer $bigint
-     * @param boolean $useNormal
-     * @return string
-     */
-    static function long2ip(int $bigint, bool $useNormal = true):string{
-        if(function_exists('long2ip') && $useNormal){
-            return long2ip($bigint);
-        }else{
-            //FFFFFF最大为4294967295
-            $bigint = $bigint > 4294967295 ? 4294967295 : $bigint;
-            $dec = dechex($bigint); //讲十进制转为十六进制
-            //十六进制默认会忽略最左边的0，毕竟是0了，怎么算都是0，留着也没用
-            //但中间的0会保留，而IP的十六进制最大为 FFFFFF
-            //所有为防止7位IP的出现，我们只能手动补0，才能成双成对（2个一对）
-            if(strlen($dec) < 8) {
-                $dec = '0'.$dec; //如果长度小于8，最自动补0
-            }
-            $aIp=[];
-            for($i = 0; $i < 8; $i += 2){
-                $hex = substr($dec, $i, 2);
-                //截取十六进制的第一位
-                $ippart = substr($hex, 0, 1);
-                if($ippart === '0') {
-                    $hex = substr($hex, 1, 1);//如果第一位为0，说明原始数值只有1位，还是要拆散
-                }
-                $aIp[] = hexdec($hex); //将每段十六进制数转换我为十进制，即每个ip段的值
-                unset($hex,$ippart);
-            }
-            return implode('.',$aIp);
-        }
-    }
-
-    /**
-     * 根据掩码计算IP区间（起始IP~结束IP）
-     *
-     * @param string $ipv4 格式：192.168.1.1 或 192.168.1.0/24
-     * @param integer $mask
-     * @return array
-     */
-    static function getIpRangeWithMask(string $ipv4, int $mask = 24):array{
-        $_ipv4 = $ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
-
-        if(!isset($ipv4[1]) || !$ipv4[1]){
-            $_ipv4[1] = $ipv4[1] = $mask;
-        }
-
-        if( $ipv4[1] > 32 || $ipv4[1] < 0 || false === Validate::ipv4($ipv4[0]) ){
-            return [];
-        }
-        $base = self::ip2long('255.255.255.255');
-        $ipv4[0] = self::ip2long($ipv4[0]);
-        $mask = pow(2, 32-intval($ipv4[1]))-1; //mask=0.0.0.255(int)
-        $smask = $mask ^ $base; //smask=255.255.255.0(int)
-        $min = $ipv4[0] & $smask;
-        $max = $ipv4[0] | $mask;
-        return [
-            "input"     => implode('/', $_ipv4),
-            "nat"       => self::long2ip($min),
-
-            // 一个IP地址一共有32(4段 8位)位，其中一部分为网络位，一部分为主机位。
-            // 网络位+主机位=32 子网掩码表示网络位的位数。如子网掩码为30位，那么主机位就为2位。 
-            // 因为2的2次方等于4，又因为每个子网中有2个IP地址(一个nat，一个broadcast)不能分配给主机，所以可以分配的IP地址为2个
-            "total"     => $mask +1,
-            "useful"    => $mask -1,
-            "first"     => self::long2ip($min+1),
-            "end"       => self::long2ip($max-1),
-            "broadcast" => self::long2ip($max),
-            "mask"      => self::long2ip($smask),
-        ];
-    }
-
-    /**
-     * 检测IP是否在某个掩码子网里
-     *
-     * @param string $ipv4  "192.168.1.115"
-     * @param string $maskArea 支持携带掩码("192.168.1.1/24")
-     * @param integer $mask 0-32
-     * @return boolean
-     */
-    static function ipv4InMaskArea(string $ipv4, string $maskArea, int $mask = 24):bool{
-        $maskArea = explode('/', preg_replace("/[^0-9\.\/]/","", $maskArea));
-        if(!isset($maskArea[1]) || !$maskArea[1]){
-            //默认授权254台主机
-            $maskArea[1] = $mask;
-        }
-        if( $maskArea[1] > 32 || $maskArea[1] < 0  || false === Validate::ipv4($ipv4)  || false === Validate::ipv4($maskArea[0]) ){
-            return [];
-        }
-
-        $maskArea[1] = 32 - $maskArea[1] * 1;
-        return (self::ip2long($ipv4) >> $maskArea[1]) == (self::ip2long($maskArea[0]) >> $maskArea[1]);
-    }
+    
 
     /**
      * 生成随机MAC地址
+     * 
+     * -e.g: phpunit("Tools::macAddr");
+     * -e.g: phpunit("Tools::macAddr",["+"]);
+     * -e.g: phpunit("Tools::macAddr",["-"]);
      *
      * @param string $sep 分隔符
      * @return string
@@ -926,6 +546,8 @@ class Tools{
     
     /**
      * 获取Htpp头信息为数组
+     * 
+     * -e.g: phpunit("Tools::getHttpHeaders");
      * 
      * 获取 $_SERVER 所有以“HTTP_” 开头的 头信息
      * 

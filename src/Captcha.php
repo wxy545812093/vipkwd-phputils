@@ -16,16 +16,16 @@ namespace Vipkwd\Utils;
 // use \Exception;
 class Captcha {
 
-	public static $codeSet = '346789ABCDEFGHJKLMNPQRTUVWXY';
-	public static $fontSize = 25;     // 验证码字体大小(px)
-	public static $useCurve = true;   // 是否画混淆曲线
-	public static $useNoise = true;   // 是否添加杂点
-	public static $imageH = 0;        // 验证码图片宽
-	public static $imageL = 0;        // 验证码图片长
-	public static $length = 4;        // 验证码位数
-	public static $bg = [243, 251, 254];  // 背景
-	protected static $_image = null;     // 验证码图片实例
-	protected static $_color = null;     // 验证码字体颜色
+		public static $codeSet = '346789ABCDEFGHJKLMNPQRTUVWXY';
+		public static $fontSize = 25;     // 验证码字体大小(px)
+		public static $useCurve = true;   // 是否画混淆曲线
+		public static $useNoise = true;   // 是否添加杂点
+		public static $imageH = 0;        // 验证码图片宽
+		public static $imageL = 0;        // 验证码图片长
+		public static $length = 4;        // 验证码位数
+		public static $bg = [243, 251, 254];  // 背景
+		protected static $_image = null;     // 验证码图片实例
+		protected static $_color = null;     // 验证码字体颜色
 	
 	/**
 	 * 输出验证码|BASE64

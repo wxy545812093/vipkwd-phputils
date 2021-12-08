@@ -10,17 +10,12 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Xls;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Color;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Cell\{Coordinate,DataType};
+use PhpOffice\PhpSpreadsheet\{IOFactory,Spreadsheet};
+use PhpOffice\PhpSpreadsheet\Reader\{Xls,Xlsx};
+use PhpOffice\PhpSpreadsheet\Style\{Alignment,Border,Color,Fill,NumberFormat};
+use PhpOffice\PhpSpreadsheet\Worksheet\{PageSetup,Drawing};
+use Phpoffice\PhpSpreadsheet\Shared\Date;
 
 class Excel{
     
@@ -28,6 +23,7 @@ class Excel{
     private static $sheetColumnNames;
     private static $currentSerialKey;
     private static $maxColumnDeep = 10;
+    private static $activeSheet = null;
     /**
      * Excel导出
      *
@@ -71,7 +67,6 @@ class Excel{
             }
 
             set_time_limit(0);
-
 
             self::optionsDefaultSettings($options);
 
@@ -141,6 +136,15 @@ class Excel{
 
             /** @var Spreadsheet $objSpreadsheet */
             $objSpreadsheet = new Spreadsheet();
+            
+            // https://www.cnblogs.com/zx-admin/p/11653863.html
+
+            $objSpreadsheet->getProperties()->setCreator("vipkwd.com");
+            //$resp = $objSpreadsheet->getSheetCount();//工作表总数
+            //$resp = $objSpreadsheet->getSheetNames();//工作表名数组
+            //$sheet = $objSpreadsheet->getSheetByName('Sheet1');//根据表名获取工作表
+            //$sheet = $objSpreadsheet->getSheet(0);//根据表索引获取工作表
+
             //设置默认文字居左，上下居中
             $styleArray = [
                 'alignment' => [
@@ -150,19 +154,67 @@ class Excel{
             ];
 
             $objSpreadsheet->getDefaultStyle()->applyFromArray($styleArray);
-            //设置Excel Sheet
-            $activeSheet = $objSpreadsheet->setActiveSheetIndex($options['sheetIndex']);
+            //切换指定工作表
+            static::$activeSheet = $activeSheet = $objSpreadsheet->setActiveSheetIndex($options['sheetIndex']);
+
+            // 在工作簿中创建工作表
+            // $worksheet1 = $spreadSheet->createSheet();
+            // $worksheet1->setTitle('Another sheet');
+
+            // 工作表标签颜色
+            $activeSheet->getTabColor()->setRGB('FF0000');
+
+            // 设置工作表缩放级别
+            $activeSheet->getSheetView()->setZoomScale(100);
+
+            // 自动列宽
+            $activeSheet->getDefaultColumnDimension()->setAutoSize(true);
+
+            //设置列默认宽度
+            // $activeSheet->getDefaultColumnDimension()->setWidth(50);
+
+            //设置行默认高度 但不会修改已设置过高度/已有值的行
+            // $activeSheet->getDefaultRowDimension()->setRowHeight(50);
+
+            //设置单元格换行
+            // $activeSheet->getStyle('B2')->getAlignment()->setWrapText(true);
+
+            //设置A链接
+            // $activeSheet->setCellValue('B2',"百度");
+            // $activeSheet->getCell('B2')->getHyperlink()->setUrl('https://www.baidu.com');
+
+            // $activeSheet->setCellValue('E26', 'www.百度.com');
+            // $activeSheet->getCell('E26')->getHyperlink()->setUrl("sheet://'Sheetname'!A1");
+
+            // 设置换行
+            // $activeSheet->getCell('A1')->setValue("hello\nworld");
+            // $activeSheet->getStyle('A1')->getAlignment()->setWrapText(true);
+
 
             //打印设置
             if (isset($options['print']) && $options['print'] === true) {
+                // 纸张方向（横向打印）
+                $activeSheet->getPageSetup()->setPaperSize(PageSetup:: ORIENTATION_LANDSCAPE);
+
                 //设置打印为A4效果
                 $activeSheet->getPageSetup()->setPaperSize(PageSetup:: PAPERSIZE_A4);
+                //页面水平居中
+                $activeSheet->getPageSetup()->setHorizontalCentered(true);
+                //关闭页面垂直居中
+                $activeSheet->getPageSetup()->setVerticalCentered(false);
+
                 //设置打印时边距
                 $pValue = 1 / 2.54;
-                $activeSheet->getPageMargins()->setTop($pValue / 2);
-                $activeSheet->getPageMargins()->setBottom($pValue * 1);
+                $activeSheet->getPageMargins()->setTop($pValue / 2 * 3.5);
+                $activeSheet->getPageMargins()->setBottom($pValue / 2 * 3.5);
                 $activeSheet->getPageMargins()->setLeft($pValue / 2);
                 $activeSheet->getPageMargins()->setRight($pValue / 2);
+
+                // &C 居中
+                // &H 阴影样式
+                $activeSheet->getHeaderFooter()->setOddHeader('&CDocument create by Vipkwd.com with Phpoffice');
+                // $activeSheet->getHeaderFooter()->setOddFooter('&L&B' . $objSpreadsheet->getProperties()->getTitle() . '&RPage &P of &N');
+                $activeSheet->getHeaderFooter()->setOddFooter('&L&B&D &T &RPage &P of &N');
             }
 
             //行数据处理
@@ -231,7 +283,10 @@ class Excel{
             //设置列度
             if (isset($options['setWidth']) && !empty($options['setWidth'])) {
                 foreach ($options['setWidth'] as $swKey => $swItem) {
+                    // 设置 swKey列的宽度
                     $activeSheet->getColumnDimension($swKey)->setWidth( $swItem * 1 + 0.71);
+                    // 自动列宽
+                    // $activeSheet->getColumnDimension($swKey)->setAutoSize(true);
                 }
                 unset($options['setWidth']);
             }
@@ -359,6 +414,16 @@ class Excel{
 
                 foreach($options['setSize'] as $ssItem => $size){
                     $activeSheet->getStyle($ssItem)->getFont()->setSize($size > 0 ? $size : 11);
+                    // 设置字体加粗大小
+                    // $activeSheet->getStyle($ssItem)->getFont()->setBold(true)->setName('Arial')->setSize(10);
+                    // 字体名
+                    // $fontName = $activeSheet->getStyle($ssItem)->getFont()->getName();
+                    // 设置颜色
+                    // $activeSheet->getStyle($ssItem)->getFont()->getColor()->setRGB('#AEEEEE');
+                    // 获取颜色值
+                    // $activeSheet->getStyle($ssItem)->getFont()->getColor()->getRGB();
+                    // 设置日期
+                    // $activeSheet->getCell($ssItem)->setValue(Date::PHPToExcel(time()));
                 }
             }
 
@@ -517,7 +582,7 @@ class Excel{
             /* 建立excel对象 */
             $obj = $objRead->load($file);
             /* 获取指定的sheet表 */
-            $currSheet = $obj->getSheet($sheetIndex);
+            static::$activeSheet = $currSheet = $obj->getSheet($sheetIndex);
 
             if (isset($options['mergeCells'])) {
                 /* 读取合并行列 */
@@ -535,6 +600,9 @@ class Excel{
             $rowCnt = $rows ? $rows : $currSheet->getHighestRow();
             $data   = [];
 
+            // 拆分单元格
+            // $currSheet->unmergeCells('B7:C10');
+
             /* 读取内容 */
             for ($_row = 1; $_row <= $rowCnt; $_row++) {
                 $isNull = true;
@@ -543,6 +611,9 @@ class Excel{
                     $cellName = Coordinate::stringFromColumnIndex($_column);
                     $cellId   = $cellName . $_row;
                     $cell     = $currSheet->getCell($cellId);
+
+                    //获取数据类型
+                    // $type = $cell->getDataType();
 
                     if (isset($options['format'])) {
                         /* 获取格式 */
@@ -593,7 +664,7 @@ class Excel{
      * @param integer $columnTotals 有效数据总列数
      * @return string|array
      */
-    private static function buildSheetColumnName(int $columnTotals){
+    static function buildSheetColumnName(int $columnTotals){
         $default = str_split("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         $code = $default;
         $deep = self::$maxColumnDeep;// A ~ AZ ~ BZ (默认最大支持77列)
@@ -621,7 +692,7 @@ class Excel{
      * @param string $h1_txt 大标题内容 默认空不显示大标题
      * @return array
      */
-    private static function parseHeaderSettings(array $options){
+    static function parseHeaderSettings(array $options){
         $titles = $options['filterTitle'];
         $h1_txt = $options['largeTitle'] ?? "";
         $___index = self::buildDataBufferSerialKey();
@@ -651,9 +722,9 @@ class Excel{
                         }
                     }else{
                         if($options['index']){
-                            $h1[0][$field] = ($field == $___index) ? $h1_item["text"] : "";
+                            $h1[0][$field] = ($field == $___index) ? $h1_txt : "";
                         }else{
-                            $h1[0][$field] = ($field == array_key_first($title)) ? $h1_item['text'] : "";
+                            $h1[0][$field] = ($field == array_key_first($title)) ? $h1_txt : "";
                         }
                     }
                 }
@@ -842,5 +913,74 @@ class Excel{
         $options['print'] = (isset($options['print']) && $options['print']) ? true : false;
         $options['index'] = (!isset($options['index']) || $options['index']) ? true : false;
         $options['hideTitle'] = (isset($options['hideTitle']) && $options['hideTitle']) ? true : false;
+    }
+
+    /**
+     * 在指定单元格写入图片
+     *
+     * @param string $imgPath 图片路径
+     * @param string $cell 单元格
+     * @param array $options 
+     *                  -- width integer <100> 图片宽
+     *                  -- height integer <100> 图片高
+     *                  -- offsetx integer <50> 图片偏移量
+     * @return void
+     */
+    private static function putImageToCell(string $imgPath, string $cell, array $options = []){
+        $options = array_merge([
+            "width" => 100,//图片宽
+            "height" => 100,//图片高
+            "offsetx" => 50,//设置图片偏移量
+        ], $options);
+        //图像写入操作
+        $drawing = new Drawing();
+        $drawing->setWorksheet(static::$activeSheet);
+        $drawing->setPath(realpath($imgPath));
+        $drawing->setWidth($options['width']);
+        $drawing->setHeight($options['height']);
+        $drawing->setOffsetX($options['offsetx']);
+        //将图片放置于单元格
+        $drawing->setCoordinates($cell);
+        unset($drawing, $options, $imageFileName, $cell);
+    }
+
+    /**
+     * 获取表格中的图片
+     *
+     * @param string $savePath 本地存储图片的位置
+     * @return array 返回各单元格图片存储在本地的位置
+     */
+    private static function getImageFromSheet(string $savePath):array{
+        //获取所有图像
+        $draws = static::$activeSheet->getDrawingCollection();
+        $savePath = rtrim(str_replace('\\','/',realpath($savePath)),'/').'/';
+        $list = [];
+        foreach ($draws as $drawing) {//$drawing 为 PhpOffice\PhpSpreadsheet\Worksheet\Drawing类的实例;
+            $coordi = $drawing->getCoordinates();//获取图像坐标 eg A4
+            //拆分成 ['A','4'];
+            // list($column, $row) = Coordinate::coordinateFromString($coordi);
+            $saveName = $savePath.$coordi.'_'. mt_rand(1000, 9999);
+            switch ($drawing->getExtension()) {
+                case 'jpg':
+                case 'jpeg':
+                    $saveName .= '.jpg';
+                    imagejpeg(imagecreatefromjpeg($drawing->getPath()),  $saveName);
+                    $list[$coordi] = $saveName;
+                    break;
+                case 'gif':
+                    $saveName .= '.gif';
+                    imagegif(imagecreatefromgif($drawing->getPath()),  $saveName);
+                    $list[$coordi] = $saveName;
+                    break;
+                case 'png':
+                    $saveName .= '.png';
+                    imagepng(imagecreatefrompng($drawing->getPath()), $saveName);
+                    $list[$coordi] = $saveName;
+                    break;
+            }
+            unset($coordi, $saveName, $drawing);
+        }
+        unset($draws, $savePath);
+        return $list;
     }
 }

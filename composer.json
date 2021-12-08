@@ -17,7 +17,14 @@
         "phpmailer/phpmailer": "6.1.6",
         "phpoffice/phpspreadsheet": "*",
         "lys/php-shard-upload": "^4.4",
-        "symfony/console": "^5.3"
+        "symfony/console": "^5.3",
+        "ext-json":"*",
+        "ext-openssl":"*",
+        "ext-mbstring":"*",
+        "ext-iconv":"*",
+        "ext-ctype":"*",
+        "ext-libxml":"*",
+        "ext-simplexml":"*"
     },
     "require-dev": { },
     "autoload": {

@@ -56,7 +56,11 @@ trait Develop{
     static function phpunit($classMethod, $args = [], $txt = ""){
         if($txt == ""){
             foreach($args as $v){
-                if(gettype($v) == 'string'){
+                if(is_callable($v)){
+                    $txt .= "\Closure";
+                }elseif(gettype($v) == 'object'){
+                    $txt .= "\Object";
+                }elseif(gettype($v) == 'string'){
                     $txt .="\"{$v}\"";
                 }else if($v === true){
                     $txt .="true";
