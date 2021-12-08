@@ -37,6 +37,39 @@ class Tools{
         return preg_match("/cli/i", $str ) ? true : false;
     }
 
+    //MD5|16位
+    static function md5_16($str)
+    {
+        return substr(md5($str), 8, 16);
+    }
+    
+    static function uuid($prefix = '')
+    {
+        $chars = md5(uniqid(mt_rand(), true));
+        $uuid = substr($chars, 0, 8) . '-';
+        $uuid .= substr($chars, 8, 4) . '-';
+        $uuid .= substr($chars, 12, 4) . '-';
+        $uuid .= substr($chars, 16, 4) . '-';
+        $uuid .= substr($chars, 20, 12);
+        return $prefix . $uuid;
+    }
+    //获取文件夹大小
+    static function getDirSize($dir)
+    {
+        static $sizeResult = 0;
+        $handle = opendir($dir);
+        while (false !== ($FolderOrFile = readdir($handle))) {
+            if ($FolderOrFile != "." && $FolderOrFile != "..") {
+                if (is_dir("$dir/$FolderOrFile")) {
+                    $sizeResult += getDirSize("$dir/$FolderOrFile");
+                } else {
+                    $sizeResult += filesize("$dir/$FolderOrFile");
+                }
+            }
+        }
+        closedir($handle);
+        return round(($sizeResult / 1048576), 2);
+    }
     /**
      * 获取系统类型
      * 
