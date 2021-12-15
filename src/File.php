@@ -437,16 +437,17 @@ class File{
     /**
 	 * 删除文件或目录
 	 *
-	 * @param string $dir
+	 * @param string $dir 目錄或文件
 	 * @return bool
 	 */
-	static function delete($dir){
+	static function delete($dirOrFile){
 		$each = function($dir) use (&$each){
 			if(!is_dir($dir)) return true;
 			$it = new \FilesystemIterator($dir);
 			$flag = true;
 			/**@var $file \SplFileInfo */
 			foreach($it as $file){
+
 				if($file->isDir()){
 					if($each($file->getPathname()) === true){
 						if(!@rmdir($file->getPathname()))
@@ -461,12 +462,18 @@ class File{
 			}
 			return $flag;
 		};
+		$dirOrFile = is_array($dirOrFile)? $dirOrFile : [$dirOrFile];
 
-		if($each($dir) === true){
-			if(!is_dir($dir) || @rmdir($dir)){
-				return true;
-			}
-		}
+        foreach($dirOrFile as $path){
+            $path = str_replace('\\','/', $path);
+            if($each($path) === true){
+                if(is_file($path)){
+                    @unlink($path);
+                }else if(!is_dir($path) || @rmdir($path)){
+                    // return true;
+                }
+            }
+        }
 		return false;
 	}
 }

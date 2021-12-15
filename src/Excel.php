@@ -44,7 +44,12 @@ class Excel{
      *                  //-- format         array <null>    设置格式，整列设置，例如['A' => 'General']
      *                  -- mergeCells     array <null>    设置合并单元格，例如['A1:J1' => 'A1:J1']
      *                  -- bold           array <true>    设置加粗样式，例如['A1', 'A2']
+     *
      *                  -- setARGB        array <true>    设置表头背景色，例如['A1', 'C1']
+     *                                                      --  true
+     *                                                      --  ['A1', 'C1']
+     *                                                      --  [["color"=>argb, "fontFill" => "solid", "cell" => "A1" ]]
+     *
      *                  -- alignCenter    array <true>    设置居中样式,默认全局居中 例如['A1', 'A2']
      *                  -- sumFields      array <null>    底部求和字段 ["db_field1" =>1000, "db_field2" => 19.34]
      *                  -- savePath       string <null>   保存路径，设置后则文件保存到服务器，不通过浏览器下载
@@ -295,29 +300,40 @@ class Excel{
             if ( isset($options['setARGB']) && is_array($options['setARGB']) ) {
                 //背景应用范围之制定特定单元格时，则应用于全部标题范围
                 $param = array_values($headers);
+                $__opts = ["setARGB" => [], "bold" => [], "alignCenter" => [] ];
                 if( isset($options['firstDataRowIndex']) && $options['firstDataRowIndex'] > 1){
                     for($i=1;$i<$options['firstDataRowIndex'];$i++){
                         foreach($param as $key=>$field){
-                            $options['setARGB'][] = (self::$sheetColumnNames[$key].$i);
-                            $options['bold'][] = (self::$sheetColumnNames[$key].$i);
-                            $options['alignCenter'][] = (self::$sheetColumnNames[$key].$i);
+                            $__opts['setARGB'][] = (self::$sheetColumnNames[$key].$i);
+                            $__opts['bold'][] = (self::$sheetColumnNames[$key].$i);
+                            $__opts['alignCenter'][] = (self::$sheetColumnNames[$key].$i);
                         }
                     }
                 }else{
                     foreach($param as $key=>$field){
-                        $options['setARGB'][] = (self::$sheetColumnNames[$key]."1");
-                        $options['bold'][] = (self::$sheetColumnNames[$key]."1");
-                        $options['alignCenter'][] = (self::$sheetColumnNames[$key]."1");
+                        $__opts['setARGB'][] = (self::$sheetColumnNames[$key]."1");
+                        $__opts['bold'][] = (self::$sheetColumnNames[$key]."1");
+                        $__opts['alignCenter'][] = (self::$sheetColumnNames[$key]."1");
                     }
                 }
+                $options['setARGB'] = array_merge($__opts['setARGB'], $options['setARGB']);
+                $options['bold'] = array_merge($__opts['bold'], $options['bold']);
+                $options['alignCenter'] = array_merge($__opts['alignCenter'], $options['alignCenter']);
 
                 if(!empty($options['setARGB'])){
-                    foreach ($options['setARGB'] as $sItem) {
-                        $activeSheet->getStyle($sItem)
-                            ->getFill()->setFillType(Fill::FILL_SOLID)
-                            ->getStartColor()->setARGB(Color::COLOR_YELLOW);
-                    } 
+                    foreach ($options['setARGB'] as $k => $sItem) {
+                        (is_string($sItem)) && $sItem = ["cell" => $sItem];
+                        $options['setARGB'][$k] = $default = array_merge([
+                            "color" => Color::COLOR_YELLOW,  "fontFill" => Fill::FILL_SOLID, "cell" => ""
+                        ], $sItem);
+                        if(!$default["cell"])
+                            continue;
+                        $activeSheet->getStyle($default["cell"])
+                            ->getFill()->setFillType($default["fontFill"] ?? Fill::FILL_SOLID)
+                            ->getStartColor()->setARGB($default["color"] ?? Color::COLOR_YELLOW);
+                    }
                 }
+                // return $options;
                 unset($options['setARGB']);
             }
 
@@ -447,10 +463,11 @@ class Excel{
                 return $fileName . '.xlsx';
             };
 
-            if(isset($options['savePath']) && @is_readable($options['savePath'])){
-                $savePath = $bulidFileName($options['savePath']);
+            $fileName = $bulidFileName($fileName ?? ($options['sheetName'] ?? ""));
+            if(isset($options['savePath']) && @is_readable($options['savePath']) && is_dir($options['savePath'])){
+                $savePath = realpath($options['savePath']). DIRECTORY_SEPARATOR .$fileName;
             }else{
-                $fileName = $bulidFileName($fileName ?? ($options['sheetName'] ?? ""));
+
                 //直接导出Excel，无需保存到本地，输出07Excel文件
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 header(
@@ -472,6 +489,9 @@ class Excel{
             $objSpreadsheet->disconnectWorksheets();
             unset($objSpreadsheet);
             ob_end_flush();
+            if(strrpos($savePath, $fileName)){
+                return $savePath;
+            }
             return true;
         } catch (Exception $e) {
             throw $e;

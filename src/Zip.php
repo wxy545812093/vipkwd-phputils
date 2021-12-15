@@ -43,23 +43,22 @@ class Zip{
                     }
                 }
                 $zip->setArchiveComment('vipkwd/utils');
-                $zip->addFromString('zipPackage-from.txt', "
-                    This zip package create by PHP utils with \"vipkwd/utils\"
+                $zip->addFromString('pakg-license.txt', "
+This zip package create by PHP utils with \"vipkwd/utils\"
 
-                    -- composer use:
-                    --      composer require vipkwd/utils
-                    --      
-                    --      include \"vendor/autoload.php\"
-                    --      Vipkwd\Utils\Tools::addZip(\"demo.zip\", \".\");
-                    --      //And a zip package was created;
-                ");
+-- composer use:
+--      composer require vipkwd/utils
+--      
+--      include \"vendor/autoload.php\"
+--      Vipkwd\Utils\Zip::addZip(\"demo.zip\", \".\");
+--      //And a zip package was created;");
                 if(is_string($fileOrPaths)){
                     $fileOrPaths =[$fileOrPaths];
                 }
                 foreach ($fileOrPaths as $file) {
                     if(is_dir($file)){
                         Tools::dirScan($file, function($_file, $_path) use(&$zip){
-                            $zip->addFile($_path."/".$_file);
+                            $zip->addFile($_path."/".$_file, basename($_file));
                         });
                     }else{
                         //重命名
@@ -69,7 +68,7 @@ class Zip{
                         // $zip->addFile($file, basename($file));
 
                         //添加文件并保留目录结构
-                        $zip->addFile($file);
+                        $zip->addFile($file, basename($file));
                     }
                 }
 				// 关闭Zip对象
