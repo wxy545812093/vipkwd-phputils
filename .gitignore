@@ -2,7 +2,6 @@
 vendor/
 composer.lock
 test.php
-examples
 composer copy.json
 src/Libs/Block.php
 src/Libs/Cookie.php

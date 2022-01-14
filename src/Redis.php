@@ -45,13 +45,13 @@ class Redis{
 
     private function __construct($config,$attr=array()) {
         $this->attr = array_merge($this->attr,$attr);
-            try{
-             $this->redis = new \Redis();
-            }catch(\Exception $e){
-             throw new \Exception($e->getMessage());
-            }
-        $this->port = $config['port'] ? $config['port'] : 6379;
-        $this->host = $config['host'];
+        try{
+            $this->redis = new \Redis();
+        }catch(\Exception $e){
+            throw new \Exception($e->getMessage());
+        }
+        $this->port = $config['port'] ?? 6379;
+        $this->host = $config['host'] ?? '127.0.0.1';
         $this->redis->connect($this->host, $this->port, $this->attr['timeout']);
         if(isset($config['auth']) && $config['auth']) {
             $this->auth($config['auth']);
@@ -67,7 +67,13 @@ class Redis{
      * 如果连接超时，将会重新建立一个连接
      * 
      * @param array $config
+     *                  -- host <'127.0.0.1'>
+     *                  -- port <'6379'>
+     *                  -- auth <''>
+     * 
      * @param int|array $attr <[]>
+     *                      -- timeout <30>
+     *                      -- db_id <0>
      * @return Vipkwd\Utils\Redis
      */
     static function instance(array $config, $attr = array()) {
@@ -79,17 +85,14 @@ class Redis{
         }
         $attr['db_id'] = $attr['db_id'] ?? 0;
         $k = md5(serialize($config).$attr['db_id']);
+        $flag = true;
         if( empty(static::$_instance) || !(static::$_instance[$k] instanceof self)) {
-            //var_dump("s2");
-            static::$_instance[$k] = new self($config,$attr);
-            static::$_instance[$k]->k = $k;
-            static::$_instance[$k]->dbId = $attr['db_id'];
-            //如果不是0号库，选择一下数据库。
-            if($attr['db_id'] != 0) {
-             static::$_instance[$k]->select($attr['db_id']);
-            }
+            $flag = false;
         } elseif( time() > static::$_instance[$k]->expireTime) {
             static::$_instance[$k]->close();
+            $flag = false;
+        }
+        if($flag === false){
             static::$_instance[$k] = new self($config,$attr);
             static::$_instance[$k]->k = $k;
             static::$_instance[$k]->dbId= $attr['db_id'];
@@ -110,7 +113,8 @@ class Redis{
         return $this->redis;
     }
 
-    /*****************hash表操作函数*******************/
+    // https://zhuanlan.zhihu.com/p/97240326
+    /************* (Hash) 字典操作函数 *******************/
 
         /**
          * 获取hash表字段的值
@@ -251,8 +255,7 @@ class Redis{
             return $this->redis->hGetAll($key);
         }
 
-    
-     /*********************有序集合操作*********************/
+    /************* (Sorted Set) 有序集合操作 *********************/
 
         /**
          * 向有序集合添加一个元素
@@ -296,10 +299,11 @@ class Redis{
          * @param string $key
          * @param int $start
          * @param int $end
+         * @param boolean $flag
          * @return array|bool
          */
-        public function zRange(string $key, int $start, int $end) {
-            return $this->redis->zRange($key,$start,$end);
+        public function zRange(string $key, int $start=0, int $end=-1, bool $flag=true) {
+            return $this->redis->zRange($key, $start, $end, $flag);
         }
 
         /**
@@ -308,26 +312,33 @@ class Redis{
          * @param string $key
          * @param int $start
          * @param int $end
+         * @param boolean $flag
          * @return array|bool
          */
-        public function zRevRange(string $key, int $start, int $end) {
-            return $this->redis->zRevRange($key,$start,$end);
+        public function zRevRange(string $key, int $start=0, int $end=-1, bool $flag=true) {
+            return $this->redis->zRevRange($key, $start, $end, $flag);
         }
 
 
         /**
          * 获取集合Order递增后,start~end区间元素
-         * min和max可以是-inf和+inf　表示最大值，最小值
+         * min和max可以是-inf和+inf　表示最小值, 最大值
          * @param string $key
-         * @param int $start
-         * @param int $end
+         * @param mixed $min 
+         * @param mixed $max
          * @param array $option 参数
          *                   withscores=>true，表示数组下标为Order值，默认返回索引数组
          *                   limit=>array(0,1) 表示从0开始，取一条记录。
          * @return array|bool
          */
-        public function zRangeByScore(string $key, int $start, int $end, array $option=[]) {
-            return $this->redis->zRangeByScore($key,$start,$end,$option);
+        public function zRangeByScore(string $key, $min="-inf", $max="+inf", array $option=[]) {
+            $min = strval($min);
+            $max = strval($max);
+            ((strpos($min, '>') !== false || strpos($min, '<') !== false) && (strpos($min, "=") === false ) ) && $min = "(".$min;
+            ((strpos($max, '<') !== false || strpos($max, '>') !== false) && (strpos($max, "=") === false ) ) && $max = "(".$max;
+            $min = str_replace(["<",">","="],'', $min);
+            $max = str_replace(["<",">","="],'', $max);
+            return $this->redis->zRangeByScore($key,$min,$max,$option);
         }
 
 
@@ -417,7 +428,7 @@ class Redis{
             return $this->redis->zCard($key);
         }
 
-    /*********************队列操作命令************************/
+    /************* (List) 队列操作命令 *********************/
 
         /**
          * 队列右侧插入元素
@@ -477,10 +488,10 @@ class Redis{
          * 返回队列指定区间的元素
          * 
          * @param string $key
-         * @param int $start
-         * @param int $end
+         * @param int $start <0>
+         * @param int $end <-1>
          */
-        public function lRange(string $key,int $start, int $end) {
+        public function lRange(string $key,int $start=0, int $end=-1) {
             return $this->redis->lrange($key,$start,$end);
         }
 
@@ -541,7 +552,7 @@ class Redis{
             return $this->redis->rPop($key);
         }
 
-    /*************redis字符串操作命令*****************/
+    /************* (String) 字符串操作命令 *****************/
 
         /**
          * 设置一个key
@@ -597,7 +608,7 @@ class Redis{
             return $this->redis->mset($arr);
         }
 
-    /*************redis　无序集合操作命令*****************/
+    /************* (Set) 无序集合操作命令 *****************/
 
         /**
          * 返回无序集合所有元素
@@ -629,10 +640,11 @@ class Redis{
          */
           protected function sAdd(string $key,$value) {
             if(!is_array($value))
-            $arr=array($value); else
-            $arr=$value;
+                $arr=array($value);
+            else
+                $arr=$value;
             foreach($arr as $row)
-            $this->redis->sAdd($key,$row);
+                $this->redis->sAdd($key,$row);
         }
 
         /**
@@ -655,7 +667,7 @@ class Redis{
             return $this->redis->srem($key,$value);
         }
 
-    /*************redis管理操作命令*****************/
+    /************* 管理操作命令 *****************/
 
         /**
          * 选择(切换)数据库
@@ -729,7 +741,9 @@ class Redis{
          * @return mixed
          */
         public function del(string $key) {
-            return $this->redis->del($key);
+            if($this->exists($key))
+                return $this->redis->del($key);
+            return 1;
         }
 
         /**
@@ -837,13 +851,13 @@ class Redis{
 
         public function getConnInfo() {
             return array(
-            'host'=>$this->host,
-            'port'=>$this->port,
-            'auth'=>$this->auth
+                'host'=>$this->host,
+                'port'=>$this->port,
+                'auth'=>$this->auth
             );
         }
      
-    /*********************事务的相关方法************************/
+    /************* 事务的相关方法 *****************/
 
         /**
          * 监控key,就是key添加乐观锁
@@ -965,15 +979,15 @@ class Redis{
         public function buildDelCmd(string $keys,int $dbId=0):string{
             $redisInfo=$this->getConnInfo();
             $cmdArr=array(
-            'redis-cli',
-            '-a',
-            $redisInfo['auth'],
-            '-h',
-            $redisInfo['host'],
-            '-p',
-            $redisInfo['port'],
-            '-n',
-            $dbId,
+                'redis-cli',
+                '-a',
+                $redisInfo['auth'],
+                '-h',
+                $redisInfo['host'],
+                '-p',
+                $redisInfo['port'],
+                '-n',
+                $dbId,
             );
             $redisStr=implode(' ', $cmdArr);
             $cmd="{$redisStr} KEYS \"{$keys}\" | xargs {$redisStr} del";

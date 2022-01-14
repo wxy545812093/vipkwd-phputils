@@ -557,7 +557,7 @@ class Db{
         $list = [];
         foreach($data as $k => $v){
             if(is_array($v)){
-                $kk = str_replace('[JSON]','', $k);
+                $kk = str_ireplace('[JSON]','', $k);
                 $list[ $kk."[JSON]" ] = $v;
                 unset($data[$k], $kk);
             }
