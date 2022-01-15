@@ -12,6 +12,153 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 // use Vipkwd\Utils\Dev;
+
+trait redisGeo{
+
+    private static $geoKey = "geo_point_index";
+
+    /**
+     * = 添加成员的经纬度信息
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $name
+     * @return void
+     */
+    public function geoAdd($lon, $lat, $name){
+        return $this->redis->rawCommand('geoadd', static::$geoKey, $lon, $lat, $name);
+    }
+
+    /**
+     * = 获取两个地理位置的距离
+     * -- 单位：m(米，默认)， km(千米)， mi(英里)， ft(英尺)
+     *
+     * @param string $city1
+     * @param string $city2
+     * @param string $unit
+     * @return string
+     */
+    public function geoDist(string $city1, string $city2, string $unit="m"){
+        return $this->redis->rawCommand('geodist', static::$geoKey, $city1, $city2, $unit);
+    }
+
+    /**
+     * = 获取成员的经纬度
+     *
+     * @param string $city
+     * @return array
+     */
+    public function geoPos(string $city):array{
+        return $this->redis->rawCommand("geopos", static::$geoKey, $city);
+    }
+
+    /**
+     * = 获取成员的经纬度hash
+     * --（geohash表示法，便于检索和存储）
+     *
+     * @param string $city1
+     * @param string $city2
+     * @return array
+     */
+    public function geoHash(string ...$citys):array{
+        return $this->redis->rawCommand("geohash", static::$geoKey, ...$citys);
+    }
+
+    /**
+     * = 查询以经纬度为圆心，$num $unit范围成员
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadius($lon, $lat, $num, string $unit='m'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit);
+    }
+
+    /**
+     * = WITHCOORD：表获取成员经纬度
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadiusWithcoord($lon, $lat, $num, string $unit='m'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit, 'WITHCOORD');
+    }
+
+    /**
+     * = WITHDIST：表获取到圆心的距离
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadiusWithdist($lon, $lat, $num, string $unit='m'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit, 'WITHDIST');
+    }
+
+    /**
+     * = WITHHASH：表获取成员经纬度HASH值
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadiusWithhash($lon, $lat, $num, string $unit='m'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit, 'WITHHASH');
+    }
+
+    /**
+     * = COUNT 数量，表示限制获取成员的数量
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $length
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadiusCount($lon, $lat, $num, string $unit='m', $length='10'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit, 'COUNT', $length);
+    }
+
+    /**
+     * = 排序由圆心获取的范围内成员
+     * 
+     * -- ASC 根据圆心位置，从近到远的返回元素
+     * -- DESC 根据圆心位置，从远到近的返回元素
+     *
+     * @param [type] $lon
+     * @param [type] $lat
+     * @param [type] $num
+     * @param string $unit
+     * @param string $sort
+     * @return array
+     */
+    public function geoRadiusOrderby($lon, $lat, $num, string $unit='m', string $sort='ASC'):array{
+        return $this->redis->rawCommand("georadius", static::$geoKey, $lon, $lat, $num, $unit, $sort);
+    }
+
+    /**
+     * = 查询以$city为圆心，$num $unit范围成员
+     *
+     * @param string $city
+     * @param [type] $num
+     * @param string $unit
+     * @return array
+     */
+    public function geoRadiusByMember(string $city, $num, string $unit='m'):array{
+        return $this->redis->rawCommand("georadiusbymember", static::$geoKey, $city, $num, $unit);
+    }
+}
 /**
 * redis操作类
 * 说明，任何为false的串，存在redis中都是空串。
@@ -43,6 +190,8 @@ class Redis{
     protected $host;
     protected $port;
 
+    use redisGeo;
+    
     private function __construct($config,$attr=array()) {
         $this->attr = array_merge($this->attr,$attr);
         try{
@@ -50,7 +199,7 @@ class Redis{
         }catch(\Exception $e){
             throw new \Exception($e->getMessage());
         }
-        $this->port = $config['port'] ?? 6379;
+        $this->port = $config['port'] ? intval($config['port']) : 6379;
         $this->host = $config['host'] ?? '127.0.0.1';
         $this->redis->connect($this->host, $this->port, $this->attr['timeout']);
         if(isset($config['auth']) && $config['auth']) {

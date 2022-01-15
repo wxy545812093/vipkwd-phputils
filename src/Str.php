@@ -16,6 +16,12 @@ class Str{
 
     /**
      * Hash对比（hash_equals函数)
+     * 
+     * -e.g: phpunit("Str::hashEquals", ["11", "22"]);
+     * -e.g: phpunit("Str::hashEquals", [false, false]);
+     * -e.g: phpunit("Str::hashEquals", [false, 0]);
+     * -e.g: phpunit("Str::hashEquals", ["abc", "abc"]);
+     * -e.g: phpunit("Str::hashEquals", ['', 0]);
      *  
      * @param string $str1
      * @param string $str2
@@ -36,6 +42,7 @@ class Str{
         }
         return hash_equals($str1, $str2);
     }
+
     /**
      * HTML转实体符
      * 
@@ -261,8 +268,15 @@ class Str{
 
     /**
      * 统计字符长度(加强版)
+     * 
+     * -e.g: phpunit("Str::strLenPlus",['$&】3张三李四王麻子']);
+     * -e.g: phpunit("Str::strLenPlus",['&】3张三李四王麻子']);
+     * -e.g: phpunit("Str::strLenPlus",['】3张三李四王麻子']);
+     * -e.g: phpunit("Str::strLenPlus",['3张三李四王麻子']);
+     * -e.g: phpunit("Str::strLenPlus",['张三李四王麻子']);
+     * -e.g: phpunit("Str::strLenPlus",['三李四王麻子']);
      *
-     * @param [type] $str
+     * @param string $str
      * @return int
      */
     static function strLenPlus($str): int{
@@ -296,6 +310,11 @@ class Str{
 
     /**
      * 字符串填充(加强版)
+     * 
+     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 10]);
+     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 11]);
+     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 12]);
+     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 16]);
      *
      * @param string $string
      * @param integer $length
@@ -333,16 +352,24 @@ class Str{
         return $string;
     }
 
-    /*
-    markSearchWords("xxxx", "company", [
-        "values" => [ "company" => ["%alipay","youtobe"] ],
-        "operators" => ["company" => "like"]
-        "operators" => ["company" => "like%"]
-        "operators" => ["company" => "eq"]
-    ]);
-    */
     /**
      * 文本搜索高亮标注
+     * 
+     * -e.g: $input="uh~,这里不仅有alipay,youtube.com,还有10musume.com, alipay";
+     * -e.g: $field="text";
+     * -e.g: $search=array();
+     * -e.g: $search["values"]=[ "text" => ["%alipay","u%","%com%","%youtu"] ];
+     * 
+     * -e.g: $search["operators"]=["text" => "like"];
+     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
+     * 
+     * 
+     * -e.g: $search["operators"]=["text" => "like%"];
+     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
+     * 
+     * 
+     * -e.g: $search["operators"]=["text" => "eq"];
+     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
      *
      * @param string $input
      * @param string $field
