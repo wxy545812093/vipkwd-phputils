@@ -19,8 +19,6 @@ class Zip{
 
     /**
      * 文件打包（zipfile不存在将自动创建)
-     *
-     * :-e-: Vipkwd\Utils\Zip::addZip();
      * 
      * @param string $zipFile 打包后的文件名
      * @param string|array $fileOrPaths 打包文件组
@@ -84,21 +82,21 @@ This zip package create by PHP utils with \"vipkwd/utils\"
 	/**
      * 解压压缩包
      * 
-     * @param string $zipFile 要解压的压缩包
-     * @param string $dest 解压到指定目录
+     * @param string $zipFile 要解压的压缩包文件名
+     * @param string $destPath 解压到指定目录
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
      * 
      * @return boolean|null
      */
-    static public function unZip(string $zipFile, string $dest, ?string $password = ""): ?bool{
+    static public function unZip(string $zipFile, string $destPath, ?string $password = ""): ?bool{
         //检测要解压压缩包是否存在
         if(!is_file($zipFile)){
             return false;
         }
-		return self::watchException(function()use(&$zipFile, &$dest, $password){
+		return self::watchException(function()use(&$zipFile, &$destPath, $password){
 			//检测目标路径是否存在
-			if(!is_dir($dest)){
-				mkdir($dest, 0777, true);
+			if(!is_dir($destPath)){
+				mkdir($destPath, 0777, true);
 			}
             $zip = new ZipArchive();
             if($zip->open($zipFile)){
@@ -107,9 +105,9 @@ This zip package create by PHP utils with \"vipkwd/utils\"
                         throw new Exception('Set password failed');
                     }
                 }
-                $zip->extractTo($dest);
+                $zip->extractTo($destPath);
                 $zip->close();
-				unset($zipFile, $dest);
+				unset($zipFile, $destPath);
 				return true;
             }
 			unset($zip);
@@ -120,13 +118,13 @@ This zip package create by PHP utils with \"vipkwd/utils\"
 	/**
 	 * 追加文件到zip
 	 *
-	 * @param string $zipFile
-	 * @param string $appendFile
-	 * @param string $content
+	 * @param string $zipFile 压缩包名
+	 * @param string $appendFile 追加的文件名
+	 * @param string $content 追加的文件内容
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
 	 * @return boolean|null
 	 */
-	static function appendFileContent(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{
+	static function append(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{
 
 		return self::watchException(function()use(&$zipFile, &$appendFile, &$content, $password){
 			$zip = new ZipArchive;

@@ -8,7 +8,7 @@
  */
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils\Libs;
+namespace Vipkwd\Utils;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -33,14 +33,10 @@ class Console extends Command {
 		"__call"
 	];
 
-	private static function getConsoleName(){
-		return "dump";
-	}
-
 	protected function configure(){
 		// return $this->__default_configure();
 		$this->setName( self::getConsoleName() )
-			->setDescription('Show the class list of <info>Vipkwd-Utils</info> package')
+			->setDescription('Show the class list of <info>Vipkwd/utils</info> package')
 			->setHelp('This command allow you to View/Show the doc of class methods list')
 			->addArgument('className', InputArgument::OPTIONAL, 'Show the method list of "className".',"")
 			->addOption("method", "m", InputOption::VALUE_OPTIONAL,'Show the "method" method in "className" class.',"")
@@ -63,9 +59,8 @@ class Console extends Command {
 		if($className == ""){
 			$className = "list";
 		}else{
-			$path = realpath(__DIR__."/../");
 			$className = ucfirst($className);
-			if(!file_exists($path.'/'.$className.".php")){
+			if(!file_exists( static::getSrcPath() .'/'.$className.".php")){
 				$output->writeln('');
 				$output->writeln('[Notice] Class "<info>'.$className.'</info>" not found in Package.');
 				$output->writeln('');
@@ -87,7 +82,7 @@ class Console extends Command {
 	}
 
 	private static function buildMethodListDoc(&$input, &$output, $cmd){
-		$path = realpath(__DIR__."/../");
+		$path = static::getSrcPath();
 		$output->writeln(self::createTRLine("+", "-"));
 		$output->writeln(self::createTRLine("|",true, true));
 		$output->writeln(self::createTRLine("+", "-"));
@@ -120,7 +115,7 @@ class Console extends Command {
 	}
 
 	private static function parseClass($class, &$input, &$output, $index, $classDescript=null){
-		$className = str_replace('Libs', $class, __NAMESPACE__);
+		$className = str_ireplace("\\Libs", "", __NAMESPACE__) ."\\".$class;
 		$class = new \ReflectionClass($className);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		//剔除未公开的方法
@@ -132,10 +127,10 @@ class Console extends Command {
 		}
 		if( self::$showList === true){
 			$output->writeln(self::createTRLine("|", [
-				"Idx" => ($index+1)."",
+				"Idx" => str_pad(strval($index+1), 2, "0", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
-				"Method" => "Total: ".count($methods),
+				"Method" => "Et: ".count($methods),
 				"Type" => "#",
 				"Arguments" => "#",
 				"Eg" => "#",
@@ -363,6 +358,14 @@ class Console extends Command {
 		$has = preg_match("/@type\ +public/i", $comment);
 		return in_array($method, self::$shieldMethods) && !$has;
 	}
+
+    private static function getSrcPath(){
+        return realpath(__DIR__."/../../src/");
+    }
+	private static function getConsoleName(){
+		return "dump";
+	}
+
 	/**
 	 * console的标准配置demo
 	 *

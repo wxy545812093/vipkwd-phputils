@@ -37,25 +37,56 @@ class Tools{
         return preg_match("/cli/i", $str ) ? true : false;
     }
 
-    //MD5|16位
-    static function md5_16($str)
-    {
+    /**
+     * MD5|16位
+     * -e.g: echo "\md5(\"admin\"); //".md5('admin');
+     * -e.g: phpunit("Tools::md5_16",["admin"]);
+     * 
+     * @param string $str
+     * @return string
+     */
+    static function md5_16(string $str):string{
         return substr(md5($str), 8, 16);
     }
     
-    static function uuid($prefix = '')
-    {
-        $chars = md5(uniqid(mt_rand(), true));
-        $uuid = substr($chars, 0, 8) . '-';
-        $uuid .= substr($chars, 8, 4) . '-';
-        $uuid .= substr($chars, 12, 4) . '-';
-        $uuid .= substr($chars, 16, 4) . '-';
+    /**
+     * 生成UUID
+     * 
+     * -e.g: phpunit("Tools::uuid");
+     * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字"]);
+     * -e.g: phpunit("Tools::uuid",[false, "99"]);
+     * -e.g: phpunit("Tools::uuid",[true]);
+     * -e.g: phpunit("Tools::uuid",[true, "0000"]);
+     * -e.g: phpunit("Tools::uuid",[true, "00000000000000"]);
+     *
+     * @param bool $toUppercase <false>
+     * @param string $prefix 前缀：仅支持英文字符与数字 <"">
+     * @param string $separator 分隔符 <"-">
+     * @return string
+     */
+    static function uuid(bool $toUppercase = false, string $prefix = '', string $separator="-"):string{
+        $prefix && $prefix = preg_replace("/[^\da-zA-Z]/","", $prefix);
+        $chars = md5(uniqid(strval(mt_rand()), true));
+        $uuid = substr($prefix . substr($chars, 0, 8), 0, 8) . $separator;
+        $uuid .= substr($chars, 8, 4) . $separator;
+        $uuid .= substr($chars, 12, 4) . $separator;
+        $uuid .= substr($chars, 16, 4) . $separator;
         $uuid .= substr($chars, 20, 12);
-        return $prefix . $uuid;
+        return $toUppercase ? strtoupper($uuid) : strtolower($uuid);
     }
-    //获取文件夹大小
-    static function getDirSize($dir)
-    {
+
+    /**
+     * 获取文件夹大小
+     * 
+     * -e.g: phpunit("Tools::getDirSize",["./"]);
+     *
+     * @param string $dir
+     * @return float
+     */
+    static function getDirSize(string $dir):float{
+        if(!is_dir($dir)){
+            return "\"$dir\" is not a directory";
+        }
         static $sizeResult = 0;
         $handle = opendir($dir);
         while (false !== ($FolderOrFile = readdir($handle))) {
@@ -70,6 +101,7 @@ class Tools{
         closedir($handle);
         return round(($sizeResult / 1048576), 2);
     }
+
     /**
      * 获取系统类型
      * 
@@ -139,16 +171,25 @@ class Tools{
     /**
      * get请求
      *
+     * -e.g: phpunit("Tools::get",["http://www.vipkwd.com/static/js/idcard.js"]);
+     * 
      * @param string $url URL地址
+     * @param array $data 请求数据 <[]>
      * @param array $header 请求头 <[]>
      *
      * @return mixed
      */
-    static public function get(string $url, array $header =[]){
+    static function get(string $url, array $data = [], array $header =[]){
         $ch = curl_init();
 
         if(!empty($header)){
             curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        }
+        if (!empty($data)) {
+            if(strrpos($url, "?") > 0 ){
+                $url = substr($url, 0, strrpos($url, "?")-1);
+            }
+            $url = $url . '?' . http_build_query($data);
         }
 
         curl_setopt($ch,CURLOPT_URL, $url);
@@ -165,6 +206,8 @@ class Tools{
 
     /**
      * Post请求
+     * 
+     * -e.g: phpunit("Tools::post",["http://www.vipkwd.com/static/js/idcard.js"]);
      *
      * @param string $url URL地址
      * @param string $param <""> 发送参数
@@ -173,7 +216,7 @@ class Tools{
      *
      * @return mixed
      */
-    static public function post(string $url, string $param="", string $dataType = 'form', array $header = []){
+    static function post(string $url, string $param="", string $dataType = 'form', array $header = []){
         $ch = curl_init();
         $dataTypeArr = [
             'form' => ['content-type: application/x-www-form-urlencoded;charset=UTF-8'],
@@ -197,6 +240,7 @@ class Tools{
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HEADER, FALSE);
         $result = curl_exec($ch);
         curl_close($ch);
         return $result;
@@ -787,4 +831,19 @@ class Tools{
         return (json_last_error() == JSON_ERROR_NONE);
     }
 
+    /**
+     * 数组转多规格SKU
+     * 
+     * -e.g: $input=array();
+     * -e.g: $input[]=[["id" => 1, "name" => "红色"], ["id" => 2, "name" => "黑色"], ["id" => 3, "name" => "蓝色"]];
+     * -e.g: $input[]=[["id" => 4, "name" => "32G"], ["id" => 5, "name" => "64G"],];
+     * -e.g: phpunit("Tools::arrayToSku",[$input]);
+     * 
+     * @param array $input 排列的数组
+     * 
+     * @return array
+     */
+    static function arrayToSku(array $input){
+        return Arr::arrayArrRange($input);
+    }
 }

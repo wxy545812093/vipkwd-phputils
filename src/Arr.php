@@ -137,6 +137,27 @@ class Arr{
         }
         return $result;
     }
+    
+    /**
+     * 判断数组中指定键是否为数组
+     *
+     * -e.g: echo '$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]]';$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]];
+     * -e.g: phpunit("Arr::isArray", [$arr,"id"]);
+     * -e.g: phpunit("Arr::isArray", [$arr,"mobile"]);
+     * 
+     * @param array $arr
+     * @param string $field
+     * @return boolean
+     */
+    static function isArray(array $arr, string $field):bool{
+        if(!is_array($arr)){
+            return false;
+        }
+        if (!isset($arr[$field]) || !is_array($arr[$field])) {
+            return false;
+        }
+        return true;
+    }
 
     /**
      * 二维数组去重

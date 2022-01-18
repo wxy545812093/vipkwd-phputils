@@ -1,9 +1,17 @@
 #!/usr/bin/env php
 <?php
+$composerFile = __DIR__.'/composer.json';
+if(!file_exists($composerFile)){
+    echo "\r\n";
+    echo sprintf("\033[31m  Missing file: composer.json \033[0m");
+    echo "\r\n\r\n";
+    exit;
+}
 
+$composer = json_decode(file_get_contents($composerFile));
 define('VIPKWD_START', microtime(true));
-define('VIPKWD_VERSION', '1.0.9');
-
+define('VIPKWD_PACKAGE_NAME', ucfirst($composer->name ?? "Vipkwd/utils"));
+define('VIPKWD_PACKAGE_VERSION', $composer->version ?? "dev");
 /*
 |--------------------------------------------------------------------------
 | Register The Auto Loader
@@ -55,7 +63,7 @@ function libcheck($lib){
 if(!class_exists("Symfony\\Component\\Console\\Application")){
     libcheck("symfony/console");
 }
-if(!class_exists("Vipkwd\\Utils\\Libs\\Console")){
+if(!class_exists("Vipkwd\\Utils\\Console")){
     libcheck("vipkwd/utils");
 }
 
@@ -70,7 +78,7 @@ if(!class_exists("Vipkwd\\Utils\\Libs\\Console")){
 |
 */
 
-$application = new Symfony\Component\Console\Application("Vipkwd/Tools", VIPKWD_VERSION);
+$application = new Symfony\Component\Console\Application(VIPKWD_PACKAGE_NAME, VIPKWD_PACKAGE_VERSION);
 
 /*
 |--------------------------------------------------------------------------
@@ -82,5 +90,5 @@ $application = new Symfony\Component\Console\Application("Vipkwd/Tools", VIPKWD_
 | or another output device for the developers. Here goes nothing!
 |
 */
-$application->add(new Vipkwd\Utils\Libs\Console());
+$application->add(new Vipkwd\Utils\Console());
 $application->run();

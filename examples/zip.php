@@ -4,6 +4,14 @@ use Vipkwd\Utils\Zip;
 use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\File;
 
-Zip::addZip("vendor.addzip.zip", "../");
-Zip::unZip("vendor.addzip.zip", "vendor___");
-Dev::isCli() ? Dev::dump("download success") : File::download("vendor.addzip.zip","vendor_demo.zip");
+$zipName = "vendor.addzip.zip";
+$unzipName = "vendor___";
+Zip::addZip($zipName, "../");
+Zip::unZip($zipName, $unzipName);
+Dev::isCli() ? Dev::dump([
+  "result" => "Success",
+  "path" => [
+    "create" => __DIR__.'/'.$zipName,
+    "unzip"  => __DIR__.'/'.$unzipName 
+  ]
+]) : File::download($zipName,"vendor_demo.zip");
