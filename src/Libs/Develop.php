@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @name 开发调试函数
  * @author vipkwd <service@vipkwd.com>
@@ -10,6 +9,8 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs;
+
+use \Awesomite\VarDumper\LightVarDumper;
 
 trait Develop{
     /**
@@ -25,6 +26,29 @@ trait Develop{
         if(self::isCli() == false){ echo "</pre>";}
         $exit && exit;
     }
+
+    /**
+     * print_r 扩展版
+     *
+     * @param mixed $data
+     * @param boolean $exit
+     * @return void
+     */
+    static function dumper($data, $exit = false){
+        if(!class_exists(LightVarDumper::class)){
+            return self::dump($data, $exit);
+        }
+        (new LightVarDumper())
+            // ->setIndent('    ')
+            ->setMaxChildren(9999)
+            ->setMaxFileNameDepth(12) //文件path深度
+            // ->setMaxDepth(30)
+            // ->setMaxLineLength(5)
+            ->setMaxStringLength(4999)//字符串打印前 xx 位
+            ->dump($data);
+        $exit && exit;
+    }
+
     /**
      * 网页打印var_dump 
      *
@@ -38,6 +62,7 @@ trait Develop{
         if(self::isCli() == false){ echo "</pre>";}
         $exit && exit;
     }
+
     /**
      * Console 打印
      *

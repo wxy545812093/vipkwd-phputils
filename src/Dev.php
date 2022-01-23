@@ -12,5 +12,6 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 class Dev{
+    const SEPA = \DIRECTORY_SEPARATOR;
     use \Vipkwd\Utils\Libs\Develop;
 }

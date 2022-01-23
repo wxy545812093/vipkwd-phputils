@@ -15,12 +15,12 @@
     "license": "MIT",
     "require": {
         "php": ">=7.0",
+        "awesomite/var-dumper": "dev-master",
+        "lys/php-shard-upload": "^4.4",
         "phpmailer/phpmailer": "6.1.6",
         "phpoffice/phpspreadsheet": "*",
-        "lys/php-shard-upload": "^4.4",
         "symfony/console": "^5.3"
     },
-    "require-dev": { },
     "autoload": {
         "psr-4": {
             "Vipkwd\\Utils\\": ["src/","support/libs/"]

@@ -22,6 +22,7 @@ use Vipkwd\Utils\{Str,Dev};
 
 class Console extends Command {
 	
+	private static $methodsOrderBy = true;
 	private static $showList = true;
 	private static $showMethod = false;
 	private static $testMethod = false;
@@ -141,6 +142,16 @@ class Console extends Command {
 
 		//统计被忽略的方法有多少个
 		$methodContinues = 0;
+		//已开启 按自然升序 打印类方法
+		if(static::$methodsOrderBy){
+			$methodsSort = [];
+			foreach($methods as $method){
+				$methodsSort[ $method->getName() ] = $method;
+			}
+			ksort($methodsSort);
+			$methods = array_values($methodsSort);
+			unset($methodsSort);
+		}
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
 			$comment = $method->getDocComment();
@@ -263,7 +274,6 @@ class Console extends Command {
 		if(count($methods) == $methodContinues && self::$showMethod !== false){
 			$output->writeln( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
 		}
-		return ;
 	}
 
 	/**
