@@ -10,7 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\{Tools, File};
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class FFmpeg{
@@ -121,18 +121,6 @@ class FFmpeg{
         return $this->_reasponse($ret, $raws, $shell,  $rawInfo);
     }
 
-    // 角度旋转
-    // $direction r/l
-    // $degrees 0 90 18 270 360
-    /*$info = $ffmpeg->rotate([
-        'file' => $file,
-        'degrees' => 180,
-        'direction' => 'r',
-        'output_dir' => '',
-        'ext' => 'mp4'
-    ]);
-    */
-
     /**
      * 旋转
      *
@@ -201,28 +189,17 @@ class FFmpeg{
                 rename($output, $file);
             }
             $ret = [
-                'ofile' => $options['file'],
+                'source' => $options['file'],
                 'nfile' => $file ?? $output
             ];
         }else{
             $ret = [
-                'ofile' => $options['file'],
+                'source' => $options['file'],
                 'msg'=>'处理错误',
             ];
         }
         return $this->_reasponse($ret, $raws, $shell);
     }
-
-
-    /*
-    $info= $ffmpeg->cut([
-        'file' => $file,
-        'ext' => 'mp4',
-        'output_dir' => '',
-        'start' => 0,  //1 可以 以秒为单位计数： 80；2 可以是 H:i:s 格式 00:01:20
-        'end' => 540  //1 可以 以秒为单位计数： 80；2 可以是 H:i:s 格式 00:01:20
-    ]);
-    */
 
     /**
      * 剪裁
@@ -251,7 +228,7 @@ class FFmpeg{
         ]);
         $raws = $this->exec($shell);
 
-        $ret['ofile'] = $options['file'];
+        $ret['source'] = $options['file'];
         if(!is_file($output)){
             $ret['msg'] = '处理错误';
         }else{
@@ -263,20 +240,58 @@ class FFmpeg{
     /**
      * 合并图片为视频
      *
+     * @param array $options
+     *                  -- rate <1> 每秒帧数
+     *                  -- vcodec <mpeg4>
+     *                  -- file <""> 图片列表正则 "/Users/Pictures/2018/A7_%05d.JPG"
+     * 
      * @return void
      */
-    private function mergeImagesToVideo(){
+    public function mergeImage(array $options){
+        $options = array_merge([
+            "rate"      => 1,
+            "vcodec"    => "mpeg4",// "huffyuv/libx264
+            "file"      => "", // "/data/path/images/images%d.png",
+            "save_name" => "",
+            "output_dir"=> ""
+        ], $options);
 
-        // $shell = vsprintf('%s -i "%s" 2>&1', [
-        //     $this->opts['command'],
-        //     $filepath
-        // ]);
-        // $raws = $this->exec($shell);
+        $output = $raws = "";
+        $msg = '图片列表正则解析无效';
+        $i = preg_match("/\%(0)([1-9](\d)?)d/", $options['file'], $match);
+        if(isset($match[2])){
 
-        ob_start();
-        passthru(sprintf($this->opts['command'] .' -y -r 1 -i "%s" -vf "'.$text.'" '.$output.' 2>&1', $options['file']));
-        $raw = ob_get_contents();
-        ob_end_clean();
+            $number = str_pad("1", intval($match[2]), $match[1], STR_PAD_LEFT);
+            $file = str_replace($match[0], $number, $options['file']);
+
+            if(File::isImage($file)){
+                if(!is_dir($options['output_dir']) || $options['output_dir'] == ""){
+                    $options['output_dir'] = File::dirname($file);
+                }
+                if(!$options['save_name']){
+                    $options['save_name'] = Tools::md5_16(Tools::uuid()).".mp4";
+                }
+                $output = $options['output_dir'] . '/' . $options['save_name'];
+
+                $shell = vsprintf('%s -y -f image2 -r %s -i "%s" -vcodec %s %s 2>&1', [
+                    $this->opts['command'],
+                    $options['rate'],
+                    $options['file'],
+                    $options['vcodec'],
+                    $output
+                ]);
+                $raws = $this->exec($shell);
+            }
+            $msg = '处理错误';
+        }
+
+        $ret['source'] = $options['file'];
+        if( !$output || !is_file($output)){
+            $ret['msg'] = $msg;
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell);
 
         //./bin/ffmpeg.exe -y -r 1 -i 'images/%d.png' -vcodec huffyuv images.avi
     }
@@ -318,7 +333,7 @@ class FFmpeg{
             @unlink($tempFile);
         }
 
-        // $ret['ofile'] = $options['file'];
+        // $ret['source'] = $options['file'];
         if(!is_file($output)){
             $ret['msg'] = '处理错误';
         }else{
@@ -330,17 +345,18 @@ class FFmpeg{
     /**
      * 拼接/同时显示
      * 
-     * 适用于视频切割产生的分段，被合并的视频必须是相同的参数
+     * 适用于DY视频的同屏幕
      *
      * @param array $inputFileList 媒体文件列表绝对地址 一维数组
-     * @param integer $vIndex <0> 输出文件视频流与 $inputFileList[$vIndex] 文件相同
-     * @param integer $aIndex <0> 输出文件音频流与 $inputFileList[$aIndex] 文件相同
+     * @param string $type <v>  h：水平(Horizontal)  v: 垂直(Vertical)
      * @param string|null $outputFile 输出文件(含扩展名的 绝对路径文件名)
      *                                如果不传此参数，将随机生成一个文件到第一个文件所在目录，并保存生成的媒体文件后缀与第一个文件相同
+     * @param integer $vIndex <0> 输出文件视频流与 $inputFileList[$vIndex] 文件相同
+     * @param integer $aIndex <0> 输出文件音频流与 $inputFileList[$aIndex] 文件相同
      * @return array
      */
     public function concatComplex(array $inputFileList, string $type = "v", string $outputFile="", int $vIndex=0, int $aIndex=0):array{
-
+      $type = ($type == "v" || $type == "V") ? "v" : "h";
       $files = [];
       foreach($inputFileList as $file){
         $file = dirname($file).'/'. basename($file);
@@ -358,19 +374,20 @@ class FFmpeg{
             case 2:
               //pad是将合成的视频宽高，iw: 第一个视频的宽，iw*2: 合成后的视频宽度加倍，ih: 第一个视频的高，合成的两个视频最好分辨率一致。overlay是覆盖，[a][1:v]overlay=w，后面代表是覆盖位置w:0
               //水平方向
-              $type == "v" && $complex = "[0:v]pad=iw*2:ih*1[a];[a][1:v]overlay=w;concat=n={$count}:v=${vIndex}:a={$aIndex}";
+              // $type == "v" && $complex = "[0:v]pad=iw*2:ih*1[a];[a][1:v]overlay=w;concat=n={$count}:v=${vIndex}:a={$aIndex}";
+              $type == "v" && $complex = "[0:v]pad=iw*2:ih*1[a];[a][1:v]overlay=w";
               //垂直方向
-              $type == "h" && $complex = "[0:v]pad=iw:ih*2[a];[a][1:v]overlay=0:h;concat=n={$count}:v=${vIndex}:a={$aIndex}";
+              $type == "h" && $complex = "[0:v]pad=iw:ih*2[a];[a][1:v]overlay=0:h";
             break;
             case 3:
               //水平方向
               $type == "v" && $complex = "[0:v]pad=iw*3:ih*1[a];[a][1:v]overlay=w[b];[b][2:v]overlay=2.0*w";
               //垂直方向
-              $type == "h" && $complex = "[0:v]pad=iw:ih*3[a];[a][1:v]overlay=0:h[b];[b][2:v]overlay=0:2.0*h;concat=n={$count}:v=${vIndex}:a={$aIndex}";
+              $type == "h" && $complex = "[0:v]pad=iw:ih*3[a];[a][1:v]overlay=0:h[b];[b][2:v]overlay=0:2.0*h";
             break;
 
             case 4: //2x2方式排列
-              $complex = "[0:v]pad=iw*2:ih*2[a];[a][1:v]overlay=w[b];[b][2:v]overlay=0:h[c];[c][3:v]overlay=w:h;concat=n={$count}:v=${vIndex}:a={$aIndex}";
+              $complex = "[0:v]pad=iw*2:ih*2[a];[a][1:v]overlay=w[b];[b][2:v]overlay=0:h[c];[c][3:v]overlay=w:h";
             break;
           }
 
@@ -394,7 +411,7 @@ class FFmpeg{
           $ret['output'] = $outputFile;
       }
       return $this->_reasponse($ret, $raws, $shell, false);
-  }
+    }
 
     /*
     $info = $ffmpeg->textWater([
@@ -415,8 +432,6 @@ class FFmpeg{
     dump($info);
     */
     public function textWater($options, $raw = false){
-        // $path = appPath(__FILE__) . '/1.mp4';
-
         switch ($options['position']) {
             case '0':
                 $axio = explode(',', $options['axio']);
@@ -476,8 +491,13 @@ class FFmpeg{
             $drawtext .=": boxcolor={$options['boxcolor']}@".(floatval($options['alpha'])??1);
         }
         if($options['text']){
-            if(preg_match("/\{@time(.*)\}/", $options['text'], $result)){
-                $options['text'] = str_replace($result[0], '%{pts:gmtime:'.(strtotime($result[1])+3600 *8).'}' , $options['text']);
+            if(preg_match("/\{@time([0-9\:\ ]+)\}/", $options['text'], $result)){
+                if(strrpos($result[1], ":")){
+                    $result[1] = strtotime($result[1]);
+                }else{
+                    $result[1] = substr($result[1], 0, 10);
+                }
+                $options['text'] = str_replace($result[0], '%{pts:gmtime:'.($result[1]+3600 *8).'}' , $options['text']);
                 $options['text'] = str_replace(':', '\\:', $options['text']);
             }
             $drawtext .=": text='{$options['text']}'"; 
@@ -488,27 +508,17 @@ class FFmpeg{
 
         $meta = self::getInfo($options['file']);
         $output = $this->output($options, $meta['basic']);
-        $shell = vsprintf('%s -y -r %s -i "%s" -vf "%s" %s 2>&1', [
+        $shell = vsprintf('%s -y -r %s -i "%s" -c:a copy -v:b %sk -vf "%s" %s 2>&1', [
             $this->opts['command'],
             ($meta['video']['fps']??24),
             $options['file'],
+            $meta['basic']['bitrate'],
             $drawtext,
             $output
         ]);
         $raws = $this->exec($shell);
 
-        // ob_start();
-        // passthru(sprintf('%s -y -r %s -i "%s" -vf "%s" %s 2>&1', [
-        //     $this->opts['command'],
-        //     ($meta['video']['fps']??24),
-        //     $options['file'],
-        //     $drawtext,
-        //     $output
-        // ]));
-        // $raw = ob_get_contents();
-        // ob_end_clean();
-
-        $ret['ofile'] = $options['file'];
+        $ret['source'] = $options['file'];
         if(!is_file($output)){
             $ret['msg'] = '处理错误';
         }else{
@@ -550,17 +560,19 @@ class FFmpeg{
           throw new \Exception("Video filter:scale Syntax error!");
         }
 
-        // ./ffmpeg -i input.mp4 -vf scale=960:540 output.mp4 
-        $shell = vsprintf('%s -y -i %s -vf scale=%s %s 2>&1', [
-          $this->opts['command'],
-          $options['file'],
-          $matches[0],
-          $output
+        // ./ffmpeg -i input.mp4 -vf scale=960:540 output.mp4
+        $info = $this->getInfo($options['file']);
+        $shell = vsprintf('%s -y -i %s -c:a copy -v:b %sk -vf scale=%s %s 2>&1', [
+            $this->opts['command'],
+            $options['file'],
+            $info['basic']['bitrate'],
+            $matches[0],
+            $output
         ]);
 
         $raws = $this->exec($shell);
 
-        $ret['ofile'] = $options['file'];
+        $ret['source'] = $options['file'];
         if(!is_file($output)){
             $ret['msg'] = '处理错误';
         }else{
@@ -597,12 +609,13 @@ class FFmpeg{
         if(isset($options['axis']) && $options['axis']){
             $crop .= ":" . str_replace(['x',"X",',',"|","_","."],':', str_replace(' ','', $options['axis']));
         }
-
-        $shell = vsprintf("%s -y -i %s -vf crop='%s'%s -acodec copy %s 2>&1", [
+        $info = $this->getInfo($options['file']);
+        $shell = vsprintf("%s -y -i %s -vf crop='%s'%s -c:a copy -v:b %sk %s 2>&1", [
             $this->opts['command'],
             $options['file'],
             $crop,
             (isset($options['seconds']) && $options['seconds'] > 0) ? (' -t '.intval($options['seconds'])) : '',
+            $info['basic']['bitrate'],
             $output
         ]);
         $raws = $this->exec($shell);
@@ -616,34 +629,256 @@ class FFmpeg{
         return $this->_reasponse($ret, $raws, $shell);
     }
 
-    private function addLogo(){
-      // 左上 ./ffmpeg -i input.mp4 -i iQIYI_logo.png -filter_complex overlay output.mp4
-      // 左下角： ./ffmpeg -i input.mp4 -i logo.png -filter_complex overlay=0:H-h output.mp4
-      // 右上角： ./ffmpeg -i input.mp4 -i logo.png -filter_complex overlay=W-w output.mp4
-      // 右下角： ./ffmpeg -i input.mp4 -i logo.png -filter_complex overlay=W-w:H-h output.mp4
+    /**
+     * 添加图片水印(如 电视台标)
+     *
+     * @param array $options
+     *                  -- position"  <lt> 水印位置 // lt/rt/rb/lb/lr/rl
+     *                  -- file <''> 媒体文件 
+     *                  -- image <''> 水印文件
+     *                  -- output_dir <''> 输出目录 默认输出到媒体文件目录
+     *                  -- save_name <''> 默认随机名
+     * @return void
+     */
+    public function imageWater($options = []){
+        $options = array_merge([
+            "position" => "lt", // lt/rt/rb/lb/lr/rl
+            "file" => "",
+            "image" => "",
+            "output_dir"=> "",
+            "save_name" => ""
+        ], $options);
+
+        $output = $this->output($options);
+
+        // 加 1px 是为解决在去除水印时能规避 贴边(0,0) 选取框选水印时命令报错的问题
+        switch($options['position']){
+            case "lr": $options['position'] = "overlay=x='if(gte(t,1), -w+(t-2)*200, NAN)':y=40"; break; //左到右
+            case "rl": $options['position'] = "overlay=x='if(gte(t,1), W-(t-2)*200, NAN)':y=40"; break; //右到左
+            case "rt": $options['position'] = "overlay=W-w"; break; //右上角
+            case "rb": $options['position'] = "overlay=W-w:H-h"; break; //右下角
+            case "lb": $options['position'] = "overlay=1:H-h"; break; //左下角
+            case "lt": //左上角
+            default: $options['position'] = "overlay=1:1"; break; //
+            // default: $options['position'] = "overlay=0+t*20:0+t*10"; break;
+        }
+        $options['file'] = File::realpath($options['file']);
+        $options['image'] = File::realpath($options['image']);
+
+        $shell = $raws = ""; $msg ='处理错误';
+        if(!is_file($options['file']) || !File::isImage($options['image'])){
+            $msg = "媒体或水印文件不存在";
+        }else{
+            $info = $this->getInfo($options['file']);
+            $shell = vsprintf("%s -y -i %s -i %s -filter_complex \"%s\" -c:a copy -b:v %sk %s 2>&1", [
+                $this->opts['command'],
+                $options['file'],
+                $options['image'],
+                $options['position'],
+                $info['basic']['bitrate'],
+                $output
+            ]);
+            $raws = $this->exec($shell);
+        }
+        $ret['source'] = $options['file'];
+        if(!is_file($output)){
+            $ret['msg'] = $msg;
+        }else{
+            //$ret = array_merge($ret, $this->getInfo($output));
+        }
+        return $this->_reasponse($ret, $raws, $shell);
     }
 
     //delogo过滤器
-    private function removeLogo(){
-      // 语法：-vf delogo=x:y:w:h[:t[:show]]
-      // x:y 离左上角的坐标 
-      // w:h logo的宽和高 
-      // t: 矩形边缘的厚度默认值4
+    /**
+     * 去除静态水印
+     *
+     * @param array $options
+     *                  -- file <"">
+     *                  -- xy <1x1> 水印在视频中的左上角位置
+     *                  -- wh <> 水印宽高
+     * @return void
+     */
+    public function removeWater(array $options){
+      // 语法：-vf delogo=x:y:w:h[:show]
+      // x:y 离左上角的坐标
+      // w:h logo的宽和高
       // show：若设置为1有一个绿色的矩形，默认值0。
-      // ffmpeg -i input.mp4 -vf delogo=0:0:220:90:100:1 output.mp4
+      // ffmpeg -i input.mp4 -vf delogo=0:0:220:90:1 output.mp4
+        $options = array_merge([
+            "file" => "",
+            "xy" => "",
+            "wh" => "",
+            "show"=> 0
+        ], $options);
+
+        $options['file'] = File::realpath($options['file']);
+        $output = $this->output($options);
+
+        preg_match("/(\d+)[\:xX\-\.](\d+)/", $options['xy'], $xy);
+        if(!isset($xy[2])){
+           return $this->_reasponse(["msg"=>"离左上角的坐标无效"], "", ""); 
+        }
+        $options['xy'] = "x=".($xy[1]+1).":y=".($xy[2]+1);
+
+        preg_match("/(\d+)[\:xX\-\.](\d+)/", $options['wh'], $wh);
+        if(!isset($wh[2])){
+           return $this->_reasponse(["msg"=>"水印宽高设置无效"], "", ""); 
+        }
+        $options['wh'] = "w={$wh[1]}:h={$wh[2]}";
+        $options['show'] = "show=".intval($options['show']);
+
+        $info = $this->getInfo($options['file']);
+
+        //Todo kb
+        $shell = vsprintf('%s -y -i %s -c:a copy -b:v %sk -vf "delogo=%s:%s:%s" %s 2>&1', [
+            $this->opts['command'],
+            $options['file'],
+            $info['basic']['bitrate'],
+            $options["xy"],
+            $options["wh"],
+            $options["show"],
+            $output
+        ]);
+
+        $raws = $this->exec($shell);
+
+        $ret['source'] = $options['file'];
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell);
     }
 
-    private function saveFrameToImage(){
-      // ffmpeg -i input.mp4 -ss 00:00:20 -t 10 -r 1 -q:v 2 -f image2 pic-%03d.jpeg
-      // -ss 表示开始时间 -t表示共要多少时间。 
-      // 如此，ffmpeg会从input.mp4的第20s时间开始，往下10s，即20~30s这10秒钟之间，每隔1s就抓一帧，总共会抓10帧
-      // pic-001.jpeg
-      // ...
-      // pic-010.jpeg
+    /**
+     * 视频抽取图片
+     *
+     * @param string $file <> 视频地址
+     * @param integer $rate <1> 抽取帧数
+     * @param string $output_dir <> 保存地址，默认空，保存到视频所在目录
+     * @param string $ss <0> 截取位置 默认0秒（即视频开头位置）
+     * @param int $t <0> 默认0 表截取到视频结尾
+     * @return array
+     */
+    public function exportImages(string $file, int $rate = 1, string $output_dir = "", string $ss = "0", int $t = 0){
+        // ffmpeg –i test.avi –r 1 –f image2 image-%3d.jpeg        //提取图片
+        // ffmpeg -i input.mp4 -ss 00:00:20 -t 10 -r 1 -q:v 2 -f image2 pic-%03d.jpeg
+        // -ss 表示开始时间 -t表示共要多少时间。 
+        // 如此，ffmpeg会从input.mp4的第20s时间开始，往下10s，即20~30s这10秒钟之间，每隔1s就抓一帧，总共会抓10帧
+        // pic-001.jpeg
+        // ...
+        // pic-010.jpeg
+        $rate = $rate > 1 ? intval($rate) : 1;
+        $file = File::realpath($file);
+        $output = $this->output([
+            "file" => $file,
+            "output_dir" => $output_dir,
+        ]);
+        $output = File::dirname($output)."/pic_".date('md')."_%05d.jpg";
+        $t = ($t > 0) ? "-t ".intval($t) : "";
+
+        $shell = vsprintf('%s -y -i %s -ss %s %s -r %s -q:v 2 -f image2 %s 2>&1', [
+            $this->opts['command'],
+            $file,
+            $ss,
+            $t,
+            $rate,
+            $output
+        ]);
+
+        $raws = $this->exec($shell);
+
+        $ret['source'] = $file;
+        $output = str_replace('%05d',"00001", $output);
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+        }else{
+            $ret['output'] = File::dirname($output);
+        }
+        return $this->_reasponse($ret, $raws, $shell);
     }
 
-    private function getOriginYuv(){
+    /**
+     * 去除片头、片尾
+     *
+     * @param array $options
+     *                  -- file
+     *                  -- start <0> 默认片头0秒
+     *                  -- end <0>  默认片尾0秒
+     *                  -- output_dir <''>
+     * @return void
+     */
+    public function cropSection(array $options){
+        $options = array_merge([
+            "file"  => "",
+            "start" => 0,
+            "end"   => 0
+        ], $options);
+        // $options['start'] = $options['start'] > 0 ? intval($options['start']) : 0;
+        $options['start'] = $this->secondsFormat($options['start'], 'float');
+        $options['end'] = $options['end'] > 0 ? intval($options['end']) : 0;
+        $options['file'] = File::realpath($options['file']);
+        $info = $this->getInfo($options['file']);
+        $output = $this->output($options);
+        
+        $t = $info['basic']['seconds'] - $options['start'] - $options['end'];
+        if($t < 1){
+            return $this->_reasponse(["msg"=>"时长设置溢出"], "", "");
+        }
+        $options['start'] =  $this->secondsFormat($options['start'], "string");
+        $shell = vsprintf('%s -y -i %s -b:v %sk -c:v copy -c:a copy -ss %s -t %s %s 2>&1', [
+            $this->opts['command'],
+            $options['file'],
+            $info['basic']['bitrate'],
+            $options['start'],
+            $t,
+            $output
+        ]);
+
+        $raws = $this->exec($shell);
+        $ret['source'] = $options['file'];
+
+        $debug = false;
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+            $debug = true;
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell, $debug);
+    }
+
+    /**
+     * 获取媒体yuv源
+     *
+     * @param array $options
+     *                  -- file
+     * @return void
+     */
+    public function getOriginYuv(array $options){
       
+        $options['file'] = File::realpath($options['file']);
+        $output = $this->output($options).'.yuv';
+        $info = $this->getInfo($options['file']);
+        $shell = vsprintf('%s -y -i %s -c:a copy -b:v %sk %s 2>&1', [
+            $this->opts['command'],
+            $options['file'],
+            $info['basic']['bitrate'],
+            $output
+        ]);
+
+        $raws = $this->exec($shell);
+
+        $ret['source'] = $options['file'];
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell);
+
       // ffmpeg -i input.mp4 output.yuv
     }
 
@@ -764,7 +999,7 @@ class FFmpeg{
         if(!$options['output_dir'] && is_dir($this->opt['output_dir'])){    
             $options['output_dir'] = $this->opt['output_dir'];
         }
-        $options['output_dir'] = $options['output_dir'] ?? '';
+        $options['output_dir'] = File::realpath($options['output_dir'] ?? '');
         if(isset($options['save_name']) && $options['save_name']){
             return $options['output_dir'].'/'.$options['save_name'].'.'.($options['ext'] ?? $baseInfo['ext']);
         }
@@ -814,7 +1049,42 @@ class FFmpeg{
         }
         isset($code) && exit("[".$this->opts['command']."]  ffmpeg 命令无效[E{$code}]");
     }
+
+    /**
+     * 时间格式化
+     *
+     * @param string|float $str
+     * @param string $type <flip> 是否反向转换 默认(flip)是  flip/float/string
+     * @return void
+     */
+    private function secondsFormat($str, $type = "flip"){
+        $seconds = $str;
+        $str = strval($str);
+        if(strrpos($str, ":")){
+            if($type == "flip" || $type == "float"){
+                $seconds = explode('.', $str);
+                list($h, $m, $s) = explode(":", $seconds[0]);
+                $seconds = ($h * 3600 + $m * 60 + $s ) . "." . ($seconds[1] ?? "000");
+            }
+        }else{
+            if($type == "flip" || $type == "string"){
+                
+                $seconds = explode('.', $str);
+                $h = bcdiv(strval($seconds[0]), "3600", 0);
+                $m = bcdiv(strval($seconds[0] % 3600), "60", 0);
+                $s = $seconds[0] - $h * 3600 - $m * 60;
+
+                $seconds = implode(":", array_map(function($v){
+                    return str_pad(strval($v), 2, "0", STR_PAD_LEFT);
+                } , [$h, $m, $s])) . "." . ($seconds[1] ?? "000");
+            }
+        }
+        return $seconds;
+    }
 }
+
+// https://blog.csdn.net/weixin_30904593/article/details/96070167 ffmpeg加文字水印并控制水印显示时间或显示周期
+
 // https://blog.csdn.net/kingvon_liwei/article/details/79271361
 // https://blog.csdn.net/u014162133/article/details/86705656 FFmpeg的filter基本用法
 // https://blog.csdn.net/thomashtq/article/details/44940457#

@@ -30,11 +30,11 @@ class File{
      * @return string
      */
     static function pathToUnix(string $path):string{
-        if($path != ""){
+        if($path){
             $path = str_replace('\\','/', $path);
             $path = realpath($path);
         }
-        return $path;
+        return $path ?? "";
     }
 
     /**
@@ -97,8 +97,7 @@ class File{
      * @return string
      */
     static function getExtension(string $path):string{
-        $pathinfo = pathinfo($path);
-        return $pathinfo['extension'];
+        return pathinfo($path, PATHINFO_EXTENSION);
     }
 
     /**
@@ -108,10 +107,8 @@ class File{
      * @param boolean $pathToUnix <false> 是否响应Unix风格化path
      * @return string
      */
-    static function realpath(string $path, bool $pathToUnix = false):string{
-        $path = realpath($path);
-        $pathToUnix === true && $path = self::pathToUnix($path);
-        return $path;
+    static function realpath(string $path, bool $pathToUnix = true):string{
+        return $pathToUnix ? self::pathToUnix($path) : realpath($path);
     }
 
     /**
@@ -476,4 +473,44 @@ class File{
         }
 		return false;
 	}
+
+    /**
+     * 检测文件是否是 图片文件
+     *
+     * @param string $filename
+     * @return boolean
+     */
+    static function isImage(string $filename):bool{
+        if(!file_exists($filename)){
+            return false;
+        }
+        $mimetype = exif_imagetype($filename);
+        switch($mimetype){
+            case IMAGETYPE_GIF:
+            case IMAGETYPE_JPEG:
+            case IMAGETYPE_PNG:
+            case IMAGETYPE_BMP:
+            case IMAGETYPE_SWF:
+            case IMAGETYPE_PSD:
+            case IMAGETYPE_BMP:
+            case IMAGETYPE_JPC:
+            case IMAGETYPE_JP2:
+            case IMAGETYPE_JB2:
+            case IMAGETYPE_IFF:
+            case IMAGETYPE_WBMP:
+            case IMAGETYPE_XBM:
+            // case MAGETYPE_JPX:
+            // case IMAGETYPE_SWC:
+            // case IMAGETYPE_TIFF_II://（Intel 字节顺序）
+            // case IMAGETYPE_TIFF_MM://（Motorola 字节顺序）
+                return true;
+        }
+        return false;
+    }
 }
+
+
+
+
+
+
