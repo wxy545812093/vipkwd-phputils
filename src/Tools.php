@@ -19,6 +19,7 @@ use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
     PHPMailer\PHPMailer\PHPMailer,
     Vipkwd\Utils\Libs\QRcode,
     Vipkwd\Utils\Validate,
+    Vipkwd\Utils\Str as VipkwdStr,
     \Exception,
     \Closure;
 
@@ -46,9 +47,8 @@ class Tools{
      * @return string
      */
     static function md5_16(string $str):string{
-        return substr(md5($str), 8, 16);
+        return VipkwdStr::md5_16($str);
     }
-    
     /**
      * 生成UUID
      * 
@@ -65,16 +65,8 @@ class Tools{
      * @return string
      */
     static function uuid(bool $toUppercase = false, string $prefix = '', string $separator="-"):string{
-        $prefix && $prefix = preg_replace("/[^\da-zA-Z]/","", $prefix);
-        $chars = md5(uniqid(strval(mt_rand()), true));
-        $uuid = substr($prefix . substr($chars, 0, 8), 0, 8) . $separator;
-        $uuid .= substr($chars, 8, 4) . $separator;
-        $uuid .= substr($chars, 12, 4) . $separator;
-        $uuid .= substr($chars, 16, 4) . $separator;
-        $uuid .= substr($chars, 20, 12);
-        return $toUppercase ? strtoupper($uuid) : strtolower($uuid);
+        return VipkwdStr::uuid($toUppercase, $prefix, $separator);
     }
-
     /**
      * 获取文件夹大小
      * 
@@ -139,34 +131,20 @@ class Tools{
     /**
      * mt_rand增强版（兼容js版Math.random)
      *
-     * -e.g: phpunit("Tools::mathRandom",[0,1]);
-     * -e.g: phpunit("Tools::mathRandom",[0,5,false]);
-     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
-     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
-     * -e.g: phpunit("Tools::mathRandom",[0,5,true]);
+     * -e.g: phpunit("Tools::mathRandom",[0,1, 15]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,0]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,1]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,4]);
+     * -e.g: phpunit("Tools::mathRandom",[0,5,6]);
      * 
      * @param integer $min
      * @param integer $max
-     * @param boolean $decimal <false> 是否包含小数
+     * @param integer $decimal <0> 小数位数
      * @return string
      */
-    static function mathRandom(int $min=0, int $max=1, bool $decimal= false){
-
-        if($max < $min){
-            throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
-        }
-        $range = mt_rand($min, $max);
-        if($decimal && $min < $max){
-            $_ = lcg_value(); 
-            while($_ < 0.1){
-                $_ *= 10;
-            }
-            $range += $_;
-            if($range > $max){
-                $range -=1;
-            }
-        }
-        return $range;
+    static function mathRandom(int $min=0, int $max=1, int $decimal= 0){
+        $decimal = $decimal === true ? 10 : $decimal;
+        return Random::randomFloat($min, $max, $decimal);
     }
     /**
      * get请求
@@ -583,7 +561,7 @@ class Tools{
             $list[] = strtoupper(
                 dechex(
                     floor(
-                        self::mathRandom(0,1,true) * 256
+                        self::mathRandom(0,1,9) * 256
                     )
                 )
             );

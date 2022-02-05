@@ -10,7 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Tools, File};
+use Vipkwd\Utils\{Tools, File, Ip};
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class FFmpeg{
@@ -202,7 +202,7 @@ class FFmpeg{
     }
 
     /**
-     * 剪裁
+     * 视频剪切
      *
      * @param array $options
      *                  -- file {string} 媒体文件绝对地址
@@ -245,7 +245,7 @@ class FFmpeg{
      *                  -- vcodec <mpeg4>
      *                  -- file <""> 图片列表正则 "/Users/Pictures/2018/A7_%05d.JPG"
      * 
-     * @return void
+     * @return array
      */
     public function mergeImage(array $options){
         $options = array_merge([
@@ -431,7 +431,14 @@ class FFmpeg{
     ]);
     dump($info);
     */
-    public function textWater($options, $raw = false){
+    /**
+     * 文字水印
+     *
+     * @param array $options
+     * @param boolean $raw
+     * @return array
+     */
+    public function textWater(array $options, $raw = false){
         switch ($options['position']) {
             case '0':
                 $axio = explode(',', $options['axio']);
@@ -502,10 +509,6 @@ class FFmpeg{
             }
             $drawtext .=": text='{$options['text']}'"; 
         }
-
-        // echo $drawtext;
-        // dump($options,1);
-
         $meta = self::getInfo($options['file']);
         $output = $this->output($options, $meta['basic']);
         $shell = vsprintf('%s -y -r %s -i "%s" -c:a copy -v:b %sk -vf "%s" %s 2>&1', [
@@ -525,7 +528,7 @@ class FFmpeg{
             $ret['output'] = $output;
         }
         return $this->_reasponse($ret, $raws, $shell, $raw);
-        // ./bin/ffmpeg.exe -y -r 30 -i 111.mp4 -vf "drawtext=fontfile=ttfs/1.ttf: x=w-tw-10:y=10: fontsize=36:fontcolor=yellow: box=1:boxcolor=black@0.4: text='Wall Clock Time\: %{pts\:gmtime\:1456007118}'" 111.mp4
+        // /usr/bin/ffmpeg -y -r 30 -i 111.mp4 -vf "drawtext=fontfile=ttfs/1.ttf: x=w-tw-10:y=10: fontsize=36:fontcolor=yellow: box=1:boxcolor=black@0.4: text='Wall Clock Time\: %{pts\:gmtime\:1456007118}'" 111.mp4
     }
 
     /*
@@ -601,7 +604,7 @@ class FFmpeg{
      * 
      * @return array
      */
-    public function crop(array $options):array{
+    public function cropPlus(array $options):array{
 
         $output = $this->output($options);
 
@@ -638,9 +641,9 @@ class FFmpeg{
      *                  -- image <''> 水印文件
      *                  -- output_dir <''> 输出目录 默认输出到媒体文件目录
      *                  -- save_name <''> 默认随机名
-     * @return void
+     * @return array
      */
-    public function imageWater($options = []){
+    public function imageWater(array $options){
         $options = array_merge([
             "position" => "lt", // lt/rt/rb/lb/lr/rl
             "file" => "",
@@ -697,9 +700,9 @@ class FFmpeg{
      *                  -- file <"">
      *                  -- xy <1x1> 水印在视频中的左上角位置
      *                  -- wh <> 水印宽高
-     * @return void
+     * @return array
      */
-    public function removeWater(array $options){
+    public function removeImageWater(array $options){
       // 语法：-vf delogo=x:y:w:h[:show]
       // x:y 离左上角的坐标
       // w:h logo的宽和高
@@ -805,12 +808,12 @@ class FFmpeg{
      *
      * @param array $options
      *                  -- file
-     *                  -- start <0> 默认片头0秒
-     *                  -- end <0>  默认片尾0秒
+     *                  -- start <0> 片头持续秒数 默认0秒
+     *                  -- end <0>  片尾持续秒数 默认0秒
      *                  -- output_dir <''>
-     * @return void
+     * @return array
      */
-    public function cropSection(array $options){
+    public function cropTitleEnding(array $options){
         $options = array_merge([
             "file"  => "",
             "start" => 0,
@@ -855,7 +858,7 @@ class FFmpeg{
      *
      * @param array $options
      *                  -- file
-     * @return void
+     * @return array
      */
     public function getOriginYuv(array $options){
       
@@ -890,20 +893,107 @@ class FFmpeg{
       // ffmpeg -i pic-001.jpeg -s 1440x1440 -yuv422p yuv420p xxx3.yuv
     }
 
+    private function defaults(array $options, array $merges = []){
+        return array_merge([
+            "file" => "",
+            "output_dir" => "",
+            "ext" => ""
+        ], $merges, $options);
+    }
+
     // 推rtmp 流
-    private function rtmp(){
+    private function rtmp(array $options){
+
+        $options = $this->defaults($options, [
+            "brand" => 10000000,
+            "path" => "myapp/test1",
+            "server" => Ip::getLocalIp()
+        ]);
+
+        $shell = $raws = "";
+        if(File::exists($options['file'])){
+            $shell = vsprintf('%s -y -re -i %s -c copy -f flv -b %s rtmp://%s 2>&1', [
+                $this->opts['command'],
+                $options['file'],
+                $options['brand'],
+                $options['server'].'/'.trim($options['path'],'/'),
+            ]);
+    
+            $raws = $this->exec($shell);
+            if(preg_match("/(.*)Connection refused(.*)/", $raws, $matches)){
+                $ret['msg'] = $matches[0];
+            }else{
+                $ret['output'] = "rtmp://".$options['server'].'/'.trim($options['path'],'/');
+            }
+        }else{
+            $ret['msg'] = '媒体文件不存在';
+        }
+        $ret['source'] = $options['file'];
+        return $this->_reasponse($ret, $raws, $shell, false);
+
       // ffmpeg -re -i ~/2012.flv -c copy -f flv rtmp://192.168.1.102/myapp/test1
 
       // ffmpeg -re -i RealStream.fifo -c copy -f flv -b 20000000 rtmp://localhost/myapp/test1
     }
 
     // https://blog.csdn.net/wh8_2011/article/details/52117932#
-    private function extract(){
+    private function extract(array $options){
+        $options = $this->defaults($options,[
+            "type" => "video",
+            "ext" => ($options['type'] ?? "video") == "video" ? "mp4" : "wav"
+        ]);
+        //TODO 音频提取未完成
+        $output = $this->output($options);
+
+        // return $this->getInfo($options['file']);
+
+        if(File::exists($options['file'])){
+            $cmd = $options['type'] == "video" ? " -vcodec copy -an " : " -acodec copy -vn ";
+            $shell = vsprintf('%s -y -i %s '.$cmd.' %s 2>&1', [
+                $this->opts['command'],
+                $options['file'],
+                $output
+            ]);
+            $raws = $this->exec($shell);
+        }
+        $ret['source'] = $options['file'];
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell, true);
         // ffmpeg -i input_file -vcodec copy -an output_file_video　　//分离视频流
         // ffmpeg -i input_file -acodec copy -vn output_file_audio　　//分离音频流
     }
 
-    private function m3u8ToMp4(){
+    /**
+     * 合并m3u-TS为MP4
+     *
+     * @param array $options
+     *                  -- file m3u8文件地址(本地绝对路径或http网络地址)
+     * @return array
+     */
+    public function m3u8ToMp4(array $options){
+
+        $options = $this->defaults($options,[
+            "ext" => "mp4"
+        ]);
+        $output = $this->output($options);
+        $shell = vsprintf('%s -y -i %s %s 2>&1', [
+            $this->opts['command'],
+            $options['file'],
+            $output
+        ]);
+        $raws = $this->exec($shell);
+        $ret['source'] = $options['file'];
+        if(!is_file($output)){
+            $ret['msg'] = '处理错误';
+        }else{
+            $ret['output'] = $output;
+        }
+        return $this->_reasponse($ret, $raws, $shell);
+
       // ffmpeg -i http://www.xxx.com/xxx.m3u8 name.mp4
     }
 

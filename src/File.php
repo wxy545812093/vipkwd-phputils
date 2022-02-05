@@ -507,6 +507,17 @@ class File{
         }
         return false;
     }
+
+    /**
+     * 检测标准路径下的文件是否存在
+     *
+     * @param string $filepath
+     * @return void
+     */
+    static function exists(string &$filepath){
+        $filepath = self::realpath($filepath);
+        return file_exists($filepath);
+    }
 }
 
 

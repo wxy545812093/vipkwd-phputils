@@ -69,55 +69,7 @@ class Arr{
     }
 
     /**
-     * 数组转无限级分类
-     * 
-     * -e.g: $list=[];
-     * -e.g: $list[]=["id"=>1,    "pid"=>0,   "name"=>"中国大陆"];
-     * -e.g: $list[]=["id"=>2,    "pid"=>1,   "name"=>"北京"];
-     * -e.g: $list[]=["id"=>22,   "pid"=>1,   "name"=>"广东省"];
-     * -e.g: $list[]=["id"=>54,   "pid"=>2,   "name"=>"北京市"];
-     * -e.g: $list[]=["id"=>196,  "pid"=>22,  "name"=>"广州市"];
-     * -e.g: $list[]=["id"=>1200, "pid"=>54,  "name"=>"海淀区"];
-     * -e.g: $list[]=["id"=>3907, "pid"=>196, "name"=>"黄浦区"];
-     * -e.g: phpunit("Arr::toTree", [$list, "id", "pid", "child", 0]);
-     * 
-     * @param array $list 归类的数组
-     * @param string $pk <"id"> 父级ID
-     * @param string $pid <"pid"> 父级PID
-     * @param string $child <"child"> 子节点容器名称
-     * @param string $rootPid <0> 顶级ID(pid)
-     * 
-     * @return array
-     */
-    static function toTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $rootPid = 0): array{
-        $tree = [];
-        if(is_array($list)){
-            $refer = [];
-            //基于数组的指针(引用) 并 同步改变数组
-            foreach ($list as $key => $val){
-                $list[$key][$child] = [];
-                $refer[$val[$pk]] = &$list[$key];
-            }
-            foreach ($list as $key => $val){
-                //是否存在parent
-                $parentId = isset($val[$pid]) ? $val[$pid] : $rootPid;
-
-                if ($rootPid == $parentId){
-                    $tree[$val[$pk]] = &$list[$key];
-                }else{
-                    if (isset($refer[$parentId])){
-                        $refer[$parentId][$child][] = &$list[$key];
-                    }
-                }
-            }
-        }
-        return array_values($tree);
-    }
-
-    /**
      * 排列组合（适用多规格SKU生成）
-     * 
-     * 
      * 
      * @param array $input 排列的数组
      * 

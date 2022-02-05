@@ -209,11 +209,25 @@ class Str{
      * @param string $str 待截取字符串
      * @param int $start <0> 从第几个字符(包含)开始截取
      * @param int $len <1> 截取长度
-     * @param string $omitted <""> 自定义返回文本的后缀，如："..."
+     * @param string $omitted <"..."> 自定义返回文本的后缀，如："..."
      * 
      * @return string
      */
-    static function substrPlus(string $str, int $start = 0, int $len = 0, string $omitted=""):string{
+    static function substrPlus(string $str, int $start = 0, int $len = 0, string $omitted="..."):string{
+        // if (function_exists("mb_substr"))
+        //     $slice = mb_substr($str, $start, $len, 'utf-8');
+        // elseif (function_exists('iconv_substr')) {
+        //     $slice = iconv_substr($str, $start, $len, 'utf-8');
+        // } else {
+        //     $re['utf-8'] = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xff][\x80-\xbf]{3}/";
+        //     $re['gb2312'] = "/[\x01-\x7f]|[\xb0-\xf7][\xa0-\xfe]/";
+        //     $re['gbk'] = "/[\x01-\x7f]|[\x81-\xfe][\x40-\xfe]/";
+        //     $re['big5'] = "/[\x01-\x7f]|[\x81-\xfe]([\x40-\x7e]|\xa1-\xfe])/";
+        //     preg_match_all($re['utf-8'], $str, $match);
+        //     $slice = join("", array_slice($match[0], $start, $len));
+        // }
+        // return $omitted ? $slice . $omitted : $slice;
+
         $rstr = '';//待返回字符串
         $str_length = self::strLenPlus( $str ); //字符串的字节数
         // $str_length = strlen( $str ); //字符串的字节数
@@ -350,6 +364,60 @@ class Str{
 			$string = str_pad($string, $length, $padStr, $padType);
 		}
         return $string;
+    }
+
+    /**
+     * 获取范围内随机数 位数不足补零
+     * 
+     * -e.g: phpunit("Str::randNumber", [1, 10]);
+     * -e.g: phpunit("Str::randNumber", [90, 105]);
+     * 
+     * @param integer $min 最小值
+     * @param integer $max 最大值
+     * @return string
+     */
+    static function randNumber(int $min, int $max): string {
+        return sprintf("%0" . strlen("$max") . "d", mt_rand($min, $max));
+    }
+
+    /**
+     * 自动转换字符集 支持数组转换
+     *
+     * -e.g: phpunit("Str::autoCharset", ["张三"]);
+     * -e.g: phpunit("Str::autoCharset", ["张三","bgk","utf-8"]);
+     * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","bgk"]);
+     * 
+     * @param string|array $string
+     * @param string $fromCharset
+     * @param string $toCharset
+     * @return string
+     */
+    static function autoCharset($string, string $fromCharset = 'gbk', string $toCharset = 'utf-8'): string {
+        $fromCharset = strtoupper($fromCharset) == 'UTF8' ? 'utf-8' : $fromCharset;
+        $toCharset = strtoupper($toCharset) == 'UTF8' ? 'utf-8' : $toCharset;
+        if (strtoupper($fromCharset) === strtoupper($toCharset) || empty($string) || (is_scalar($string) && !is_string($string))) {
+            //如果编码相同或者非字符串标量则不转换
+            return $string;
+        }
+        if (is_string($string)) {
+            if (function_exists('mb_convert_encoding')) {
+                return mb_convert_encoding($string, $toCharset, $fromCharset);
+            } elseif (function_exists('iconv')) {
+                return iconv($fromCharset, $toCharset, $string);
+            } else {
+                return $string;
+            }
+        } elseif (is_array($string)) {
+            foreach ($string as $key => $val) {
+                $_key = self::autoCharset($key, $fromCharset, $toCharset);
+                $string[$_key] = self::autoCharset($val, $fromCharset, $toCharset);
+                if ($key != $_key)
+                    unset($string[$key]);
+            }
+            return $string;
+        } else {
+            return $string;
+        }
     }
 
     /**
@@ -512,4 +580,64 @@ class Str{
     static function md5_16(string $str):string{
         return substr(md5($str), 8, 16);
     }
+
+    /**
+     * 检查字符串是否是UTF8编码
+     * 
+     * -e.g: phpunit("Str::isUtf8", ["张三"]);
+     * -e.g: phpunit("Str::isUtf8", ["123"]);
+     * 
+     * @param string $string 字符串
+     * @return Boolean
+     */
+    static function isUtf8(string $string): bool {
+        $len = strlen($string);
+        for ($i = 0; $i < $len; $i++) {
+            $c = ord($string[$i]);
+            if ($c > 128) {
+                if (($c >= 254)) return false;
+                elseif ($c >= 252) $bits = 6;
+                elseif ($c >= 248) $bits = 5;
+                elseif ($c >= 240) $bits = 4;
+                elseif ($c >= 224) $bits = 3;
+                elseif ($c >= 192) $bits = 2;
+                else return false;
+                if (($i + $bits) > $len) return false;
+                while ($bits > 1) {
+                    $i++;
+                    $b = ord($string[$i]);
+                    if ($b < 128 || $b > 191) return false;
+                    $bits--;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 生成UUID
+     * 
+     * -e.g: phpunit("Tools::uuid");
+     * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字"]);
+     * -e.g: phpunit("Tools::uuid",[false, "99"]);
+     * -e.g: phpunit("Tools::uuid",[true]);
+     * -e.g: phpunit("Tools::uuid",[true, "0000"]);
+     * -e.g: phpunit("Tools::uuid",[true, "00000000000000"]);
+     *
+     * @param bool $toUppercase <false>
+     * @param string $prefix 前缀：仅支持英文字符与数字 <"">
+     * @param string $separator 分隔符 <"-">
+     * @return string
+     */
+    static function uuid(bool $toUppercase = false, string $prefix = '', string $separator="-"):string{
+        $prefix && $prefix = preg_replace("/[^\da-zA-Z]/","", $prefix);
+        $chars = md5(uniqid(strval(mt_rand()), true));
+        $uuid = substr($prefix . substr($chars, 0, 8), 0, 8) . $separator;
+        $uuid .= substr($chars, 8, 4) . $separator;
+        $uuid .= substr($chars, 12, 4) . $separator;
+        $uuid .= substr($chars, 16, 4) . $separator;
+        $uuid .= substr($chars, 20, 12);
+        return $toUppercase ? strtoupper($uuid) : strtolower($uuid);
+    }
+
 }
