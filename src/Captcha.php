@@ -48,7 +48,7 @@ class Captcha {
 		// 验证码字体随机颜色
 		self::$_color = imagecolorallocate(self::$_image, mt_rand(1,120), mt_rand(1,120), mt_rand(1,120));
 		// 验证码使用随机字体 
-		$ttf = dirname(__FILE__).'/../support/ttfs/'.mt_rand(1, 6).'.ttf';
+		$ttf = VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/'.mt_rand(1, 6).'.ttf';
 		// 绘杂点
 		if (self::$useNoise) {
 			self::_writeNoise();

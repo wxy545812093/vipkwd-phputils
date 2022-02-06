@@ -26,6 +26,8 @@ class Console extends Command {
 	private static $showList = true;
 	private static $showMethod = false;
 	private static $testMethod = false;
+	private static $writelnLines = [];
+	private static $writelnWidths = [];
 	private static $shieldMethods = [
 		"__construct",
 		"__destruct",
@@ -73,20 +75,64 @@ class Console extends Command {
 				self::$showMethod = $method;
 				self::$testMethod = $eg != "-";
 				self::parseClass($className, $input, $output, 0, $classDescript=null);
+				self::output($input, $output);
 				return 1;
 			}
 		}
 		self::buildMethodListDoc($input, $output, $className);
+		self::output($input, $output);
 		return 1;
 
 		// return $this->__default_execute($input, $output);
 	}
 
+	private function output(&$input, &$output){
+		$widths = [
+			"Idx" 		=> 0,
+			"Namespace" => 0,
+			"Class" 	=> 0,
+			"Method" 	=> 0,
+			"Type" 		=> 0,
+			"Arguments" => 0,
+			"Eg"		=> 0,
+			"Comment" 	=> 40,
+		];
+		$checker = function($line)use(&$widths){
+			foreach($widths as $field => $width){
+				$txt = str_replace(['<info>','</info>'],"", strval($line[$field]));
+				$len = Str::strLenPlus($txt);
+				if($len > $width){
+					$widths[$field] = $len;
+				}
+				unset($len);
+			}
+		};
+		foreach(self::$writelnLines as $idx => $line){
+			if(isset($line[1]) && is_array($line[1])){
+				$checker($line[1]);
+			}else if($line[1] === true){
+				$checker(array_combine(array_keys($widths), array_keys($widths)));
+			}
+		}
+		// Dev::dump($widths);
+		// Dev::dump(self::$writelnLines,1);
+		self::$writelnWidths = $widths;
+		foreach(self::$writelnLines as $line){
+			if(is_array($line)){
+				$output->writeln(self::createTRLine($line[0], $line[1], $line[2] ?? false));
+			}else{
+				$output->writeln($line);
+			}
+		}
+	}
 	private static function buildMethodListDoc(&$input, &$output, $cmd){
 		$path = static::getSrcPath();
-		$output->writeln(self::createTRLine("+", "-"));
-		$output->writeln(self::createTRLine("|",true, true));
-		$output->writeln(self::createTRLine("+", "-"));
+		// $output->writeln(self::createTRLine("+", "-"));
+		// $output->writeln(self::createTRLine("|",true, true));
+		// $output->writeln(self::createTRLine("+", "-"));
+		self::$writelnLines[] = ["+", "-"];
+		self::$writelnLines[] = ["|",true, true];
+		self::$writelnLines[] = ["+", "-"];
 
 		foreach(glob($path ."/*.php") as $index => $classFile){
 			$_classFile = preg_replace("|[A-Za-z0-9\._\-]+|",'',str_replace($path, '', $classFile));
@@ -112,7 +158,8 @@ class Console extends Command {
 			unset($classFile);
 			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $classDescript);
 		};
-		$output->writeln(self::createTRLine("+", "-"));
+		// $output->writeln(self::createTRLine("+", "-"));
+		self::$writelnLines[] = ["+", "-"];
 	}
 
 	private static function parseClass($class, &$input, &$output, $index, $classDescript=null){
@@ -120,15 +167,25 @@ class Console extends Command {
 		$class = new \ReflectionClass($className);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		//剔除未公开的方法
-		foreach($methods as $k => $method){;
+		foreach($methods as $k => $method){
 			if($method->isProtected() || $method->isPrivate()){
 				unset($methods[$k]);
 			}
 			unset($k,$method);
 		}
 		if( self::$showList === true){
-			$output->writeln(self::createTRLine("|", [
-				"Idx" => str_pad(strval($index+1), 2, "0", STR_PAD_LEFT),
+			// $output->writeln(self::createTRLine("|", [
+			// 	"Idx" => str_pad(strval($index+1), 2, "0", STR_PAD_LEFT),
+			// 	"Namespace" => $class->getNamespaceName(),
+			// 	"Class" => $class->getShortName(),
+			// 	"Method" => "Et: ".count($methods),
+			// 	"Type" => "#",
+			// 	"Arguments" => "#",
+			// 	"Eg" => "#",
+			// 	"Comment" => $classDescript,
+			// ]));
+			self::$writelnLines[] = ["|", [
+				"Idx" => str_pad(strval($index+1), 2, " ", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => "Et: ".count($methods),
@@ -136,7 +193,7 @@ class Console extends Command {
 				"Arguments" => "#",
 				"Eg" => "#",
 				"Comment" => $classDescript,
-			]));
+			]];
 			return;
 		}
 
@@ -149,7 +206,14 @@ class Console extends Command {
 				$methodsSort[ $method->getName() ] = $method;
 			}
 			ksort($methodsSort);
+			if(array_key_exists("instance", $methodsSort)){
+				$instance = $methodsSort['instance'];
+				unset($methodsSort['instance']);
+			}
 			$methods = array_values($methodsSort);
+			if(isset($instance)){
+				array_unshift($methods, $instance);
+			}
 			unset($methodsSort);
 		}
 		//遍历所有的方法
@@ -215,13 +279,26 @@ class Console extends Command {
 			}
 
 			if(self::$showMethod != false){
-				$output->writeln(self::createTRLine("+", "-"));
-				$output->writeln(self::createTRLine("|",true, true));
-				$output->writeln(self::createTRLine("+", "-"));
+				// $output->writeln(self::createTRLine("+", "-"));
+				// $output->writeln(self::createTRLine("|",true, true));
+				// $output->writeln(self::createTRLine("+", "-"));
+				self::$writelnLines[] = ["+", "-"];
+				self::$writelnLines[] = ["|",true, true];
+				self::$writelnLines[] = ["+", "-"];
 			}
 
-			$output->writeln(self::createTRLine("|", [
-				"Idx" => ($index+1)."",
+			// $output->writeln(self::createTRLine("|", [
+			// 	"Idx" => ($index+1)."",
+			// 	"Namespace" => $class->getNamespaceName(),
+			// 	"Class" => $class->getShortName(),
+			// 	"Method" => $method->getName(),
+			// 	"Type" => $method->isStatic() ? "static" : "public",
+			// 	"Arguments" => $args,
+			// 	"Eg" => $eg,
+			// 	"Comment" => $doc,
+			// ]));
+			self::$writelnLines[] = ["|", [
+				"Idx" => str_pad(strval($index+1), 2, " ", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => $method->getName(),
@@ -229,18 +306,20 @@ class Console extends Command {
 				"Arguments" => $args,
 				"Eg" => $eg,
 				"Comment" => $doc,
-			]));
+			]];
 			
 			if(self::$showMethod !== false){
-				$output->writeln(self::createTRLine("+", "-"));
-				$output->writeln("");
+				// $output->writeln(self::createTRLine("+", "-"));
+				self::$writelnLines[] = ["+", "-"];
+				// $output->writeln("");
+				self::$writelnLines[] = "";
 				if($comment != ""){
 					$comment = preg_replace("|(\ +)\/\*\*|","/**", $comment);
 					$comment = preg_replace("|(\ +)\*|"," *", $comment);
-					$output->writeln($comment);
+					// $output->writeln($comment);
+					self::$writelnLines[] = $comment;
 				}
-				// $output->writeln(self::createTDText(100));
-				// $output->writeln("");
+
 				if($method->isStatic()){
 					$text = "<info>{$className}</info>::<info>".$method->getName()."</info>";
 				}else{
@@ -257,22 +336,29 @@ class Console extends Command {
 					$text.="(";
 					$args = explode(',', $args);
 				}
-				$output->writeln($text);
+				// $output->writeln($text);
+				self::$writelnLines[] = $text;
 				foreach($args as $var){
 					// $output->writeln("");
-					$output->writeln("    {$var}");
+					// $output->writeln("    {$var}");
+					self::$writelnLines[] = "    {$var}";
 				}
-				!empty($args) && $output->writeln(")");
+				// !empty($args) && $output->writeln(")");
+				!empty($args) && self::$writelnLines[] = ")";
 
-				$output->writeln("");
-				$output->writeln(self::createTDText(100));
-				$output->writeln("");
+				// $output->writeln("");
+				// $output->writeln(self::createTDText(100));
+				// $output->writeln("");
+				self::$writelnLines[] = "";
+				self::$writelnLines[] = self::createTDText(100);
+				self::$writelnLines[] = "";
 				break;
 			}
 		}
 		//类中没有枚举到指定方法(或级别不是 public|static)；
 		if(count($methods) == $methodContinues && self::$showMethod !== false){
-			$output->writeln( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
+			// $output->writeln( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
+			self::$writelnLines[] = ( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
 		}
 	}
 
@@ -333,11 +419,11 @@ class Console extends Command {
 			"Type" 		=> 8,
 			"Arguments" => self::$showList === true ? 11 : 76,
 			"Eg"		=> 5,
-			"Comment" 	=> 40,
+			"Comment" 	=> 50,
 		];
 		$list = [];
 		$list[] ="";
-		foreach($conf as $title => $with){
+		foreach(self::$writelnWidths as $title => $with){
 			if($isTitle === true){
 				$field = $title;
 			}else{
@@ -353,7 +439,7 @@ class Console extends Command {
 		$septer = "-";
 		if($txt != "-"){
 			$septer = " ";
-			$len -= 2;
+			// $len -= 2;
 		}
 		$txt = Str::strPadPlus($txt, $len, $septer);
 		if($setColor === true){
@@ -361,6 +447,7 @@ class Console extends Command {
 			$txt = "<info>" .$txt. "</info>";
 		}
 		if($septer != "-") $txt = " {$txt} ";
+		else $txt= "-{$txt}-";
 		return $txt;
 	}
 
@@ -369,9 +456,10 @@ class Console extends Command {
 		return in_array($method, self::$shieldMethods) && !$has;
 	}
 
-    private static function getSrcPath(){
-        return realpath(__DIR__."/../../src/");
-    }
+	private static function getSrcPath(){
+			return VIPKWD_UTILS_LIB_ROOT ."/src/";
+	}
+	
 	private static function getConsoleName(){
 		return "dump";
 	}

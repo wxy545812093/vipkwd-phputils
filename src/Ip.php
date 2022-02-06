@@ -254,7 +254,7 @@ class Ip{
      * @return array
      */
     static function getIpInfo(string $ip): array{
-        $qqwryPath = realpath(__DIR__ .'/../support/qqwry.dat');
+        $qqwryPath = VIPKWD_UTILS_LIB_ROOT.'/support/qqwry.dat';
         $iplocation = new Helper_IpLocation($qqwryPath);
         $location = $iplocation->getlocation( $ip );
         $region = static::ip2region($ip);

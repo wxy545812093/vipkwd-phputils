@@ -14,3 +14,4 @@ if (function_exists("get_magic_quotes_gpc")) {
     }
     unset($process);
 }
+define('VIPKWD_UTILS_LIB_ROOT', realpath(__DIR__ .'/../'));

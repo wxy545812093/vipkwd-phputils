@@ -12,68 +12,891 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\{Tools,Str as VipkwdStr, Dev};
 
-class Thumb {
+class Thumb{
+
+	use ThumbCoreVar, ThumbCore, Thumbmaker;
+
+	private static $maxNumber = 99999999;
+
+	/**
+	 * 添加描边框
+	 *
+	 * @param integer $frameWidthPiex <10> 
+	 * @param string $frameColor
+	 * @return self
+	 */
+	public function eventAddFrame(int $frameWidthPiex=10, string $frameColor="#0ff"):self{
+		$this->numberRangeLimit($frameWidthPiex, 0, self::$maxNumber);
+		$this ->Framewidth = $frameWidthPiex;
+		$this ->Framecolor = $this->colorHexFix($frameColor);
+		return $this;
+	}
+
+	/**
+	 * 文字水印
+	 *
+	 * @param string $text
+	 * @param string $ttfPath <"">
+	 * @param integer $fontSize <16>
+	 * @param string $textColor <"#000000">
+	 * @param string $position <"50% 50%"> 居中
+	 * @return self
+	 */
+	public function watermarkText(string $text, string $ttfPath="", int $fontSize=16, string $textColor="#000",string $position='50% 50%'):self{
+		$this->numberRangeLimit($fontSize, 8, 100);
+		if(File::exists($ttfPath)){
+			$this -> Copyrightfonttype = $ttfPath;
+		}
+		$this -> Copyrighttext = $text;
+		$this -> Copyrightposition = $position;
+		$this -> Copyrightfontsize = $fontSize;
+		$this -> Copyrighttextcolor = $this->colorHexFix($textColor);
+		return $this;
+	}
+	/**
+	 * 自动调整尺寸
+	 *
+	 * @param integer $size （ size > 0 ）
+	 * @return self
+	 */
+	public function eventAutoResize(int $size):self{
+		$this->Thumbsize = $size;
+		return $this;
+	}
+
+	/**
+	 * 设置尺寸
+	 *
+	 * @param integer|null $widthPiex
+	 * @param integer|null $heightPiex
+	 * @return self
+	 */
+	public function eventResize(?int $widthPiex=null, ?int $heightPiex = null):self{
+		$heightPiex >0 && $this->Thumbheight = $heightPiex;
+		$widthPiex >0 && $this->Thumbwidth = $widthPiex;
+		return $this;
+	}
+
+	/**
+	 * 百分比缩放
+	 *
+	 * @param integer $percentage （0~100）
+	 * @return self
+	 */
+	public function eventPercentZoom(int $percentage):self{
+		$this->numberRangeLimit($percentage);
+		$this -> Thumbsize = $percentage;
+		$this -> Percentage = true;
+		return $this;
+	}
+
+	/**
+	 * 图像放大（填充)
+	 *
+	 * @param integer $size ( size > 0)
+	 * @return self
+	 */
+	public function eventEnlarged(int $size):self{
+		$this->numberRangeLimit($size, 0, self::$maxNumber);
+		$this -> Thumbsize = $size;
+		$this -> Inflate = true;
+		return $this;
+	}
+
+	/**
+	 * 设置图片质量比
+	 *
+	 * @param integer $num （0~100）
+	 * @return self
+	 */
+	public function changeQuality(int $num):self{
+		$this->numberRangeLimit($num);
+		$this -> Quality = $num;
+		return $this;
+	}
+
+	/**
+	 * 开启边框阴影
+	 *
+	 * @return self
+	 */
+	public function filterShadow():self{
+		$this ->Shadow = true;
+		return $this;
+	}
+
+	/**
+	 * 遮罩阴影
+	 *
+	 * @param string $colorHex 遮罩颜色Hex
+	 * @param integer $coverWidth 遮罩覆盖宽度px
+	 * @param integer $depth <20> 透明度 （0~100）
+	 * @param integer $direction <2> 1从右向左 2从左向右
+	 * @return self
+	 */
+	public function filterShading(string $colorHex,int $coverWidth, int $depth = 20, int $direction = 2):self{
+		$colorHex = $this->colorHexFix($colorHex);
+		$this->numberRangeLimit($direction, 1, 2);
+		$this->numberRangeLimit($coverWidth, 0, self::$maxNumber);
+		$this->numberRangeLimit($depth);
+		$this -> Shading = array(1,$depth,$coverWidth,$direction);
+		$this -> Shadingcolor = $colorHex;
+		return $this;
+	}
+
+	/**
+	 * 镜像
+	 *
+	 * @param string $colorHex 镜面色值Hex
+	 * @param integer $mirrorHeight <100> 镜像高度（0~100）
+	 * @param integer $startDepth <10> 镜面透明度梯度起始强度（0~100）
+	 * @param integer $endDepth <60> 镜面透明度梯度结束强度（0~100）
+	 * @param integer $gapPiex <2> 镜面与原图 触点间距px
+	 * @return self
+	 */
+	public function filterMirror(string $colorHex, int $mirrorHeight=100, int $startDepth=10, int $endDepth=60, int $gapPiex = 2):self{
+		$this->numberRangeLimit($startDepth);
+		$this->numberRangeLimit($endDepth);
+		$this->numberRangeLimit($mirrorHeight);
+		$this->numberRangeLimit($gapPiex,0, self::$maxNumber);
+		$this -> Mirror = array(1,$startDepth,$endDepth,$mirrorHeight,$gapPiex);
+		$this -> Mirrorcolor = $this->colorHexFix($colorHex);
+		return $this;
+	}
+
+	/**
+	 * 底片效果
+	 *
+	 * @param string $state <true> 状态开关 默认开
+	 * 
+	 * @return self
+	 */
+	public function filterNegative(bool $state = true):self{
+		$this->Negative = !!$state;
+		return $this;
+	}
+
+	/**
+	 * 颜色替换(场景：证件照换背景)
+	 *
+	 * @param string $findHex
+	 * @param string $replaceHex
+	 * @param integer $rgbGap
+	 * @return self
+	 */
+	public function filterColorReplace(string $findHex, string $replaceHex, int $rgbGap = 10):self{
+		$this -> Colorreplace = array(
+			1,
+			$this->colorHexFix($findHex),
+			$this->colorHexFix($replaceHex),
+			$rgbGap);
+		return $this;
+	}
 	
-    use ThumbCoreVar, ThumbCore;
+	/**
+	 * 灰化图像（黑白照）
+	 *
+	 * @param boolean $state <true> 状态开关 默认开
+	 * @return self
+	 */
+	public function filterGreyscale(bool $state = true):self{
+		$this->Greyscale = !!$state;
+		return $this;
+	}
 
+	/**
+	 * 色彩融合/混合
+	 *
+	 * @param integer $r （0~255）
+	 * @param integer $g （0~255）
+	 * @param integer $b （0~255）
+	 * @param integer $opacity （0~127）
+	 * @return void
+	 */
+	public function filterMergeColor(int $r, int $g, int $b, int $opacity = 0){
+		$this -> numberRangeLimit($r,0, 255);
+		$this -> numberRangeLimit($g,0, 255);
+		$this -> numberRangeLimit($b,0, 255);
+		$this -> numberRangeLimit($opacity,0, 127);
+		$this -> Colorize = array(1, $r, $g, $b, $opacity);
+		return $this;
+	}
+
+	/**
+	 * 调整对比度
+	 *
+	 * @param integer $depth 明暗度（-100 ~ 100）(暗 < 0 < 明)
+	 * @return self
+	 */
+	public function filterContrast(int $depth):self{
+		$this -> numberRangeLimit($depth, -100, 100);
+		$this -> Contrast = array(1,$depth);
+		return $this;
+	}
+
+	/**
+	 * 调色板
+	 *
+	 * @param integer $colorAmounts 调色板的颜色数量
+	 * @return self
+	 */
+	public function filterPalette(int $colorAmounts):self{
+		$this -> numberRangeLimit($colorAmounts, 1, self::$maxNumber);
+		$this -> Palette = array(1,$colorAmounts);
+		return $this;
+	}
+
+	/**
+	 * 移除噪点
+	 *
+	 * @return self
+	 */
+	public function filterRemoveNoise():self{
+		$this -> Medianfilter = true;
+		return $this;
+	}
+	
+
+	/**
+	 * 扭曲:旋转
+	 *
+	 * @param integer $strength 效果强度(0~100)
+	 * @param integer $direction <0> 旋转方向 0=顺时针1=逆时针
+	 * @return self
+	 */
+	public function eventRotateWarp(int $strength, int $direction = 0):self{
+		$this -> numberRangeLimit($strength, 0, 100);
+		$this -> numberRangeLimit($direction, 0, 1);
+		$this -> Twirlfx = array(1, $strength, $direction);
+		return $this;
+	}
+
+	/**
+	 * 扭曲:波纹
+	 *
+	 * @param integer $hAmount 水平波数量
+	 * @param integer $hAmplitudePiex 水平波振幅
+	 * @param integer $vAmount 垂直波数量
+	 * @param integer $vAmplitudePiex 垂直波振幅
+	 * @return self
+	 */
+	public function eventWavesWarp(int $hAmount, int $hAmplitudePiex, int $vAmount=0, int $vAmplitudePiex=0):self{
+		$this -> Ripplefx = array(1,$hAmount, $hAmplitudePiex, $vAmount, $vAmplitudePiex);
+		return $this;
+	}
+
+	/**
+	 * 扭曲:湖面形
+	 *
+	 * @param integer $density 波的密度
+	 * @param integer $areaSize 从底部测量的湖泊面积(0 - 100)
+	 * @return self
+	 */
+	public function eventLakeWarp(int $density, int $areaSize):self{
+		$this->numberRangeLimit($areaSize, 0, 100);
+		$this -> Lakefx = array(1,$density, $areaSize);
+		return $this;
+	}
+
+	/**
+	 * 扭曲:圆形水滴效果
+	 *
+	 * @param integer $Amplitude 振幅px
+	 * @param integer $radius 半径px
+	 * @param integer $waveLength 波长
+	 * @return self
+	 */
+	public function eventWaterdropWarp(float $amplitude, int $radius, int $waveLength):self{
+		$this -> numberRangeLimit($radius, 0.1, self::$maxNumber);
+		$this -> numberRangeLimit($waveLength, 1, self::$maxNumber);
+		$this -> Waterdropfx = array(1,$amplitude,$radius,$waveLength);
+		return $this;
+	}
+
+	/**
+	 * 调整伽马(灰度)系数
+	 * 
+	 * gamma值即伽马值，是对曲线的优化调整，是亮度和对比度的辅助功能。Gamma也叫灰度系数
+	 *
+	 * @param float $coefficient 校正系数 ( 系数 > 0 )
+	 * @return self
+	 */
+	public function eventChangeGamma(float $coefficient):self{
+		$this->numberRangeLimit($coefficient, 0.00001, self::$maxNumber);
+		$this -> Gamma = array(1,$coefficient);
+		return $this;
+	}
+	/**
+	 * 马赛克
+	 *
+	 * @param integer $depth 深度（0~150）
+	 * @return self
+	 */
+	public function filterMosaic(int $depth):self{
+		$this->numberRangeLimit($depth,0, 150);
+		$this->Pixelate = array(1, $depth);
+		return $this;
+	}
+
+	/**
+	 * 提亮
+	 *
+	 * @param integer $depth 深度（-100 ~ 100）
+	 * @return self
+	 */
+	public function eventBrightness(int $depth):self{
+		$this->numberRangeLimit($depth, -100, 100);
+		$this->Brightness = array(1, $depth);
+		return $this;
+	}
+	
+	/**
+	 * 设置背景色
+	 *
+	 * @param string $colorHex HEX色值（f00 或 ff0000）
+	 * 
+	 * @return self
+	 */
+	public function setBackgroundColor(string $colorHex):self{
+		$this->Backgroundcolor = $this->colorHexFix($colorHex);
+		return $this;
+	}
+
+	/**
+	 * 图像虚化（仅重新定位像素）
+	 *
+	 * @param integer $pixelRange <2> 像素范围
+	 * @param integer $repeats <1> 定位(虚化)次数 （1~10）
+	 * @return self
+	 */
+	public function filterVacuity(int $pixelRange = 2, int $repeats = 1):self{
+		$this	-> numberRangeLimit($repeats, 1, 10);
+		$this -> Pixelscramble = array(1,$pixelRange, $repeats);
+		return $this;
+	}
+	/**
+	 * 边角切割
+	 *
+	 * @param integer $percentage 切角百分比
+	 * @param integer $type <1> 1直角切割 2圆角切割
+	 * @param boolean $lt <true> 切割左上角
+	 * @param boolean $lb <true> 切割左下角
+	 * @param boolean $rt <true> 切割右上角
+	 * @param boolean $rb <true> 切割右下角
+	 * @return self
+	 */
+	public function eventClipCorner(int $percentage, int $type=1, bool $lt=true, bool $lb=true, bool $rt=true, bool $rb=true):self{
+		$this->numberRangeLimit($percentage);
+		$this->numberRangeLimit($type, 1, 2);
+		$this -> Clipcorner = array($type, $percentage, 0, (int)$lt, (int)$lb, (int)$rt, (int)$rb);
+		return $this;
+	}
+
+	/**
+	 * 透明图像
+	 *
+	 * @param string $color 覆盖色值HEX 
+	 * @param integer $type <0> 0=PNG 1=GIF 2=原始文件格式
+	 * @param integer $rgbTolerance <0> RGB容错值（0~100）
+	 * @return self
+	 */
+	public function eventMakeTransparent(string $color, int $type = 0, int $rgbTolerance = 0):self{
+		$this->numberRangeLimit($type, 0, 2);
+		$this->numberRangeLimit($rgbTolerance);
+		$this -> Maketransparent = array(1, $type, $this->colorHexFix($color), $rgbTolerance);
+		return $this;
+	}
+
+	/**
+	 * 怀旧滤镜
+	 *
+	 * @param integer $noise <10> 噪点度(0~100)
+	 * @param integer $depth <80> 深褐度(0~100)
+	 * @return self
+	 */ 
+	public function filterNostalgic(int $noise =10, int $depth = 80):self{
+		$this->numberRangeLimit($noise);
+		$this->numberRangeLimit($depth);
+		$this -> Ageimage = array(1,$noise,$depth);
+		return $this;
+	}
+	
+	/**
+	 * 书签活页夹
+	 *
+	 * @param integer $frameWidth <10> 页夹宽度px
+	 * @param string $frameColor <"#00ffff"> 页夹背景
+	 * @param integer $binderSpacingPiex <5> 活页间距px
+	 * @return self
+	 */
+	public function filterBinder(int $frameWidth=10, string $frameColor="#0ff", int $binderSpacingPiex=5):self{
+		$this -> eventAddFrame($frameWidth, $frameColor);
+		$this -> Binder = !0;
+		$this -> Binderspacing = $binderSpacingPiex;
+		return $this;
+	}
+
+	/**
+	 * 翻转图像
+	 *
+	 * @param string $direction <h> h 水平翻转；v 垂直翻转
+	 * @return self
+	 */
+	public function eventFlip(string $direction = "h"):self{
+		//水平
+		strtoupper($direction) == "H" && $this -> Fliphorizontal = true;
+		//垂直
+		strtoupper($direction) == "V" && $this -> Flipvertical = true;
+		return $this;
+	}
+
+	/**
+	 * 旋转
+	 *
+	 * @param integer $degSize 度数 （-180 ~ 180）负数向左旋转
+	 * @param boolean $keepSize
+	 * @return self
+	 */
+	public function eventRotate(int $degSize, bool $keepSize = false):self{
+		$this->numberRangeLimit($degSize, -360, 360);
+		$this -> Rotate = $degSize;
+
+		//保持原图尺寸(默认角度倾斜会撑宽原图))
+		$keepSize && $this -> Croprotate = true;
+
+		return $this;
+	}
+
+	/**
+	 * 按长边放大至正方向(有留白)
+	 *
+	 * @return self
+	 */
+	public function eventSquareSpacing():self{
+		$this -> Square = true;
+		return $this;
+	}
+
+	/**
+	 * 剪裁(无留白)
+	 *
+	 * @param integer $type 1=center crop 2=square crop
+	 * @param integer $unit 0=percentage 1=pixels
+	 * @param integer $leftGap 剪除边距
+	 * @param integer $rightGap 剪除边距
+	 * @param integer $topGap 剪除边距
+	 * @param integer $bottomGap 剪除边距
+	 * @return self
+	 */
+	public function eventCrop(int $type = 1, int $unit = 1, int $leftGap = 0, int $rightGap = 0, int $topGap = 0, int $bottomGap = 0):self{
+		$this->numberRangeLimit($type, 1, 2);
+		$this->numberRangeLimit($unit, 0, 1);
+		$this->numberRangeLimit($leftGap, 0, self::$maxNumber);
+		$this->numberRangeLimit($rightGap, 0, self::$maxNumber);
+		$this->numberRangeLimit($topGap, 0, self::$maxNumber);
+		$this->numberRangeLimit($bottomGap, 0, self::$maxNumber);
+		$type += 1;
+		$this -> Cropimage = array($type, $unit, $leftGap, $rightGap, $topGap, $bottomGap);
+		return $this;
+	}
+	
+	/**
+	 * PNG图片水印
+	 *
+	 * @param string $filename 水印图地址
+	 * @param string $position <"80% 90%"> "左间距百分比 上间距百分比"
+	 * @param integer $transparency <10> 透明度 0-100 100不透明
+	 * @return self
+	 */
+	public function watermarkPng(string $filename, string $position = "80% 90%", int $transparency = 10):self{
+		$this->numberRangeLimit($transparency);
+		$this -> Watermarkpng = $filename;
+		$this -> Watermarkposition = $position;
+		$this -> Watermarktransparency = $transparency; //透明度
+		return $this;
+	}
+
+
+	/**
+	 * 宝丽来效果
+	 *
+	 * @param integer $thumbSize 图像大小
+	 * @param string $text 文字内容
+	 * @param string $ttfPath 字体文件
+	 * @param integer $fontSize 字体大小
+	 * @param string $textColor 字体颜色
+	 * @return self
+	 */
+	public function polaroidEffect(int $thumbSize, string $text="", string $ttfPath="", int $fontSize=50, string $textColor="#000"):self{
+		$this->numberRangeLimit($thumbSize, 10, self::$maxNumber);
+		$this->numberRangeLimit($fontSize, 10, self::$maxNumber);
+		$this -> Thumbsize = 200;
+		// $this -> Shadow = true;
+		$this -> Polaroid = true;
+		$text && $this -> Polaroidtext = trim($text);
+		File::exists($ttfPath) && $this -> Polaroidfonttype = $ttfPath;
+		$this -> Polaroidfontsize = $fontSize;
+		$this -> Polaroidtextcolor = $this->colorHexFix($textColor);
+		return $this;
+	}
+	/**
+	 * 预定义滤镜
+	 *
+	 * @param boolean $edge <true>
+	 * @param boolean $emboss <true>
+	 * @return self
+	 */
+	public function filterPreDefined(bool $edge=true, bool $emboss=true):self{
+		$this -> Edge = $edge;
+		$this -> Emboss = $emboss;
+		$this -> Sharpen = true;
+		$this -> Blur = true;
+		$this -> Mean = true;
+		return $this;
+	}
+
+	/**
+	 * 透视原图并填补背景
+	 *
+	 * @param string $direction <"right">  透视方向 left/right/top/bottom
+	 * @param integer $perspective  <10> 透视强度（0~100）
+	 * @return self
+	 */
+	public function perspectiveOrigin(string $direction="right", int $perspective=10):self{
+		$this->numberRangeLimit($perspective);
+		$directions = [ "left"=> 0, "right"=> 1, "top"=> 2, "bottom"=> 3 ];
+		!array_key_exists($direction, $directions) && $direction = "right";
+		$this -> Perspective = array(1,$directions[$direction], $perspective);
+		return $this;
+	}
+
+	/**
+	 * 透视缩略图并填补背景
+	 *
+	 * @param string $direction <"right">  透视方向 left/right/top/bottom
+	 * @param integer $perspective  <10> 透视强度（0~100）
+	 * @return self
+	 */
+	public function perspectiveThumb(string $direction="right", int $perspective=10):self{
+		$this->numberRangeLimit($perspective);
+		$directions = [ "left"=> 0, "right"=> 1, "top"=> 2, "bottom"=> 3 ];
+		!array_key_exists($direction, $directions) && $direction = "right";
+		$this -> Perspectivethumb = array(1,$directions[$direction], $perspective);
+		return $this;
+	}
+
+	/**
+	 * 生成占位图
+	 *
+	 * @param string $WxHsize 400x300 || 4:3x400 || 16:9x300
+	 * @param string $textColor <#ffffff> #ffffff || #fff || #f
+	 * @param string $bgColor <#666666> #ffffff || #fff || #f
+	 * @param string $text	<宽 x 高> 最大12个字
+	 * @param integer $imageType 1gif 2jpg 3png
+	 * @return header
+	 */
+	public function placeholderFigure(string $WxHsize, string $textColor="#fff", string $bgColor="#666", string $text = "W x H", int $imageType = 2){
+			$this->numberRangeLimit($imageType, 1,3);
+			$WxHsize = strtolower(str_replace(" ","", trim($WxHsize)));
+			list($width, $height) = explode("x", $WxHsize);
+			if(strpos($width, ":")){
+				list($w1,$h1) = explode(":", $width);
+				$width = bcmul(bcdiv($height, $h1, 4), $w1, 0);
+			}else if(strpos($height, ":")){
+				list($w1,$h1) = explode(":", $height);
+				$height = bcmul(bcdiv($width, $w1, 4), $height, 0);
+			}
+			$width *= 1;
+			$height *= 1;
+			$this->numberRangeLimit($width, 50, 2048);
+			$this->numberRangeLimit($height, 50, 2048);
+
+			// 文本大小
+			$size = intval(($width > $height ? $height : $width) * 0.1);
+			// 设置文本内容
+			$text = trim($text);
+			$content = ($text && $text != "W x H") ? mb_substr($text,0,12) : $width . ' x ' . $height;
+
+			$bgColor = $this->hex2rgb($this->colorHexFix($bgColor));
+			$textColor = $this->hex2rgb($this->colorHexFix($textColor));
+			$etag = md5(json_encode(compact( "height", "width", "content","size", "textColor", "bgColor", "imageType" )));
+			if(array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag){
+				Tools::sendHttpCode(304);
+        exit();
+    	}
+			// 创建画布
+			$this->thumb = imagecreatetruecolor($width, $height);
+			// 设置文本颜色
+			$textColor = imagecolorallocate($this->thumb, $textcolor['r'],$textcolor['g'],$textcolor['b']);
+			// 设置画布颜色
+			$backgroundColor = imagecolorallocate($this->thumb, $bgColor['r'],$bgColor['g'],$bgColor['b']);
+			// 创建画布并且填充颜色
+			imagefilledrectangle($this->thumb, 0, 0, $width, $height, $backgroundColor);
+			// 设置字体文字路径
+			$fontPath = realpath(VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/1.ttf');
+			//计算文本范围
+			$position = imagettfbbox($size, 0, $fontPath, $content);
+			$x        = intval(($width - $position[2] - $position[0]) / 2);
+			$y        = intval(($height - $position[3] - $position[5]) / 2);
+			// 写入文本
+			imagefttext($this->thumb, $size, 0, $x, $y, $textColor, $fontPath, $content);
+
+			// 开启缓存
+			ob_start();
+			// 输出图像
+			switch($imageType) {
+				case 1:
+					imagegif($this->thumb);
+					$t = "image/gif";
+					break;
+				case 2:
+					imagejpeg($this->thumb,NULL,$this->Quality ? intval($this->Quality): 90);
+					$t = "image/jpeg";
+					break;
+				case 3:
+					imagepng($this->thumb);
+					$t = "image/png";
+					break;
+			}
+			$this->im && imagedestroy($this->im);
+			$this->thumb && imagedestroy($this->thumb);
+			$content = ob_get_clean();
+			header('Cache-Control: public');
+			header('max-age: 31536000');
+			header('Last-Modified: ' . gmdate("D, d M Y H:i:s", strtotime(date('Y-m-01 00:00:00'))) . ' GMT');
+			header("Etag:" . $etag);
+			header('Content-type: '.$t);
+			header('Content-Length:'.strlen($content));
+			echo $content;
+	}
+	 
+	/**
+	 * 16进制色值转RGB数值
+	 * 
+	 * -- #dfdfdf转换成(239,239,239)
+	 *
+	 * @param string $color
+	 * @return void
+	 */
+	public function hex2rgb(string $color ) {
+		$color = str_replace("#", "", $color);
+		if ( strlen( $color ) == 6 ) {
+			list( $r, $g, $b ) = array( $color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5] );
+		} elseif ( strlen( $color ) == 3 ) {
+			list( $r, $g, $b ) = array( $color[0] . $color[0], $color[1] . $color[1], $color[2] . $color[2] );
+		} else {
+			return false;
+		}
+		$r = hexdec( $r );
+		$g = hexdec( $g );
+		$b = hexdec( $b );
+		return array( 'r' => $r, 'g' => $g, 'b' => $b );
+	}
+
+	/**
+	 * 为canvas填补文字
+	 *
+	 * @param string $text
+	 * @param string $position
+	 * @param integer $textSize
+	 * @param string $textColor
+	 * @param string $ttfPath
+	 * @return self
+	 */
+	public function textForCanvas(string $text, string $position="50% 50%", int $textSize = 20, string $textColor="#000",string $ttfPath=""):self{
+		$this->numberRangeLimit($textSize, 1, self::$maxNumber);
+		$this -> Addtext = array(
+			1,
+			$text,
+			$position,
+			File::exists($ttfPath) ? $ttfPath : '',
+			$textSize,
+			$this->colorHexFix($textColor)
+		);
+		return $this;
+	}
+
+	/**
+	 * 设置文件保存目录
+	 *
+	 * @param string $savePath 
+	 * @return self
+	 */
+	public function savePath($savePath = ""):self{
+		if($savePath && is_dir(dirname($savePath))){
+			$this->Thumblocation = realpath(dirname($savePath)).'/';
+		}else{
+			$this->Thumblocation = realpath(dirname($this->image)).'/';
+		}
+		$this->Thumbprefix = VipkwdStr::md5_16(VipkwdStr::uuid()).'.';
+		return $this;
+	}
+
+	/**
+	 * 获取图片指定像素点的亮度值
+	 *
+	 * @param integer $x
+	 * @param integer $y
+	 * @return void
+	 */
+	public function getBrightnessOfPixel(int $x, int $y){
+			$rgb = imagecolorat($this->image, $x, $y);
+			$r = ($rgb >> 16) & 0xFF;
+			$g = ($rgb >> 8) & 0xFF;
+			$b = $rgb & 0xFF;
+
+			//红绿蓝能量不同，亮度不同，对应系数也不同（参考https://www.w3.org/TR/AERT/#color-contrast）
+			$brightness = intval($r * 0.299 + $g * 0.587 + $b * 0.114);
+
+			return $brightness;
+	}
+
+	/**
+	 * 获取图片信息
+	 *
+	 * @param string $fileName
+	 * @return array
+	 */
+	public function getImageInfo(string $fileName):array{
+			//获取图像信息
+			$info = @getimagesize($fileName);
+
+			//检测图像合法性
+			if (false === $info || (\IMAGETYPE_GIF === $info[2] && empty($info['bits']))) {
+					return [];
+			}
+			//设置图像信息
+			return [
+					'width'  => $info[0],
+					'height' => $info[1],
+					'type'   => \image_type_to_extension($info[2], false),
+					'mime'   => $info['mime'],
+					'bits'	 => $info['bits'],
+					"atime"	 => fileatime($fileName),
+					"mtime"	 => filemtime($fileName),
+					"ctime"	 => filectime($fileName),
+					"md5"	 	 => hash_file("md5",$fileName),
+					"path"	 => dirname($fileName),
+					"name"	 => basename($fileName),
+			];
+	}
+	/**
+	 * 数值区间验证
+	 *
+	 * @param [type] $num
+	 * @param integer $min
+	 * @param integer $max
+	 * @return void
+	 */
+	private function numberRangeLimit(&$num, $min = 0, $max = 100){
+		$num <= $min && $num = $min;
+		$num >= $max && $num = $max;
+		$num *= 1;
+	}
+	
+	/**
+	 * 16进制色值检测/修补
+	 *
+	 * @param string $color
+	 * @return void
+	 */
+	private function colorHexFix(string $color){
+		$color = str_replace("#","", trim($color));
+		$len = strlen($color);
+		switch($len){
+			case "3":
+				$color = str_split($color);
+				$color = implode("", [ $color[0], $color[0], $color[1], $color[1], $color[2], $color[2], ]);
+				break;
+			case "2":
+				$color = implode("", [ $color, $color, $color]);
+				break;
+			case "1":
+				$color = str_pad("", 6, $color);
+				break;
+		}
+		$color = strtoupper(substr(str_pad($color, 6, "0"), 0, 6));
+		
+		// Dev::vdump([$color, preg_match("/^[0-9A-F]{6}$/i", $color),1],1);
+		if(!preg_match("/^([0-9A-F]+){6}$/i", $color)){
+			$color = "000000";
+		}
+		return "#".$color;
+	}
+}
+
+
+trait Thumbmaker {
+	
     private static $_instance = [];
 
-    /**
-     * 实例化入口
-     *
-     * @param array $option <[]> 预留参数
-     * @param string $instanceID <"1"> 单例ID
-     * @return self
-     */
-    static function instance(array $option = [], string $instanceID = "1"):self{
-        $_k = md5($instanceID);
-        if(!isset(static::$_instance[$_k])){
-            static::$_instance[$_k] = new self($option);
-        }
-        return static::$_instance[$_k];
-    }
+	/**
+	 * 实例化入口
+	 *
+	 * @param array $option <[]> 预留参数
+	 * @param string $instanceID <"1"> 单例ID
+	 * @return self
+	 */
+	static function instance(array $option = [], string $instanceID = "1"):self{
+			$_k = md5($instanceID);
+			if(!isset(static::$_instance[$_k])){
+					static::$_instance[$_k] = new self($option);
+			}
+			return static::$_instance[$_k];
+	}
 
 	/**
 	 * 创建和输出缩略图
 	 *
 	 * @param string/array $filename 数组时: 一维图片PATH
-	 * @param string $outputType <'screen'> [screen|storeage]
+	 * @param bool $storage <false> true 保存到本地
 	 */	
-	public function createThumb($filename="unknown",$outputType="screen"):void{
+	public function createThumb($filename="unknown",bool $storage=false):array{
 
-		if (is_array($filename) && $outputType != "screen") {
+		$list = [];
+		if (is_array($filename) && $storage) {
 			foreach ($filename as $name) {
-                if(file_exists($name)){
-                    $this->image=$name;
-                    $this->thumbmaker();
-                    $this->savethumb();
-                }
+				if(file_exists($name)){
+						$this->image=$name;
+						$this->thumbmaker();
+						$list[] = [
+							"origin" => $this->image,
+							"thumb" => $this->savethumb()
+						];
+				}
 			}
+			return $list;
 		} else {
-            if(file_exists($filename)){
-                $this->image=$filename;
-                $this->thumbmaker();
-                if ($outputType == "storeage") {
-                    $this->savethumb();
-                } else {
-                    $this->displaythumb();
-                }
-            }
+			if(file_exists($filename)){
+					$this->image=$filename;
+					$this->thumbmaker();
+					if ($storage) {
+						$list[] = [
+							"origin" => $this->image,
+							"thumb" => $this->savethumb()
+						];
+						return $list;
+					} else {
+							$this->displaythumb();
+					}
+			}
 		}
+		return [];
 	}
     
-    /**
-	 * Create image from canvas
+  /**
+	 * 从画布创建图像
 	 *
-	 * @param int width
-	 * @param int height
-	 * @param int IMAGETYPE_XXX
-	 * @param string background color
-	 * @param boolean transparent	 
+	 * @param int $width
+	 * @param int $height
+	 * @param string $bgcolor background color
+	 * @param int $filetype <IMAGETYPE_PNG> PHP常量 IMAGETYPE_XXX
+	 * @param boolean $transparent <false> 
+	 * @return self
 	 */	
-	public function createCanvas(int $width, int $height, int $filetype, string $bgcolor, bool $transparent):void{
+	public function createCanvas(int $width, int $height, string $bgcolor, int $filetype=IMAGETYPE_PNG, bool $transparent=false):self{
 		$this->im=imagecreatetruecolor($width,$height);
 		$this->size=array($width,$height,$filetype);
 		$color=imagecolorallocate($this->im,hexdec(substr($bgcolor,1,2)),hexdec(substr($bgcolor,3,2)),hexdec(substr($bgcolor,5,2)));
@@ -82,10 +905,11 @@ class Thumb {
 			$this->Keeptransparency=true;
 			imagecolortransparent($this->im,$color);
 		}
+		return $this;
 	}	
 	
 	/**
-	 * Output the thumbnail as base64 encoded text
+	 * 输出图片的base64数据
 	 *
 	 * @param string filename
 	 */	
@@ -114,80 +938,80 @@ class Thumb {
 		return $encoded;
 	}
 	
-    /**
+  /**
 	 * 擦出EXIF信息并转存图像
 	 *
 	 * @param string $srcImage
 	 * @param string $outputFilename
 	 */	      
-    public function wipeExif(string $srcImage, string $outputFilename):void{
-        if (file_exists($srcImage)) {
-            $src_file = fopen($srcImage, 'rb');
-            $wipe = false;
-            if ($src_file) {
-                $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
-                    $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                    while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
-						$length = unpack("n1length", fread($src_file, 2));	
-						fseek($src_file, $length['length'] - 2, SEEK_CUR);
-						$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-						$wipe = true;
-                    }
-                    if ($wipe) {
-						fseek($src_file, -2, SEEK_CUR);
-						$image_data = "\xff\xd8" . fread($src_file, filesize($srcImage));
-						fclose($src_file);
-						$des_file = fopen($outputFilename, 'w');
-						if ($des_file) {
-							fwrite($des_file, $image_data);
-							fclose($des_file);
-							chmod($outputFilename, octdec($this->Chmodlevel));
-						}
-                    } else {
-						fclose($src_file);
-                    }
-                } else {
-                    fclose($src_file);
-                }
-            }
-        }
-    }
+	protected function wipeExif(string $srcImage, string $outputFilename):void{
+			if (file_exists($srcImage)) {
+					$src_file = fopen($srcImage, 'rb');
+					$wipe = false;
+					if ($src_file) {
+							$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+							if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
+									$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+									while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
+					$length = unpack("n1length", fread($src_file, 2));	
+					fseek($src_file, $length['length'] - 2, SEEK_CUR);
+					$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+					$wipe = true;
+									}
+									if ($wipe) {
+					fseek($src_file, -2, SEEK_CUR);
+					$image_data = "\xff\xd8" . fread($src_file, filesize($srcImage));
+					fclose($src_file);
+					$des_file = fopen($outputFilename, 'w');
+					if ($des_file) {
+						fwrite($des_file, $image_data);
+						fclose($des_file);
+						chmod($outputFilename, octdec($this->Chmodlevel));
+					}
+									} else {
+					fclose($src_file);
+									}
+							} else {
+									fclose($src_file);
+							}
+					}
+			}
+	}
 
 	/**
 	 * 读取图像EXIF信息
 	 *
 	 * @param string source image
 	 */	      
-    public function readExif(string $srcImage){
-        $exif = "";
-        if (file_exists($srcImage)) {
-						if(function_exists('exif_read_data')){
-							//return exif_read_data($srcImage);
-						}
-            $src_file = fopen($srcImage, 'rb');
-            if ($src_file) {
-                $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
-                    $exifdata = fread($src_file, 2);
-                    $header = unpack("C1byte1/" . "C1byte2/", $exifdata);
-                    while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
-                        $exif .= $exifdata;
-                        $exifdata = fread($src_file, 2);
-                        $exif .= $exifdata;
-                        $length = unpack("n1length", $exifdata);
-												$exif .= fread($src_file, $length['length'] - 2);
-                        $exifdata = fread($src_file, 2);
-												$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
-                    }
-	    						fclose($src_file);
-                } else {
-                  fclose($src_file);
-                }
-            }
-        }
-        return $exif;
-    }
+	protected function readExif(string $srcImage){
+			$exif = "";
+			if (file_exists($srcImage)) {
+					if(function_exists('exif_read_data')){
+						//return exif_read_data($srcImage, "EXIF", true);
+					}
+					$src_file = fopen($srcImage, 'rb');
+					if ($src_file) {
+							$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+							if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
+									$exifdata = fread($src_file, 2);
+									$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
+									while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
+											$exif .= $exifdata;
+											$exifdata = fread($src_file, 2);
+											$exif .= $exifdata;
+											$length = unpack("n1length", $exifdata);
+											$exif .= fread($src_file, $length['length'] - 2);
+											$exifdata = fread($src_file, 2);
+											$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
+									}
+								fclose($src_file);
+							} else {
+								fclose($src_file);
+							}
+					}
+			}
+			return $exif;
+	}
     
 	/**
 	 * 写入 EXIF 信息到图像
@@ -195,7 +1019,7 @@ class Thumb {
 	 * @param string 待
 	 * @param string 二进制格式的Exif数据
 	 */	      
-    public function insertExif($srcImage, $exifData):void{
+	protected function insertExif($srcImage, $exifData):void{
         if (file_exists($srcImage)) {
             $src_file = fopen($srcImage, 'rb');
             if ($src_file) {
@@ -221,15 +1045,16 @@ class Thumb {
                 }
             }
         }
-    }
+  }
 
-    /**
+  /**
 	 * 创建一个动画的PNG图像
 	 *
 	 * @param array $frames
-	 * @param string $output
+	 * @param string $outputFilename
 	 * @param string $delay
 	 */	
+	
 	public function createApng($frames, $outputFilename, $delay):void{
 		$imageData = array();
 		$IHDR = array();
@@ -272,7 +1097,7 @@ class Thumb {
 				}
 			}
 		}
-    	$pngHeader = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
+    $pngHeader = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
 		$IHDR_chunk = $this->create_chunk('IHDR', pack('NNCCCCC', $IHDR['width'], $IHDR['height'], $IHDR['bits'], $IHDR['color'], $IHDR['compression'], $IHDR['prefilter'], $IHDR['interlacing']));
 		$acTL_chunk = $this->create_chunk('acTL', pack("NN", count($imageData), 0));
 		$data = $this->create_fcTL($sequenceNumber, $IHDR['width'], $IHDR['height'], $delay);  
@@ -976,8 +1801,8 @@ trait ThumbCore{
 		$this->Framecolor             = '#FFFFFF';
 		$this->Watermarkpng           = '';
 		$this->Watermarkposition      = '100% 100%';
-		$this->Watermarktransparency  = '70';	
-		$this->Quality                = '90';
+		$this->Watermarktransparency  = 70;	
+		$this->Quality                = 90;
 		$this->Chmodlevel             = '0755';
 		$this->Thumblocation          = '';
 		$this->Thumbsaveas            = '';
@@ -1033,7 +1858,7 @@ trait ThumbCore{
 		$this->Polaroid               = false;
 		$this->Polaroidtext           = '';
 		$this->Polaroidfonttype       = '';
-		$this->Polaroidfontsize       = '30';
+		$this->Polaroidfontsize       = 30;
 		$this->Polaroidtextcolor      = '#000000';
 		$this->Polaroidframecolor     = '#FFFFFF';		
 		$this->Displacementmap        = array(0,'',0,0,0,50,50);
@@ -1128,13 +1953,13 @@ trait ThumbCore{
 			$this->size=GetImageSize($this->image);
 			switch($this->size[2]) {
 				case 1:
-					if (imagetypes() & IMG_GIF) {$this->im=imagecreatefromgif($this->image);return true;} else {$this->invalidImage('No GIF support');return false;}
+					if (imagetypes() & IMG_GIF) {$this->im=imagecreatefromgif($this->image);return true;} else {$this->invalidImage('无效GIF图像');return false;}
 					break;
 				case 2:
-					if (imagetypes() & IMG_JPG) {$this->im=imagecreatefromjpeg($this->image);$this->Keeptransparency=false;return true;} else {$this->invalidImage('No JPG support');return false;}
+					if (imagetypes() & IMG_JPG) {$this->im=imagecreatefromjpeg($this->image);$this->Keeptransparency=false;return true;} else {$this->invalidImage('无效JPG图像');return false;}
 					break;
 				case 3:
-					if (imagetypes() & IMG_PNG) {$this->im=imagecreatefrompng($this->image);return true;} else {$this->invalidImage('No PNG support');return false;}
+					if (imagetypes() & IMG_PNG) {$this->im=imagecreatefrompng($this->image);return true;} else {$this->invalidImage('无效PNG图像');return false;}
 					break;
 				default:
 					$this->invalidImage('不支持的文件类型');
@@ -1155,7 +1980,8 @@ trait ThumbCore{
 	 */	
 	private function invalidImage(string $message):void{
 		$this->thumb=imagecreate(80,75);
-		$black=imagecolorallocate($this->thumb,0,0,0);$yellow=imagecolorallocate($this->thumb,255,255,0);
+		$black=imagecolorallocate($this->thumb,0,0,0);
+		$yellow=imagecolorallocate($this->thumb,255,255,0);
 		imagefilledrectangle($this->thumb,0,0,80,75,imagecolorallocate($this->thumb,255,0,0));
 		imagerectangle($this->thumb,0,0,79,74,$black);imageline($this->thumb,0,20,80,20,$black);
 		imagefilledrectangle($this->thumb,1,1,78,19,$yellow);imagefilledrectangle($this->thumb,27,35,52,60,$yellow);
@@ -1171,8 +1997,8 @@ trait ThumbCore{
 	private function createemptythumbnail():void{
 	
 		$thumbsize=$this->Thumbsize;
-        $thumbwidth=$this->Thumbwidth;
-        $thumbheight=$this->Thumbheight;
+		$thumbwidth=$this->Thumbwidth;
+		$thumbheight=$this->Thumbheight;
 		if ($thumbsize==0) {$thumbsize=9999;$thumbwidth=0;$thumbheight=0;}
 		if ($this->Percentage) {
 			if ($thumbwidth>0) {$thumbwidth=intval(($thumbwidth/100)*$this->size[0]);}
@@ -1234,7 +2060,7 @@ trait ThumbCore{
 	 * 保存缩略图到文件
 	 *
 	 */	
-	private function savethumb():void{
+	private function savethumb():string{
 	
 		if ($this->Thumbsaveas!='') {
 			switch (strtolower($this->Thumbsaveas)) {
@@ -1258,21 +2084,27 @@ trait ThumbCore{
 		}
 		if ($this->Thumbfilename!='') {
 			$this->image=$this->Thumbfilename;
-		}		
+		}
+		(!$this->Thumblocation && !$this->Thumbprefix ) && $this->savePath();
+
+		$Thumbfilename = $this->Thumblocation.$this->Thumbprefix.basename($this->image);
 		switch($this->size[2]) {
 			case 1:
-				imagegif($this->thumb,$this->Thumblocation.$this->Thumbprefix.basename($this->image));
+				imagegif($this->thumb,$Thumbfilename);
 				break;
 			case 2:
-				imagejpeg($this->thumb,$this->Thumblocation.$this->Thumbprefix.basename($this->image),$this->Quality);
+				imagejpeg($this->thumb,$Thumbfilename,$this->Quality);
 				break;
 			case 3:
-				imagepng($this->thumb,$this->Thumblocation.$this->Thumbprefix.basename($this->image));
+				imagepng($this->thumb,$Thumbfilename);
 				break;
 		}		
-		if ($this->Chmodlevel!='') {chmod($this->Thumblocation.$this->Thumbprefix.basename($this->image),octdec($this->Chmodlevel));}
+		if ($this->Chmodlevel !='') {
+			chmod($Thumbfilename,octdec($this->Chmodlevel));
+		}
 		imagedestroy($this->im);
 		imagedestroy($this->thumb);
+		return $Thumbfilename;
 	}
 
 	/**
@@ -1380,7 +2212,7 @@ trait ThumbCore{
 	 */	
 	private function clipcornersround() {
 	
-		$clipsize=floor($this->size[0]*($this->Clipcorner[1]/100));
+		$clipsize=intval($this->size[0]*($this->Clipcorner[1]/100));
 		$clip_degrees=90/max($clipsize,1);
 		$points_tl=array(0,0);
 		$points_br=array($this->size[0],$this->size[1]);
@@ -1423,13 +2255,13 @@ trait ThumbCore{
 			$new_col=intval($col['red']*0.2125+$col['green']*0.7154+$col['blue']*0.0721);
 			$noise=intval(rand(-$this->Ageimage[1],$this->Ageimage[1]));
 			if ($this->Ageimage[2]>0) {
-				$r=$new_col+$this->Ageimage[2]+$noise;
+				$r=intval($new_col+$this->Ageimage[2]+$noise);
 				$g=intval($new_col+$this->Ageimage[2]/1.86+$noise);
 				$b=intval($new_col+$this->Ageimage[2]/-3.48+$noise);
 			} else {
-				$r=$new_col+$noise;
-				$g=$new_col+$noise;
-				$b=$new_col+$noise;
+				$r=intval($new_col+$noise);
+				$g=intval($new_col+$noise);
+				$b=intval($new_col+$noise);
 			}
 			imagecolorset($this->im,$c,max(0,min(255,$r)),max(0,min(255,$g)),max(0,min(255,$b)));
 		}
@@ -1665,7 +2497,7 @@ trait ThumbCore{
 	 *
 	 */		
 	private function cropimage() {	
-		
+		$this->Cropimage[1] = $this->Cropimage[1] ? 1 : 0;
 		if ($this->Cropimage[1]==0) {
 			$crop2=intval($this->size[0]*($this->Cropimage[2]/100));
 			$crop3=intval($this->size[0]*($this->Cropimage[3]/100));
@@ -1679,13 +2511,13 @@ trait ThumbCore{
 			$crop5=intval($this->Cropimage[5]);	
 		}
 		if ($this->Cropimage[0]==2) {
-			$crop2=intval($this->size[0]/2)-$crop2;
-			$crop3=intval($this->size[0]/2)-$crop3;
-			$crop4=intval($this->size[1]/2)-$crop4;
-			$crop5=intval($this->size[1]/2)-$crop5;
+			$crop2=intval(($this->size[0]/2)-$crop2);
+			$crop3=intval(($this->size[0]/2)-$crop3);
+			$crop4=intval(($this->size[1]/2)-$crop4);
+			$crop5=intval(($this->size[1]/2)-$crop5);
 		}
 		if ($this->Cropimage[0]==3) {
-			if ($this->size[0]>$this->size[1]) {
+			if ($this->size[0] > $this->size[1]) {
 				$crop2=$crop3=intval(($this->size[0]-$this->size[1])/2);
 				$crop4=$crop5=0;
 			} else {
@@ -1693,6 +2525,7 @@ trait ThumbCore{
 				$crop2=$crop3=0;			
 			}
 		}
+
 		$this->newimage=imagecreatetruecolor(intval($this->size[0]-$crop2-$crop3),intval($this->size[1]-$crop4-$crop5));
 		if ($crop5<0) {$crop5=0;imagefilledrectangle($this->newimage,0,0,imagesx($this->newimage),imagesy($this->newimage),imagecolorallocate($this->newimage,hexdec(substr($this->Polaroidframecolor,1,2)),hexdec(substr($this->Polaroidframecolor,3,2)),hexdec(substr($this->Polaroidframecolor,5,2))));}
 		imagecopy($this->newimage,$this->im,0,0,$crop2,$crop4,$this->size[0]-$crop2-$crop3,$this->size[1]-$crop4-$crop5);
@@ -1900,7 +2733,19 @@ trait ThumbCore{
 	private function perspective() {
 		
 		$this->newimage=imagecreatetruecolor($this->size[0],$this->size[1]);
-		imagefilledrectangle($this->newimage,0,0,$this->size[0],$this->size[1],imagecolorallocate($this->newimage,hexdec(substr($this->Backgroundcolor,1,2)),hexdec(substr($this->Backgroundcolor,3,2)),hexdec(substr($this->Backgroundcolor,5,2))));			
+		imagefilledrectangle(
+			$this->newimage,
+			0,
+			0,
+			$this->size[0],
+			$this->size[1],
+			imagecolorallocate(
+				$this->newimage,
+				hexdec(substr($this->Backgroundcolor,1,2)),
+				hexdec(substr($this->Backgroundcolor,3,2)),
+				hexdec(substr($this->Backgroundcolor,5,2))
+			)
+		);
 		if ($this->Perspective[1]==0 || $this->Perspective[1]==1) {
         $gradient=($this->size[1]-($this->size[1]*(max(100-$this->Perspective[2],1)/100)))/$this->size[0];
 		    for ($c=0;$c<$this->size[0];$c++) {
@@ -1929,7 +2774,6 @@ trait ThumbCore{
 		}
 		imagecopy($this->im,$this->newimage,0,0,0,0,$this->size[0],$this->size[1]);
 		imagedestroy($this->newimage);
-	
 	}		
 
 	 /**
@@ -1938,7 +2782,19 @@ trait ThumbCore{
 	 */	
 	private function perspectivethumb() {
 		$this->newimage=imagecreatetruecolor($this->thumbx,$this->thumby);
-		imagefilledrectangle($this->newimage,0,0,$this->thumbx,$this->thumby,imagecolorallocate($this->newimage,hexdec(substr($this->Backgroundcolor,1,2)),hexdec(substr($this->Backgroundcolor,3,2)),hexdec(substr($this->Backgroundcolor,5,2))));
+		imagefilledrectangle(
+			$this->newimage,
+			0,
+			0,
+			$this->thumbx,
+			$this->thumby,
+			imagecolorallocate(
+				$this->newimage,
+				hexdec(substr($this->Backgroundcolor,1,2)),
+				hexdec(substr($this->Backgroundcolor,3,2)),
+				hexdec(substr($this->Backgroundcolor,5,2))
+			)
+		);
 		if ($this->Perspectivethumb[1]==0 || $this->Perspectivethumb[1]==1) {
 			$gradient=($this->thumby-($this->thumby*(max(100-$this->Perspectivethumb[2],1)/100)))/$this->thumbx;
 			for ($c=0;$c<$this->thumbx;$c++) {
@@ -1979,27 +2835,27 @@ trait ThumbCore{
 		}
 		if ($this->Shading[3]==0) {
 			$shadingstrength=$this->Shading[1]/($this->size[0]*($this->Shading[2]/100));
-			for ($c=$this->size[0]-intval(($this->size[0]*($this->Shading[2]/100)));$c<$this->size[0];$c++) { 
+			for ($c=$this->size[0]-floor(($this->size[0]*($this->Shading[2]/100)));$c<$this->size[0];$c++) { 
 				$opacity=intval($shadingstrength*($c-($this->size[0]-floor(($this->size[0]*($this->Shading[2]/100)))))); 
-				imagecopymerge($this->im,$this->newimage,$c,0,0,0,1,$this->size[1],intval(max(min($opacity,100),0)));
+				imagecopymerge($this->im,$this->newimage,intval($c),0,0,0,1,$this->size[1],max(min($opacity,100),0));
 			}	
 		} else if ($this->Shading[3]==1) {
 			$shadingstrength=$this->Shading[1]/($this->size[0]*($this->Shading[2]/100));
-			for ($c=0;$c<intval($this->size[0]*($this->Shading[2]/100));$c++) { 
+			for ($c=0;$c<floor($this->size[0]*($this->Shading[2]/100));$c++) { 
 				$opacity=intval($this->Shading[1]-($c*$shadingstrength));			 
-				imagecopymerge($this->im,$this->newimage,$c,0,0,0,1,$this->size[1],intval(max(min($opacity,100),0)));
+				imagecopymerge($this->im,$this->newimage,intval($c),0,0,0,1,$this->size[1],max(min($opacity,100),0));
 			}			
 		} else if ($this->Shading[3]==2) {
 			$shadingstrength=$this->Shading[1]/($this->size[1]*($this->Shading[2]/100));
-			for ($c=0;$c<intval($this->size[1]*($this->Shading[2]/100));$c++) { 
+			for ($c=0;$c<floor($this->size[1]*($this->Shading[2]/100));$c++) { 
 				$opacity=intval($this->Shading[1]-($c*$shadingstrength));			 
-				imagecopymerge($this->im,$this->newimage,0,$c,0,0,$this->size[0],1,intval(max(min($opacity,100),0)));
+				imagecopymerge($this->im,$this->newimage,0,intval($c),0,0,$this->size[0],1,max(min($opacity,100),0));
 			}			
 		} else {
 			$shadingstrength=$this->Shading[1]/($this->size[1]*($this->Shading[2]/100));
-			for ($c=$this->size[1]-intval(($this->size[1]*($this->Shading[2]/100)));$c<$this->size[1];$c++) { 
+			for ($c=$this->size[1]-floor(($this->size[1]*($this->Shading[2]/100)));$c<$this->size[1];$c++) { 
 				$opacity=intval($shadingstrength*($c-($this->size[1]-floor(($this->size[1]*($this->Shading[2]/100)))))); 
-				imagecopymerge($this->im,$this->newimage,0,$c,0,0,$this->size[0],1,intval(max(min($opacity,100),0)));
+				imagecopymerge($this->im,$this->newimage,0,intval($c),0,0,$this->size[0],1,max(min($opacity,100),0));
 			}			
 		}
 		imagedestroy($this->newimage);
@@ -2027,7 +2883,7 @@ trait ThumbCore{
 		$shadingstrength=intval(($this->Mirror[2]-$this->Mirror[1])/$bottom);
 		for ($c=$this->thumby-$bottom;$c<$this->thumby;$c++) { 
 			$opacity=intval($this->Mirror[1]+floor(($bottom-($this->thumby-$c))*$shadingstrength));
-			imagecopymerge($this->thumb,$this->newimage,0,$c,0,0,$this->thumbx,1,intval(max(min($opacity,100),0)));
+			imagecopymerge($this->thumb,$this->newimage,0,$c,0,0,$this->thumbx,1,max(min($opacity,100),0));
 		}	
 		imagedestroy($this->newimage);
 
@@ -2109,7 +2965,7 @@ trait ThumbCore{
 			for ($y=0;$y<$this->size[1];$y++) {
 				for ($x=0;$x<$this->size[0];$x++) {
 					$pixel=ImageColorAt($this->im,$x,$y);
-					$grey=floor(($pixel >> 16 & 0xFF)*0.299 + ($pixel >> 8 & 0xFF)*0.587 + ($pixel & 0xFF)*0.114);
+					$grey=intval(($pixel >> 16 & 0xFF)*0.299 + ($pixel >> 8 & 0xFF)*0.587 + ($pixel & 0xFF)*0.114);
 					imagesetpixel($this->im,$x,$y,imagecolorallocatealpha($this->im,$grey,$grey,$grey,$pixel >> 24 & 0xFF));
 				}
 			}
@@ -2229,8 +3085,8 @@ trait ThumbCore{
 	 */	
 	private function bilinear($xnew,$ynew) {
 		
-		$xf=floor($xnew);$xc=$xf+1;$fracx=$xnew-$xf;$fracx1=1-$fracx;
-		$yf=floor($ynew);$yc=$yf+1;$fracy=$ynew-$yf;$fracy1=1-$fracy;
+		$xf=intval($xnew);$xc=$xf+1;$fracx=$xnew-$xf;$fracx1=1-$fracx;
+		$yf=intval($ynew);$yc=$yf+1;$fracy=$ynew-$yf;$fracy1=1-$fracy;
 		$ff=$this->rgbpixel($xf,$yf);$cf=$this->rgbpixel($xc,$yf);
 		$fc=$this->rgbpixel($xf,$yc);$cc=$this->rgbpixel($xc,$yc);
 		$red=intval($fracy1*($fracx1*$ff['red']+$fracx*$cf['red'])+$fracy*($fracx1*$fc['red']+$fracx*$cc['red']));
@@ -2247,7 +3103,7 @@ trait ThumbCore{
 	private function twirlfx() {
 		
 		$rotationamount=$this->Twirlfx[1]/1000;
-		$centerx=floor($this->size[0]/2);$centery=floor($this->size[1]/2);
+		$centerx=intval($this->size[0]/2);$centery=intval($this->size[1]/2);
 		$this->newimage=imagecreatetruecolor($this->size[0],$this->size[1]);
 		for ($y=0;$y<$this->size[1];$y++) {
 			for ($x=0;$x<$this->size[0];$x++) {
@@ -2299,13 +3155,13 @@ trait ThumbCore{
 	private function lakefx() {
 		
 		$this->newimage=imagecreatetruecolor($this->size[0],$this->size[1]);
-		$ystart=max($this->size[1]-floor($this->size[1]*($this->Lakefx[2]/100)),0);
+		$ystart=intval(max($this->size[1]-floor($this->size[1]*($this->Lakefx[2]/100)),0));
 		if ($ystart>0) {
 		    imagecopy($this->newimage,$this->im,0,0,0,0,$this->size[0],$this->size[1]);
 		}
 		for ($y=$ystart;$y<$this->size[1];$y++) {
 			for ($x=0;$x<$this->size[0];$x++) {
-				$newy=$y+3*pi()*(1/$this->size[1])*$y*sin(($this->size[1]*($this->Lakefx[1]/100)*($this->size[1]-$y))/$y); 
+				$newy=intval($y+3*pi()*(1/$this->size[1])*$y*sin(($this->size[1]*($this->Lakefx[1]/100)*($this->size[1]-$y))/$y)); 
 				$newpix=$this->bilinear($x,$newy);
 				imagesetpixel($this->newimage,intval($x),intval($y),imagecolorallocatealpha($this->newimage,$newpix['red'],$newpix['green'],$newpix['blue'],$newpix['alpha']));
 			}
@@ -2321,7 +3177,7 @@ trait ThumbCore{
 	 */	
 	private function waterdropfx() {
 		
-		$centerx=floor($this->size[0]/2);$centery=floor($this->size[1]/2);
+		$centerx=intval($this->size[0]/2);$centery=intval($this->size[1]/2);
 		$this->newimage=imagecreatetruecolor($this->size[0],$this->size[1]);
 		for ($y=0;$y<$this->size[1];$y++) {
 			for ($x=0;$x<$this->size[0];$x++) {
@@ -2330,8 +3186,8 @@ trait ThumbCore{
 				$amount=$this->Waterdropfx[1]*sin($distance/$this->Waterdropfx[3]*2*pi());
 				$amount=$amount*($this->Waterdropfx[2]-$distance)/$this->Waterdropfx[2];
 				if ($distance!=0) {$amount=$amount*$this->Waterdropfx[3]/$distance;}
-				$newx=$x+$truex*$amount;
-				$newy=$y+$truey*$amount;
+				$newx=intval($x+$truex*$amount);
+				$newy=intval($y+$truey*$amount);
 				$newpix=$this->bilinear($newx,$newy);
 				imagesetpixel($this->newimage,$x,$y,imagecolorallocatealpha($this->newimage,$newpix['red'],$newpix['green'],$newpix['blue'],$newpix['alpha']));
 			}
@@ -2370,14 +3226,12 @@ trait ThumbCore{
 	/**
 	 * Create a PNG binary chunk
 	 *
-	 * @param array $type
+	 * @param string $type
 	 * @param string $data
 	 */
 	private function create_chunk($type, $data = '') {
-
 		$chunk = pack("N", strlen($data)) . $type . $data . pack("N", crc32($type . $data));        
 		return $chunk;
-		
 	}
 
 	/**
@@ -2414,26 +3268,26 @@ trait ThumbCore{
 	
 		$originalarray=$this->Cropimage;
 		if ($this->size[0]>$this->size[1]) {
-			$cropwidth=floor(($this->size[0]-floor(($this->size[1]/1.05)))/2);
-			$this->Cropimage=array(1,1,$cropwidth,$cropwidth,0,-1*floor(0.16*$this->size[1]));
+			$cropwidth=intval(($this->size[0]-floor(($this->size[1]/1.05)))/2);
+			$this->Cropimage=array(1,1,$cropwidth,$cropwidth,0,-1*intval(0.16*$this->size[1]));
 			$this->cropimage();
-			$this->Framewidth=floor(0.05*($this->size[1]-2*$cropwidth));
+			$this->Framewidth=intval(0.05*($this->size[1]-2*$cropwidth));
 		} else {
-			$cropheight=floor(($this->size[1]-floor(($this->size[0]/1.05)))/2);
-			$bottom=-1*floor(0.16*$this->size[1]);
+			$cropheight=intval(($this->size[1]-floor(($this->size[0]/1.05)))/2);
+			$bottom=-1*intval(0.16*$this->size[1]);
 			$this->Cropimage=array(1,1,0,0,$cropheight,$cropheight);
 			$this->cropimage();
 			$this->Cropimage=array(1,1,0,0,0,$bottom);
 			$this->cropimage();
-			$this->Framewidth=floor(0.05*$this->size[0]);
+			$this->Framewidth=intval(0.05*$this->size[0]);
 		}
 		$this->Cropimage=$originalarray;
 		if ($this->Polaroidtext!='' && $this->Polaroidfonttype!='') {
 		  $dimensions=imagettfbbox($this->Polaroidfontsize,0,$this->Polaroidfonttype,$this->Polaroidtext);
 			$widthx=$dimensions[2];
 			$heighty=$dimensions[5];
-			$y=$this->size[1]-floor($this->size[1]*0.08)-$heighty;
-			$x=floor(($this->size[0]-$widthx)/2);
+			$y=intval($this->size[1]-floor($this->size[1]*0.08)-$heighty);
+			$x=intval(($this->size[0]-$widthx)/2);
 			imagettftext($this->im,$this->Polaroidfontsize,0,$x,$y,imagecolorallocate($this->im,hexdec(substr($this->Polaroidtextcolor,1,2)),hexdec(substr($this->Polaroidtextcolor,3,2)),hexdec(substr($this->Polaroidtextcolor,5,2))),$this->Polaroidfonttype,$this->Polaroidtext);		
 		}
 		
@@ -2488,8 +3342,8 @@ trait ThumbCore{
 						$pixelmap=ImageColorAt($map,$x-$mapx,$y-$mapy);
 						$redmap=1+$pixelmap >> 16 & 0xFF;
 						$greenmap=1+$pixelmap >> 8 & 0xFF;
-						$newx=$x+(($redmap-128)*$this->Displacementmap[5])/256;
-						$newy=$y+(($greenmap-128)*$this->Displacementmap[6])/256;
+						$newx=intval($x+(($redmap-128)*$this->Displacementmap[5])/256);
+						$newy=intval($y+(($greenmap-128)*$this->Displacementmap[6])/256);
 					}
 				}
 				$newpix=$this->bilinear($newx,$newy);
@@ -2513,7 +3367,8 @@ trait ThumbCore{
 			imagedestroy($this->im);
 			$this->im=imagecreatetruecolor($this->thumbx,$this->thumby);
 			imagecopy($this->im,$this->thumb,0,0,0,0,$this->thumbx,$this->thumby);
-			$this->size[0]=$this->thumbx;$this->size[1]=$this->thumby;
+			$this->size[0]=$this->thumbx;
+			$this->size[1]=$this->thumby;
 			$this->Displacementmap=$this->Displacementmapthumb;
 			$this->displace();
 			$this->Displacementmap=$temparray;
