@@ -2,7 +2,7 @@
 
 /**
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -115,7 +115,7 @@ class Console extends Command {
 			}
 		}
 		// Dev::dump($widths);
-		// Dev::dump(self::$writelnLines,1);
+		// Dev::dumper(self::$writelnLines,1);
 		self::$writelnWidths = $widths;
 		foreach(self::$writelnLines as $line){
 			if(is_array($line)){
@@ -376,6 +376,8 @@ class Console extends Command {
 				$_eg = trim($_eg);
 				if( ($pos = stripos($_eg, "-e.g:")) > 0 ){
 					$_eg = trim( substr($_eg, $pos+5 ));
+					$_eg = preg_replace("/(\ +)=(\ +)/","=", $_eg);
+					$_eg = rtrim($_eg,";").";";
 					if( $_eg[0] == "'" || $_eg[0] == '"'){
 						eval("$_eg");
 					}else{

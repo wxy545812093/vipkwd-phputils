@@ -2,7 +2,7 @@
 /**
  * @name 收件地址智能解析
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -33,6 +33,8 @@ class Address {
         $this->childNodeName = [
             "zipCode" => 'child',
             "cityList"  => "children",
+            "countyList"  => "children",
+            "streetList"  => "children",
         ];
         $this->nodeKey = [
             "zipCode" => "zipcode",
@@ -50,6 +52,7 @@ class Address {
 
         $this->loadData();
 
+        // Dev::isCli() && Dev::dumper($this,1 );
         $event = $addrString;
         $_phone = [];
         $obj = [];
@@ -61,11 +64,12 @@ class Address {
                 //$addrString = str_replace($match[0][0], '', $addrString);
             }
         }
+        // Dev::dumper($addrString);
         //过滤特殊字符
         $addrString = preg_replace("/\ +/"," ", $this->stripscript($addrString));
+        // Dev::dumper($addrString,1);
         $copyAddress = explode(' ', $addrString);
         $familyNameList = RandomName::getFamilyNameList();
-
         $remarks = [];
         $names = [];
         $remarkIndex = 0;
@@ -223,12 +227,13 @@ class Address {
 
         // 市查找
         $this->findCity($address);
-
+        
         // 区县查找
         $this->findCounty($address);
-
+        
         // 城镇/街道查找
         $this->findStreet($address);
+        // echo $address;Dev::dumper($this->smartObj,1);
 
         // 姓名查找
         if ( $this->smartObj['province']) {
@@ -245,19 +250,19 @@ class Address {
         $snippets = "";
         //粗略匹配上的省份
         for($endIndex = 0; $endIndex < mb_strlen($address); $endIndex++) {
-                $snippets = mb_substr($address, 0, $endIndex + 2);
-                foreach(self::$addressList as $res){
-                    if(mb_stripos( $res["province"], $snippets) === 0){
+            $snippets = mb_substr($address, 0, $endIndex + 2);
+            foreach(self::$addressList as $res){
 
-                        empty($match) && $match = [
-                            "province" => $res["province"],
-                            "provinceCode" => $res[$this->nodeKey['cityCode']]
-                        ];
-
-                        $match["matchValue"] = $snippets;
-                    }
+                if( $this->validateAlias($res, $snippets, "province") ){
+                    empty($match) && $match = [
+                        "province" => $res["province"],
+                        "provinceCode" => $res[$this->nodeKey['cityCode']]
+                    ];
+                    $match["matchValue"] = $snippets;
                 }
+            }
         }
+
         if(!empty($match)){
             $this->smartObj['province'] = $match['province'];
             $this->smartObj['provinceCode'] = $match['provinceCode'];
@@ -305,17 +310,7 @@ class Address {
                                 //枚举城市
                                 foreach($item[$this->childNodeName['cityList']] as $res){
                                     // unset($res['children']);
-                                    $flag = false;
-                                    if(isset($res['alias']) && !empty($res['alias'])){
-                                        //节点已优化 城市名称
-                                        if(in_array($snippets, $res['alias'])){
-                                            $flag = true;
-                                            $res['city'] = $snippets;
-                                        }
-                                    }else if( mb_stripos($res["city"], $snippets) === 0) {
-                                        $flag = true;
-                                    }
-                                    if($flag){
+                                    if( $this->validateAlias($res, $snippets, "city") ){
                                         empty($match) && $match = [
                                             "province"      => $item["province"],
                                             "provinceCode"  => $item[$this->nodeKey['cityCode']],
@@ -365,13 +360,25 @@ class Address {
                         foreach($el[$this->childNodeName['cityList']] as $item){
                             // 定位城市
                             // 原理：前序已定位省份和城市 的前提下: 如果枚举城市(也包括别名)与前序城市不匹配,将直接忽略(foreach ··· continue)
+                            // if(
+                            //     (( !isset($item['alias']) && $item['city'] != $this->smartObj['city']) || 
+                            //     (isset($item['alias']) && !in_array($this->smartObj['city'], $item['alias']) )) &&
+                            //     ($this->smartObj['province'] && $this->smartObj['city'])
+                            // ){
+                            //     continue;
+                            // }
+                            $this->validateAlias($item);
                             if(
-                                (( !isset($item['alias']) && $item['city'] != $this->smartObj['city']) || 
-                                (isset($item['alias']) && !in_array($this->smartObj['city'], $item['alias']) )) &&
+                                (
+                                    ( empty($item['alias']) && $item['city'] != $this->smartObj['city'])
+                                    || 
+                                    ( !empty($item['alias']) && !in_array($this->smartObj['city'], $item['alias'])) 
+                                ) &&
                                 ($this->smartObj['province'] && $this->smartObj['city'])
                             ){
                                 continue;
                             }
+
                             // 已定位到城市
                             foreach($item[$this->childNodeName['cityList']] as $res){
                                 if(mb_stripos($res['county'], $snippets,) === 0){
@@ -442,13 +449,17 @@ class Address {
                 // 定位省份
                 if ( $provinceEl['name'] == $this->smartObj['province']) {
                     //不是直辖市
-                    if (!in_array($this->smartObj['province'],$this->bcityList)) {
+                    // if (!in_array($this->smartObj['province'],$this->bcityList)) {
+
                         foreach($provinceEl[$this->childNodeName['cityList']] as $cityEl){
                             // 定位城市
                             if($cityEl['name'] == $this->smartObj['city']){
+
                                 foreach($cityEl[$this->childNodeName['cityList']] as $countyEl){
                                     // 定位区县
                                     if($countyEl['name'] == $this->smartObj['county']){
+                                        // Dev::dumper($countyEl[$this->childNodeName['cityList']],1);
+
                                         // 遍历城镇/街道
                                         foreach($countyEl[$this->childNodeName['cityList']] as $res){
 
@@ -467,7 +478,7 @@ class Address {
                             }
                             unset($cityEl);
                         }
-                    }
+                    // }
                 }
                 unset($provinceEl);
             }
@@ -482,6 +493,33 @@ class Address {
             }
         }
         unset($match, $snippets, $endIndex);
+    }
+
+    private function validateAlias(&$res, string $snippets=null, string $field=null):bool{
+        $alias = $res['alias'] ?? "";
+        if(is_array($alias)){
+            $alias = implode(",", array_values($alias));
+        }
+        $alias = explode(",", str_replace([" ","|","/"],["",",",","],trim($alias)));
+        $alias = array_filter($alias, function($v){
+            return trim($v) != "";
+        });
+        $res['alias'] = array_values($alias);
+
+        $flag = false;
+        if($snippets && $field){
+            if(!empty($res['alias'])){
+                //节点已优化 城市名称
+                if(in_array($snippets, $res['alias'])){
+                    $flag = true;
+                    $res[$field] = $snippets;
+                }
+            }else if(mb_stripos( $res[$field], $snippets) === 0){
+                $flag = true;
+            }
+        }
+        unset($alias);
+        return $flag;
     }
 
     private function loadData(){
@@ -574,11 +612,14 @@ class Address {
         $s = preg_replace("/\ +/", ' ', $s); //去除空格
         return preg_replace("/[\r\n]/", '', $s);
     }
-
+    
     private function filter(){
-        foreach($this->smartObj as $field => $v){
-            if(trim($v) == "") unset($this->smartObj[$field]);
-        }
+        $this->smartObj = array_filter($this->smartObj, function($v){
+            return trim($v) != "";
+        });
+        // foreach($this->smartObj as $field => $v){
+        //     if(trim($v) == "") unset($this->smartObj[$field]);
+        // }
         return $this->smartObj;
     }
 

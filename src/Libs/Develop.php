@@ -2,7 +2,7 @@
 /**
  * @name 开发调试函数
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -34,18 +34,20 @@ trait Develop{
      * @param boolean $exit
      * @return void
      */
-    static function dumper($data, $exit = false){
+    static function dumper($data, $exit = false, bool $format = true){
         if(!class_exists(LightVarDumper::class)){
             return self::dump($data, $exit);
         }
+        if($format) echo "<pre>";
         (new LightVarDumper())
             // ->setIndent('    ')
             ->setMaxChildren(9999)
-            ->setMaxFileNameDepth(12) //文件path深度
+            ->setMaxFileNameDepth(66) //文件path深度
             // ->setMaxDepth(30)
             // ->setMaxLineLength(5)
             ->setMaxStringLength(4999)//字符串打印前 xx 位
             ->dump($data);
+            if($format) echo "</pre>";
         $exit && exit;
     }
 
@@ -87,6 +89,8 @@ trait Develop{
                     $txt .= "\Object";
                 }elseif(gettype($v) == 'string'){
                     $txt .="\"{$v}\"";
+                }else if($v === null){
+                    $txt .="null";
                 }else if($v === true){
                     $txt .="true";
                 }else if($v === false){
@@ -98,10 +102,8 @@ trait Develop{
             }
             $txt = rtrim($txt, ',');
         }
-        // echo "<pre>";
         echo " Vipkwd\\Utils\\{$classMethod}($txt); // ";
-        $rst = var_dump(call_user_func_array("Vipkwd\\Utils\\{$classMethod}", $args));
-        // echo "</pre>";
+        self::dumper(call_user_func_array("Vipkwd\\Utils\\{$classMethod}", $args), false, false);
     }
 
     static function br(){

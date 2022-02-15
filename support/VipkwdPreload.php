@@ -14,4 +14,7 @@ if (function_exists("get_magic_quotes_gpc")) {
     }
     unset($process);
 }
+function phpunit($class, $paramsArray){
+    return \Vipkwd\Utils\Dev::phpunit($class, $paramsArray);
+}
 define('VIPKWD_UTILS_LIB_ROOT', realpath(__DIR__ .'/../'));

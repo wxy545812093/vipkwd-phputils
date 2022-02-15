@@ -2,7 +2,7 @@
 /**
  * @name 构建各类有意义的随机数
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -10,7 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Tools,Str as VipkwdStr};
+use Vipkwd\Utils\{Libs\RandomName,Tools,Str as VipkwdStr};
 
 class Random {
 
@@ -188,7 +188,7 @@ class Random {
      * 
      * @return string
      */
-    static function randomId(): string {
+    static function randomIdcard(bool $validate = false): string {
         $prefixArr = [
             11, 12, 13, 14, 15,
             21, 22, 23,
@@ -203,6 +203,98 @@ class Random {
         $suffixArr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'X'];
         shuffle($suffixArr);
 
-        return $prefixArr[0] . '0000' . self::randomDate('Ymd') . Strs::randString(3, 1) . $suffixArr[0];
+        $id = $prefixArr[0] . '0000' . self::randomDate('Ymd') . Strs::randString(3, 1) . $suffixArr[0];
+        if($validate){
+            if(!Validate::idcardOfChina($id)){
+                return self::randomIdcard(true);
+            }
+        }
+        return $id;
     }
+
+    /**
+     * 随机生成简体字
+     * 
+     * -e.g: phpunit("Random::randomZhChar");
+     * -e.g: phpunit("Random::randomZhChar",[4]);
+     * -e.g: phpunit("Random::randomZhChar",[2]);
+     * 
+     * @param int $length <0>
+     * @return string
+     */
+    static function randomZhChar(int $length=0): string
+    {
+        $s = '';
+        for ($i = 0; $i < $length; $i++) {
+            // 使用chr()函数拼接双字节汉字，前一个chr()为高位字节，后一个为低位字节
+            $a = chr(mt_rand(0xB0, 0xD0)) . chr(mt_rand(0xA1, 0xF0));
+            // 转码
+            $s .= @iconv('GB2312', 'UTF-8', $a);
+        }
+        return $s;
+    }
+
+    /**
+     * 生成随机字符(验证码)
+     *
+     * -e.g: phpunit("Random::randomCode");
+     * -e.g: phpunit("Random::randomCode");
+     * -e.g: phpunit("Random::randomCode",[1]);
+     * -e.g: phpunit("Random::randomCode",[4]);
+     * -e.g: phpunit("Random::randomCode",[5]);
+     * -e.g: phpunit("Random::randomCode",[5,true]);
+     * -e.g: phpunit("Random::randomCode",[5,true]);
+     * 
+     * @param integer $len
+     * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
+     * @return string
+     */
+    static function randomCode(int $len = 6, bool $onlyDigit = false):string{      
+        $char = '1234567890';
+		if ($onlyDigit === false) {
+			$char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+		}
+		return substr(str_shuffle(str_repeat($char, $len)), 0, $len);
+	}
+
+
+    /**
+     * 随机生成马甲昵称
+     *
+     * -e.g: phpunit("Random::randomNickName");
+     * -e.g: phpunit("Random::randomNickName");
+     * -e.g: phpunit("Random::randomNickName");
+     * 
+     * @return string
+     */
+    static function randomNickName():string{
+        return RandomName::getNickName();
+    }
+
+    /**
+     * 随机生成女名
+     *
+     * -e.g: phpunit("Random::randomFemaleName");
+     * -e.g: phpunit("Random::randomFemaleName",[false]);
+     * 
+     * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
+     * @return string
+     */
+    static function randomFemaleName(bool $surName = true):string{
+        return RandomName::getFemaleName($surName);
+    }   
+
+    /**
+     * 随机生成男名
+     * 
+     * -e.g: phpunit("Random::randomMaleName");
+     * -e.g: phpunit("Random::randomMaleName",[false]);
+     *
+     * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
+     * @return string
+     */
+    static function randomMaleName(bool $surName = true):string{
+        return RandomName::getMaleName($surName);
+    }
+
 }

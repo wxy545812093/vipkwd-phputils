@@ -2,7 +2,7 @@
 /**
  * @name 字符串处理函数包
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -11,7 +11,7 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use \Exception;
-use Vipkwd\Utils\Libs\{RandomName,ZhToPy};
+use Vipkwd\Utils\Libs\{ZhToPy};
 class Str{
 
     /**
@@ -133,68 +133,6 @@ class Str{
 		$str = preg_replace("/&#.*?;/i", "", $str);
 		return $str;
 	}
-
-    /**
-     * 生成随机字符(验证码)
-     *
-     * -e.g: phpunit("Str::randomCode");
-     * -e.g: phpunit("Str::randomCode");
-     * -e.g: phpunit("Str::randomCode",[1]);
-     * -e.g: phpunit("Str::randomCode",[4]);
-     * -e.g: phpunit("Str::randomCode",[5]);
-     * -e.g: phpunit("Str::randomCode",[5,true]);
-     * -e.g: phpunit("Str::randomCode",[5,true]);
-     * 
-     * @param integer $len
-     * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
-     * @return string
-     */
-    static function randomCode(int $len = 6, bool $onlyDigit = false):string{      
-        $char = '1234567890';
-		if ($onlyDigit === false) {
-			$char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-		}
-		return substr(str_shuffle(str_repeat($char, $len)), 0, $len);
-	}
-
-    /**
-     * 随机生成马甲昵称
-     *
-     * -e.g: phpunit("Str::randomNickName");
-     * -e.g: phpunit("Str::randomNickName");
-     * -e.g: phpunit("Str::randomNickName");
-     * 
-     * @return string
-     */
-    static function randomNickName():string{
-        return RandomName::getNickName();
-    }
-
-    /**
-     * 随机生成女名
-     *
-     * -e.g: phpunit("Str::randomFemaleName");
-     * -e.g: phpunit("Str::randomFemaleName",[false]);
-     * 
-     * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
-     * @return string
-     */
-    static function randomFemaleName(bool $surName = true):string{
-        return RandomName::getFemaleName($surName);
-    }   
-
-    /**
-     * 随机生成男名
-     * 
-     * -e.g: phpunit("Str::randomMaleName");
-     * -e.g: phpunit("Str::randomMaleName",[false]);
-     *
-     * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
-     * @return string
-     */
-    static function randomMaleName(bool $surName = true):string{
-        return RandomName::getMaleName($surName);
-    }
 
     /**
      * (中/英/混合)字符串截取(加强版)
@@ -614,6 +552,29 @@ class Str{
         return true;
     }
 
+    static function isAscii(string $str):bool {
+        return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['ASCII','ISO-646']);
+    }
+    
+    static function isLatin1(string $str):bool {
+        return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['Latin1','ISO-8859-1']);
+    }
+    
+    static function isGB2312(string $str):bool {
+        return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['GB2312','EUC-CN']);
+    }
+    
+    static function isGBK(string $str):bool {
+        return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['GBK','CP936']);
+    }
+    
+    static function isUtf82(string $str):bool {
+        return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['UTF-8']);
+    }
+    
+    static function getCharset(string $str):string{
+        return mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1','CP936'));
+    }
     /**
      * 生成UUID
      * 

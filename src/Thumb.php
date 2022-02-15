@@ -18,6 +18,8 @@ class Thumb{
 
 	use ThumbCoreVar, ThumbCore, Thumbmaker;
 
+	private static $__position = "";
+
 	private static $maxNumber = 99999999;
 
 	/**
@@ -34,27 +36,6 @@ class Thumb{
 		return $this;
 	}
 
-	/**
-	 * 文字水印
-	 *
-	 * @param string $text
-	 * @param string $ttfPath <"">
-	 * @param integer $fontSize <16>
-	 * @param string $textColor <"#000000">
-	 * @param string $position <"50% 50%"> 居中
-	 * @return self
-	 */
-	public function watermarkText(string $text, string $ttfPath="", int $fontSize=16, string $textColor="#000",string $position='50% 50%'):self{
-		$this->numberRangeLimit($fontSize, 8, 100);
-		if(File::exists($ttfPath)){
-			$this -> Copyrightfonttype = $ttfPath;
-		}
-		$this -> Copyrighttext = $text;
-		$this -> Copyrightposition = $position;
-		$this -> Copyrightfontsize = $fontSize;
-		$this -> Copyrighttextcolor = $this->colorHexFix($textColor);
-		return $this;
-	}
 	/**
 	 * 自动调整尺寸
 	 *
@@ -506,18 +487,47 @@ class Thumb{
 	 * PNG图片水印
 	 *
 	 * @param string $filename 水印图地址
-	 * @param string $position <"80% 90%"> "左间距百分比 上间距百分比"
 	 * @param integer $transparency <10> 透明度 0-100 100不透明
 	 * @return self
 	 */
-	public function watermarkPng(string $filename, string $position = "80% 90%", int $transparency = 10):self{
+	public function watermarkPng(string $filename, int $transparency = 10):self{
 		$this->numberRangeLimit($transparency);
 		$this -> Watermarkpng = $filename;
-		$this -> Watermarkposition = $position;
+		if(!empty(static::$__position)){
+			$this -> Watermarkposition = static::$__position;
+		}
 		$this -> Watermarktransparency = $transparency; //透明度
 		return $this;
 	}
 
+
+	/**
+	 * 文字水印
+	 *
+	 * @param string $text
+	 * @param integer $fontSize <16>
+	 * @param string $textColor <"#000000">
+	 * @param string $ttfPath <"">
+	 * @return self
+	 */
+	public function watermarkText(string $text, int $fontSize=16, string $textColor="#000", string $ttfPath=""):self{
+		$this->numberRangeLimit($fontSize, 8, 100);
+		if(File::exists($ttfPath)){
+			$this -> Copyrightfonttype = $ttfPath;
+		}else{
+			$ttfPath = VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/msyh.ttf';
+			if(File::exists($ttfPath)){
+				$this -> Copyrightfonttype = $ttfPath;
+			}
+		}
+		$this -> Copyrighttext = $text;
+		if(!empty(static::$__position)){
+			$this -> Copyrightposition = static::$__position;
+		}
+		$this -> Copyrightfontsize = $fontSize;
+		$this -> Copyrighttextcolor = $this->colorHexFix($textColor);
+		return $this;
+	}
 
 	/**
 	 * 宝丽来效果
@@ -629,7 +639,7 @@ class Thumb{
 			// 创建画布
 			$this->thumb = imagecreatetruecolor($width, $height);
 			// 设置文本颜色
-			$textColor = imagecolorallocate($this->thumb, $textcolor['r'],$textcolor['g'],$textcolor['b']);
+			$textColor = imagecolorallocate($this->thumb, $textColor['r'],$textColor['g'],$textColor['b']);
 			// 设置画布颜色
 			$backgroundColor = imagecolorallocate($this->thumb, $bgColor['r'],$bgColor['g'],$bgColor['b']);
 			// 创建画布并且填充颜色
@@ -699,18 +709,17 @@ class Thumb{
 	 * 为canvas填补文字
 	 *
 	 * @param string $text
-	 * @param string $position
 	 * @param integer $textSize
 	 * @param string $textColor
 	 * @param string $ttfPath
 	 * @return self
 	 */
-	public function textForCanvas(string $text, string $position="50% 50%", int $textSize = 20, string $textColor="#000",string $ttfPath=""):self{
+	public function textForCanvas(string $text, int $textSize = 20, string $textColor="#000",string $ttfPath=""):self{
 		$this->numberRangeLimit($textSize, 1, self::$maxNumber);
 		$this -> Addtext = array(
 			1,
 			$text,
-			$position,
+			!empty(static::$__position) ? static::$__position : $this->Addtext[2],
 			File::exists($ttfPath) ? $ttfPath : '',
 			$textSize,
 			$this->colorHexFix($textColor)
@@ -722,11 +731,19 @@ class Thumb{
 	 * 设置文件保存目录
 	 *
 	 * @param string $savePath 
+	 * @param boolean $mkdir <false>
 	 * @return self
 	 */
-	public function savePath($savePath = ""):self{
-		if($savePath && is_dir(dirname($savePath))){
-			$this->Thumblocation = realpath(dirname($savePath)).'/';
+	public function savePath($savePath = null, bool $mkdir = false):self{
+		if( null !== $savePath){
+			$savePath = realpath($savePath);
+			if(is_file($savePath)){
+				$savePath = dirname($savePath);
+			}
+			if(!is_dir($savePath) && $mkdir){
+				@mkdir($savePath, 0755, true);
+			}
+			$this->Thumblocation = realpath($savePath).'/';
 		}else{
 			$this->Thumblocation = realpath(dirname($this->image)).'/';
 		}
@@ -782,18 +799,58 @@ class Thumb{
 					"name"	 => basename($fileName),
 			];
 	}
+
+	/**
+	 * 设置定位(水印位置等)
+	 * 
+	 * --支持 9宫格( $x=1 ~ 9)
+	 * --支持 百分比 ($x=20%,$y=20%)
+	 * --支持 数值定位 ($x=10, $y=100)
+	 * --不支持 三种方式的混合定位
+	 *
+	 * @param integer|string $x
+	 * @param integer|string $y
+	 * @return self
+	 */
+	public function setPosition($x, $y = null):self{
+		switch($x){
+			case "1": $x = $y = "0%";break;
+			case "2": $x = "50%"; 	$y = "0%";break;
+			case "3": $x = "100%"; 	$y = "0%";break;
+			case "4": $x = "0%"; 		$y = "50%";break;
+			case "5": $x = "50%";		$y = "50%";break;
+			case "6": $x = "100%";	$y = "50%";break;
+			case "7": $x = "0%";		$y = "100%";break;
+			case "8": $x = "50%";		$y = "100%";break;
+			case "9": $x = "100%";	$y = "100%";break;
+			default: 
+				//数值
+				if(!strpos("$x","%") && !strpos("$y","%")){
+					$x = intval($x);
+					$y = intval($y);
+				}else{
+					$x = str_replace("%","", $x)."%";
+					$y = str_replace("%","", $y ?? "0")."%";
+				}
+				break;
+		}
+		static::$__position = "{$x} {$y}";
+		return $this;
+	}
+
 	/**
 	 * 数值区间验证
 	 *
-	 * @param [type] $num
-	 * @param integer $min
-	 * @param integer $max
+	 * @param integer|float $num
+	 * @param integer|float $min
+	 * @param integer|float $max
 	 * @return void
 	 */
 	private function numberRangeLimit(&$num, $min = 0, $max = 100){
 		$num <= $min && $num = $min;
 		$num >= $max && $num = $max;
 		$num *= 1;
+		return $num;
 	}
 	
 	/**
@@ -824,6 +881,26 @@ class Thumb{
 			$color = "000000";
 		}
 		return "#".$color;
+	}
+
+	/**
+	 * 资源坐标定位管理
+	 *
+	 * @param string $position
+	 * @param callback $callback
+	 * @return array
+	 */
+	private function formatPosition(string $position, $callback):array{
+		$_pos = str_replace("%","", $position);
+		$cpos = explode(" ", $_pos);
+		if($_pos == $position){
+			//直接设置X,Y
+			return $callback($cpos[0]*1, $cpos[1] ? $cpos[1]*1 : 0, false);
+		}
+		$this->numberRangeLimit($cpos[0], 0, 100);
+		$this->numberRangeLimit($cpos[1], 0, 100);
+		//百分比配置X,Y
+		return $callback($cpos[0]*1, $cpos[1]*1, true);
 	}
 }
 
@@ -1133,122 +1210,122 @@ trait ThumbCoreVar{
 	 *
 	 * @var int
 	 */	
-	public $Thumbsize;	
+	protected $Thumbsize;	
 	/**
 	 * 缩略图的高度(px)
 	 * 强制所有缩略图都具有相同的高度
 	 *
 	 * @var int
 	 */	
-	public $Thumbheight;		
+	protected $Thumbheight;		
 	/**
 	 * 缩略图的宽度(px)
 	 * 强制所有缩略图都具有相同的宽度
 	 *
 	 * @var int
 	 */	
-	public $Thumbwidth;
+	protected $Thumbwidth;
 	/**
 	 * 尺寸百分数（而不是px）
 	 * 
 	 * @var boolean
 	 */		
-	public $Percentage;	
+	protected $Percentage;	
 	/**
 	 * 放大图像
 	 *
 	 * @var boolean
 	 */		
-	public $Inflate;
+	protected $Inflate;
 	/**
 	 * JPEG图像的质量（0 ~ 100）
 	 *
 	 * @var int
 	 */		
-	public $Quality;	
+	protected $Quality;	
 	/**
 	 * 图像周围的帧宽度(px)
 	 *
 	 * @var int
 	 */	
-	public $Framewidth;
+	protected $Framewidth;
 	/**
 	 * 框架帧颜色:“#00FF00”
 	 *
 	 * @var string
 	 */		
-	public $Framecolor;	
+	protected $Framecolor;	
 	/**
 	 * 背景颜色:“#00FF00”
 	 *
 	 * @var string
 	 */		
-	public $Backgroundcolor;	
+	protected $Backgroundcolor;	
 	/**
 	 * 添加阴影
 	 * 
 	 * @var boolean
 	 */		
-	public $Shadow;
+	protected $Shadow;
 	/**
 	 * 显示活页夹环
 	 *
 	 * @var boolean
 	 */		
-	public $Binder;
+	protected $Binder;
 	/**
 	 * 活页夹环间距(px)
 	 *
 	 * @var int
 	 */			
-	public $Binderspacing;	
+	protected $Binderspacing;	
 	/**
 	 * PNG水印图像路径
 	 *
 	 * @var string
 	 */		
-	public $Watermarkpng;
+	protected $Watermarkpng;
 	/**
 	 * Position of watermark image, bottom right corner: '100% 100%'
      * 水印图像的位置，右下角:“100% 100%”
 	 *
 	 * @var string
 	 */		
-	public $Watermarkposition;
+	protected $Watermarkposition;
 	/**
 	 * Transparency level of watermark image 0 - 100
      * 水印图像的透明度等级为0 - 100
 	 *
 	 * @var int
 	 */		
-	public $Watermarktransparency;
+	protected $Watermarktransparency;
 	/**
 	 * CHMOD level of saved thumbnails: '0755'
      * 保存缩略图的chmod权限:'0755'
 	 *
 	 * @var string
 	 */		
-	public $Chmodlevel;
+	protected $Chmodlevel;
 	/**
 	 * 缩略图本地PATH
 	 *
 	 * @var string
 	 */		
-	public $Thumblocation;
+	protected $Thumblocation;
 	/**
 	 * Filetype conversion for saving thumbnail
      * 保存缩略图的文件类型转换
 	 *
 	 * @var string
 	 */		
-	public $Thumbsaveas;	
+	protected $Thumbsaveas;	
 	/**
 	 * Prefix for saving thumbnails
      * 用于保存缩略图的前缀
 	 *
 	 * @var string
 	 */		
-	public $Thumbprefix;
+	protected $Thumbprefix;
 
 	/**
 	 * Clip corners; array with 7 values
@@ -1262,7 +1339,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Clipcorner;
+	protected $Clipcorner;
 	/**
 	 * 怀旧老化/灰色效果
      * array with 3 values
@@ -1272,7 +1349,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Ageimage;
+	protected $Ageimage;
 	/**
 	 * 裁剪图像
      * array with 6 values
@@ -1285,48 +1362,48 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Cropimage;	
+	protected $Cropimage;	
 	/**
 	 * PNG边框图像PATH
 	 *
 	 * @var string
 	 */			
-	public $Borderpng;
+	protected $Borderpng;
 	/**
 	 * Copyright text
      * 版权文本
 	 *
 	 * @var string
 	 */		
-	public $Copyrighttext;
+	protected $Copyrighttext;
 	/**
 	 * Position for Copyrighttext text, bottom right corner: '100% 100%'
      * 版权文本 位置
 	 *
 	 * @var string
 	 */			
-	public $Copyrightposition;
+	protected $Copyrightposition;
 	/**
 	 * Path to TTF Fonttype
      * 字体文件位置(不指定则 默认使用系统字体)
 	 *
 	 * @var string
 	 */			
-	public $Copyrightfonttype;		
+	protected $Copyrightfonttype;		
 	/**
 	 * Fontsize for Copyrighttext text
      * 字号
 	 *
 	 * @var string
 	 */			
-	public $Copyrightfontsize;	
+	protected $Copyrightfontsize;	
 
 	/**
      * 文字颜色: '#000000'(不指定则 默认黑白)
 	 *
 	 * @var string
 	 */			
-	public $Copyrighttextcolor;
+	protected $Copyrighttextcolor;
 
 	/**
 	 * Add text to the image
@@ -1339,37 +1416,37 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Addtext;	
+	protected $Addtext;	
 	/**
 	 * Rotate image in degrees
 	 *
 	 * @var int
 	 */				
-	public $Rotate;	
+	protected $Rotate;	
 	/**
 	 * Flip the image horizontally
 	 *
 	 * @var boolean
 	 */				
-	public $Fliphorizontal;		
+	protected $Fliphorizontal;		
 	/**
 	 * Flip the image vertically
 	 *
 	 * @var boolean
 	 */				
-	public $Flipvertical;	
+	protected $Flipvertical;	
 	/**
 	 * Create square canvas thumbs
 	 *
 	 * @var boolean
 	 */			
-	public $Square;
+	protected $Square;
 	/**
 	 * Apply a filter to the image
 	 *
 	 * @var boolean
 	 */			
-	public $Applyfilter;
+	protected $Applyfilter;
 	/**
 	 * Apply a 3x3 filter matrix to the image; array with 9 values
 	 * [0]: a1,1
@@ -1384,55 +1461,55 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Filter;
+	protected $Filter;
 	/**
 	 * Divisor for filter
 	 *
 	 * @var int
 	 */				
-	public $Divisor;
+	protected $Divisor;
 	/**
 	 * Offset for filter
 	 *
 	 * @var int
 	 */				
-	public $Offset;
+	protected $Offset;
 	/**
 	 * Blur filter
 	 *
 	 * @var boolean
 	 */				
-	public $Blur;	
+	protected $Blur;	
 	/**
 	 * Sharpen filter
 	 *
 	 * @var boolean
 	 */				
-	public $Sharpen;		
+	protected $Sharpen;		
 	/**
 	 * Edge filter
 	 *
 	 * @var boolean
 	 */				
-	public $Edge;
+	protected $Edge;
 	/**
 	 * Emboss filter
 	 *
 	 * @var boolean
 	 */				
-	public $Emboss;
+	protected $Emboss;
 	/**
 	 * Mean filter
 	 *
 	 * @var boolean
 	 */				
-	public $Mean;	
+	protected $Mean;	
 	/**
 	 * Rotate and crop the image
 	 *
 	 * @var boolean
 	 */				
-	public $Croprotate;	
+	protected $Croprotate;	
 	/**
 	 * Apply perspective to the image; array with 3 values
 	 * [0]: 0=disable 1=enable
@@ -1441,7 +1518,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Perspective;
+	protected $Perspective;
 	/**
 	 * Apply perspective to the thumbnail; array with 3 values
 	 * [0]: 0=disable 1=enable
@@ -1450,7 +1527,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Perspectivethumb;
+	protected $Perspectivethumb;
 	/**
 	 * Apply shading gradient to the image; array with 4 values
 	 * [0]: 0=disable 1=enable
@@ -1460,13 +1537,13 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Shading;
+	protected $Shading;
 	/**
 	 * Shading gradient color in web format: '#00FF00'
 	 *
 	 * @var string
 	 */		
-	public $Shadingcolor;		
+	protected $Shadingcolor;		
 	/**
 	 * Apply a mirror effect to the thumbnail; array with 4 values
 	 * [0]: 0=disable 1=enable
@@ -1477,19 +1554,19 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */	
-	public $Mirror;
+	protected $Mirror;
 	/**
 	 * Mirror gradient color in web format: '#00FF00'
 	 *
 	 * @var string
 	 */		
-	public $Mirrorcolor;		
+	protected $Mirrorcolor;		
 	/**
 	 * Create image negative
 	 *
 	 * @var boolean
 	 */			
-	public $Negative;
+	protected $Negative;
 	/**
 	 * Replace a color in the image; array with 4 values
 	 * [0]: 0=disable 1=enable
@@ -1499,7 +1576,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Colorreplace;
+	protected $Colorreplace;
 	/**
 	 * Scramble pixels; array with 3 values
 	 * [0]: 0=disable 1=enable
@@ -1508,13 +1585,13 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Pixelscramble;
+	protected $Pixelscramble;
 	/**
 	 * Convert image to greyscale
 	 *
 	 * @var boolean
 	 */				
-	public $Greyscale;
+	protected $Greyscale;
 	/**
 	 * Change brightness of the image; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1522,7 +1599,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Brightness;	
+	protected $Brightness;	
 	/**
 	 * Change contrast of the image; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1530,7 +1607,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Contrast;
+	protected $Contrast;
 	/**
 	 * Change gamma of the image; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1538,7 +1615,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Gamma;	
+	protected $Gamma;	
 	/**
 	 * Reduce palette of the image; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1546,7 +1623,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Palette;	
+	protected $Palette;	
 	/**
 	 * Merge a color in the image; array with 5 values
 	 * [0]: 0=disable 1=enable
@@ -1557,7 +1634,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Colorize;	
+	protected $Colorize;	
 	/**
 	 * Pixelate the image; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1565,13 +1642,13 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Pixelate;		
+	protected $Pixelate;		
 	/**
 	 * Apply a median filter to remove noise
 	 *
 	 * @var boolean
 	 */				
-	public $Medianfilter;		
+	protected $Medianfilter;		
 	/**
 	 * Deform the image with twirl effect; array with 3 values
 	 * [0]: 0=disable 1=enable
@@ -1580,7 +1657,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Twirlfx;
+	protected $Twirlfx;
 	/**
 	 * Deform the image with ripple effect; array with 2 values
 	 * [0]: 0=disable 1=enable
@@ -1591,7 +1668,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Ripplefx;		
+	protected $Ripplefx;		
 	/**
 	 * Deform the image with perspective ripple or 'lake' effect; array with 3 values
 	 * [0]: 0=disable 1=enable
@@ -1600,7 +1677,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Lakefx;
+	protected $Lakefx;
 	/**
 	 * Deform the image with a circular waterdrop effect; array with 4 values
 	 * [0]: 0=disable 1=enable
@@ -1610,7 +1687,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Waterdropfx;
+	protected $Waterdropfx;
 	/**
 	 * Create transparent image; array with 4 values
 	 * [0]: 0=disable 1=enable
@@ -1620,55 +1697,55 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Maketransparent;
+	protected $Maketransparent;
 	/**
 	 * Keep transparency of original image
 	 *
 	 * @var boolean
 	 */				
-	public $Keeptransparency;	
+	protected $Keeptransparency;	
 	/**
 	 * Filename for saving thumbnails
 	 *
 	 * @var string
 	 */		
-	public $Thumbfilename;	
+	protected $Thumbfilename;	
 	/**
 	 * Create Polaroid Look
 	 *
 	 * @var boolean
 	 */			
-	public $Polaroid;
+	protected $Polaroid;
 	/**
 	 * Write text on Polaroid
 	 *
 	 * @var string
 	 */			
-	public $Polaroidtext;	
+	protected $Polaroidtext;	
 	/**
 	 * Path to TTF Fonttype
 	 *
 	 * @var string
 	 */			
-	public $Polaroidfonttype;		
+	protected $Polaroidfonttype;		
 	/**
 	 * Fontsize for polaroid text
 	 *
 	 * @var int
 	 */			
-	public $Polaroidfontsize;	
+	protected $Polaroidfontsize;	
 	/**
 	 * Polaroid text color in web format: '#000000'
 	 *
 	 * @var string
 	 */			
-	public $Polaroidtextcolor;
+	protected $Polaroidtextcolor;
 	/**
 	 * Polaroid frame color in web format: '#FFFFFF'
 	 *
 	 * @var string
 	 */			
-	public $Polaroidframecolor;		
+	protected $Polaroidframecolor;		
 	/**
 	 * Deform the image with a displacement map; array with 7 values
 	 * [0]: 0=disable 1=enable
@@ -1681,7 +1758,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Displacementmap;
+	protected $Displacementmap;
 	/**
 	 * Deform the thumbnail with a displacement map; array with 7 values
 	 * [0]: 0=disable 1=enable
@@ -1694,7 +1771,7 @@ trait ThumbCoreVar{
 	 *
 	 * @var array
 	 */		
-	public $Displacementmapthumb;	
+	protected $Displacementmapthumb;	
 	/**
 	 * The image filename or array with filenames
 	 *
@@ -1785,6 +1862,7 @@ trait ThumbCore{
 		if(is_resource($this->im)) imagedestroy($this->im);
 		if(is_resource($this->thumb)) imagedestroy($this->thumb);
 		if(is_resource($this->newimage)) imagedestroy($this->newimage);
+		if(!empty(static::$__position)) static::$__position = "";
 	}
 
   private function init(){
@@ -2143,18 +2221,35 @@ trait ThumbCore{
 	
 		if (file_exists($this->Watermarkpng)) {
 			$this->newimage=imagecreatefrompng($this->Watermarkpng);
-			$wpos=explode(' ',str_replace('%','',$this->Watermarkposition));
+			list($cposx, $cposy) = $this->formatPosition($this->Watermarkposition, function($x, $y, $percentage){
+				if($percentage){
+					$cposx = min(
+						max(imagesx($this->im)*($x/100)-0.5*imagesx($this->newimage),0),
+						imagesx($this->im)-imagesx($this->newimage)
+					);
+					$cposy = min(
+						max(imagesy($this->im)*($y/100)-0.5*imagesy($this->newimage),0),
+						imagesy($this->im)-imagesy($this->newimage)
+					);
+				}else{
+					$cposx = min($x, imagesx($this->im)-imagesx($this->newimage));
+					$cposy = min($y, imagesy($this->im)-imagesy($this->newimage));
+				}
+				return [intval($cposx), intval($cposy)];
+			});
+			// $wpos=explode(' ',str_replace('%','',$this->Watermarkposition));
+			// $cposx = min(
+			// 	max(imagesx($this->im)*($wpos[0]/100)-0.5*imagesx($this->newimage),0),
+			// 	imagesx($this->im)-imagesx($this->newimage)
+			// );
+			// $cposy = min(
+			// 	max(imagesy($this->im)*($wpos[1]/100)-0.5*imagesy($this->newimage),0),
+			// 	imagesy($this->im)-imagesy($this->newimage)
+			// );
 			imagecopymerge(
 				$this->im,
 				$this->newimage,
-				intval(min(
-					max(imagesx($this->im)*($wpos[0]/100)-0.5*imagesx($this->newimage),0),
-					imagesx($this->im)-imagesx($this->newimage)
-				)),
-				intval(min(
-					max(imagesy($this->im)*($wpos[1]/100)-0.5*imagesy($this->newimage),0),
-					imagesy($this->im)-imagesy($this->newimage)
-				)),0,0,
+				$cposx, $cposy,0,0,
 				imagesx($this->newimage),
 				imagesy($this->newimage),intval($this->Watermarktransparency)
 			);
@@ -2319,18 +2414,32 @@ trait ThumbCore{
 			$fontwidth=imagefontwidth($this->Copyrightfontsize);
 		} else {		
 			$dimensions=imagettfbbox($this->Copyrightfontsize,0,$this->Copyrightfonttype,$this->Copyrighttext);
-			$widthx=$dimensions[2];$heighty=$dimensions[5];
+			$widthx=$dimensions[2];
+			$heighty=$dimensions[5];
 			$dimensions=imagettfbbox($this->Copyrightfontsize,0,$this->Copyrightfonttype,'W');
 			$fontwidth=$dimensions[2];
 		}
-		$cpos=explode(' ',str_replace('%','',$this->Copyrightposition));
-		if (count($cpos)>1) {
-			$cposx=intval(min(max($this->thumbx*($cpos[0]/100)-0.5*$widthx,$fontwidth),$this->thumbx-$widthx-0.5*$fontwidth));
-			$cposy=intval(min(max($this->thumby*($cpos[1]/100)-0.5*$heighty,$heighty),$this->thumby-$heighty*1.5));
-		} else {
-			$cposx=intval($fontwidth);
-			$cposy=intval($this->thumby-10);
-		}			
+		// $cpos=explode(' ',str_replace('%','',$this->Copyrightposition));
+		// if (count($cpos)>1) {
+		// 	$cposx=intval(min(max($this->thumbx*($cpos[0]/100)-0.5*$widthx,$fontwidth),$this->thumbx-$widthx-0.5*$fontwidth));
+		// 	$cposy=intval(min(max($this->thumby*($cpos[1]/100)-0.5*$heighty,$heighty),$this->thumby-$heighty*1.5));
+		// } else {
+		// 	$cposx=intval($fontwidth);
+		// 	$cposy=intval($this->thumby-10);
+		// }
+		list($cposx, $cposy) = $this->formatPosition($this->Copyrightposition, function($x, $y, $percentage)use($fontwidth, $widthx, $heighty){
+			if($percentage){
+				$cposx=min(max($this->thumbx*($x/100)-0.5*$widthx,$fontwidth),$this->thumbx-$widthx-0.5*$fontwidth);
+				$cposy=min(max($this->thumby*($y/100)-0.5*$heighty,$heighty),$this->thumby-$heighty*1.5);
+			}else{
+				// $cposx=$fontwidth;
+				// $cposy=$this->thumby-10;
+				$cposx = min($x, $this->thumbx-$widthx-0.5*$fontwidth);
+				$cposy = min($y, $this->thumby-$heighty*1.5);
+			}
+			return [intval($cposx), intval($cposy)];
+		});
+
 		if ($this->Copyrighttextcolor=='') {
 			$colors=array();
 			for ($i=$cposx;$i<($cposx+$widthx);$i++) {
@@ -2386,14 +2495,27 @@ trait ThumbCore{
 			$dimensions=imagettfbbox($this->Addtext[4],0,$this->Addtext[3],'W');
 			$fontwidth=$dimensions[2];
 		}
-		$cpos=explode(' ',str_replace('%','',$this->Addtext[2]));
-		if (count($cpos)>1) {
-			$cposx=intval(min(max($this->size[0]*($cpos[0]/100)-0.5*$widthx,$fontwidth),$this->size[0]-$widthx-0.5*$fontwidth));
-			$cposy=intval(min(max($this->size[1]*($cpos[1]/100)-0.5*$heighty,$heighty),$this->size[1]-$heighty*1.5));
-		} else {
-			$cposx=intval($fontwidth);
-			$cposy=intval($this->size[1]-10);
-		}			
+		// $cpos=explode(' ',str_replace('%','',$this->Addtext[2]));
+		// if (count($cpos)>1) {
+		// 	$cposx=intval(min(max($this->size[0]*($cpos[0]/100)-0.5*$widthx,$fontwidth),$this->size[0]-$widthx-0.5*$fontwidth));
+		// 	$cposy=intval(min(max($this->size[1]*($cpos[1]/100)-0.5*$heighty,$heighty),$this->size[1]-$heighty*1.5));
+		// } else {
+		// 	$cposx=intval($fontwidth);
+		// 	$cposy=intval($this->size[1]-10);
+		// }
+		list($cposx, $cposy) = $this->formatPosition($this->Addtext[2], function($x, $y, $percentage)use($fontwidth, $widthx, $heighty){
+			if($percentage){
+				$cposx=min(max($this->size[0]*($x/100)-0.5*$widthx,$fontwidth),$this->size[0]-$widthx-0.5*$fontwidth);
+				$cposy=min(max($this->size[1]*($y/100)-0.5*$heighty,$heighty),$this->size[1]-$heighty*1.5);
+			}else{
+				// $cposx=intval($fontwidth);
+				// $cposy=intval($this->size[1]-10);
+				$cposx = min($x, $this->size[0]-$widthx-0.5*$fontwidth);
+				$cposy = min($y, $this->size[1]-$heighty*1.5);
+			}
+			return [intval($cposx), intval($cposy)];
+		});
+
 		if ($this->Addtext[3]=='')
 			imagestring($this->im,$this->Addtext[4],$cposx,$cposy,$this->Addtext[1],imagecolorallocate($this->im,hexdec(substr($this->Addtext[5],1,2)),hexdec(substr($this->Addtext[5],3,2)),hexdec(substr($this->Addtext[5],5,2))));
 		else

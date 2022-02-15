@@ -3,7 +3,7 @@
 /**
  * @name (regexp)验证类
  * @author vipkwd <service@vipkwd.com>
- * @link https://github.com/wxy545812093/phputils
+ * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -12,6 +12,12 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 class Validate{
+
+    static $reg_internat_mobile = "/^(((\+?0?\d{1,4})[\ \-])?(\d{5,11}))$/";
+    static $reg_email = "/\w+([-+.]\w+)*@((\w+([-.]\w+)*)\.)[a-zA-Z]{2,5}$/";
+    static $reg_telephone ="/^(((0[1-9]\d{1,2})[ \-]|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/";
+    static $reg_zipcode = "/^[1-9]\d{5}(?!\d)$/";
+    
     /**
      * 验证移动通讯号码（兼容：国际号码格式）
      *
@@ -24,7 +30,7 @@ class Validate{
             // match 组2：带分隔符的区域码
             // match 组3：区域码
             // match 组4：mobile号码
-            return self::exec("/^(((\+?0?\d{1,4})[\ \-])?(\d{5,11}))$/", $str);
+            return self::exec(self::$reg_internat_mobile, $str);
         }
         return $result;
     }
@@ -36,7 +42,7 @@ class Validate{
      * @return boolean
      */
     static function email(string $str):bool{
-        return self::exec("/\w+([-+.]\w+)*@((\w+([-.]\w+)*)\.)[a-zA-Z]{2,5}$/", $str);
+        return self::exec(self::$reg_email, $str);
     }
 
     /**
@@ -62,7 +68,7 @@ class Validate{
      * @return boolean
      */
     static function telephone(string $str):bool{
-        return self::exec("/^(((0[1-9]\d{1,2})[ \-]|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/", $str);
+        return self::exec(self::$reg_telephone, $str);
     }
 
     /**
@@ -72,7 +78,7 @@ class Validate{
      * @return boolean
      */
     static function zipCodeOfChina(string $str):bool{
-        return self::exec("/^[1-9]\d{5}(?!\d)$/", $str);
+        return self::exec(self::$reg_zipcode, $str);
     }
 
     /**
@@ -101,7 +107,7 @@ class Validate{
                 11 =>"北京",12 =>"天津",13 =>"河北",14 =>"山西",15 =>"内蒙古",21 =>"辽宁",22 =>"吉林",23 =>"黑龙江",31 =>"上海",32 =>"江苏",
                 33 =>"浙江",34 =>"安徽",35 =>"福建",36 =>"江西",37 =>"山东",41 =>"河南",42 =>"湖北 ",43 =>"湖南",44 =>"广东",45 =>"广西",
                 46 =>"海南",50 =>"重庆",51 =>"四川",52 =>"贵州",53 =>"云南",54 =>"西藏",61 =>"陕西",62 =>"甘肃",63 =>"青海",64 =>"宁夏",
-                65 =>"新疆",71 =>"台湾",81 =>"香港",82 =>"澳门",91 =>"国外",
+                65 =>"新疆",71 =>"台湾",81 =>"香港",82 =>"澳门"//,91 =>"国外",
             ];
             $tip = "";
             if (!$str || !preg_match("/^[1-9]\d{16}(\d|X)$/i",$str) ) {
@@ -182,7 +188,7 @@ class Validate{
     }
 
     /**
-     * 验证Alibaba支付宝账号
+     * 验证支付宝账号
      *
      * @param string $str
      * @return boolean
