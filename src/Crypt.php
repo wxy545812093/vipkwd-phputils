@@ -17,173 +17,173 @@ class Crypt{
     /**
      * [A组]-DES. 加密
      * 
-     * -e.g: phpunit("Crypt::encryptDes", ["待加密字符串", "key", "iv_len_8"]);
+     * -e.g: phpunit("Crypt::desEncrypt", ["待加密字符串", "key", "iv_len_8"]);
      * 
      * @param string $data
      * @param string $key
      * @param string $iv8
      * @return void
      */
-    static function encryptDes(string $data, string $key, string $iv8){
+    static function desEncrypt(string $data, string $key, string $iv8){
         return Des::instance($key, $iv8)->encrypt($data);
     }
 
     /**
      * [A组]-DES. 解密
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptDes("待加密字符串", "key", "iv_len_8");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptDes("待加密字符串", "key", "iv_len_8");// '.$hash;
-     * -e.g: phpunit("Crypt::decryptDes", [$hash, "key", "iv_len_8"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::desEncrypt("待加密字符串", "key", "iv_len_8");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::desEncrypt("待加密字符串", "key", "iv_len_8");// '.$hash;
+     * -e.g: phpunit("Crypt::desDecrypt", [$hash, "key", "iv_len_8"]);
      * 
      * @param string $data
      * @param string $key
      * @param string $iv8
      * @return void
      */
-    static function decryptDes(string $data, string $key, string $iv8){
+    static function desDecrypt(string $data, string $key, string $iv8){
         return Des::instance($key, $iv8)->decrypt($data);
     }
 
     /**
      * [B组]-AES. 加密
      * 
-     * -e.g: phpunit("Crypt::encryptAes", ["待加密字符串", "key", "ivChar_length_16"]);
+     * -e.g: phpunit("Crypt::aesEncrypt", ["待加密字符串", "key", "ivChar_length_16"]);
      * 
      * @param string $data
      * @param string $key
      * @param string $iv16
      * @return void
      */
-    static function encryptAes(string $data, string $key, string $iv16){
+    static function aesEncrypt(string $data, string $key, string $iv16){
         return Aes::instance($key, $iv16)->encrypt($data);
     }
 
     /**
      * [B组]-AES. 解密
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptAes("待加密字符串", "key", "ivChar_length_16");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptAes("待加密字符串", "key", "ivChar_length_16");// '.$hash;
-     * -e.g: phpunit("Crypt::decryptAes", [$hash, "key", "ivChar_length_16"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::aesEncrypt("待加密字符串", "key", "ivChar_length_16");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::aesEncrypt("待加密字符串", "key", "ivChar_length_16");// '.$hash;
+     * -e.g: phpunit("Crypt::aesDecrypt", [$hash, "key", "ivChar_length_16"]);
      * 
      * @param string $data
      * @param string $key
      * @param string $iv16
      * @return void
      */
-    static function decryptAes(string $data, string $key, string $iv16){
+    static function aesDecrypt(string $data, string $key, string $iv16){
         return Aes::instance($key, $iv16)->decrypt($data);
     }
 
     /**
      * [C组]-RSA. 公钥加密
      * 
-     * -e.g: phpunit("Crypt::encryptRsaPub", ["待加密字符串", "your pub key"]);
+     * -e.g: phpunit("Crypt::rsaPubEncrypt", ["待加密字符串", "your pub key"]);
      * 
      * @param string $data
      * @param string $pubkey
      * @return void
      */
-    static function encryptRsaPub(string $data, string $pubkey){
+    static function rsaPubEncrypt(string $data, string $pubkey){
         return Rsa::instance()->setPubKey($pubkey)->encryptPubkey($data);
     }
 
     /**
      * [C组]-RSA. 私钥解密
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRsaPub("待加密字符串", "your pub key");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRsaPub("待加密字符串", "your pub key");// '.$hash;
-     * -e.g: phpunit("Crypt::decryptRsaPri", [$hash, "your pri key"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::rsaPubEncrypt("待加密字符串", "your pub key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::rsaPubEncrypt("待加密字符串", "your pub key");// '.$hash;
+     * -e.g: phpunit("Crypt::rsaPriDecrypt", [$hash, "your pri key"]);
      * 
      * @param string $data
      * @param string $prikey
      * @return void
      */
-    static function decryptRsaPri(string $data, string $prikey){
+    static function rsaPriDecrypt(string $data, string $prikey){
         return Rsa::instance()->setPriKey($prikey)->decryptPrikey($data);
     }
 
     /**
      * [D组]-RSA. 私钥加密
      * 
-     * -e.g: phpunit("Crypt::encryptRsaPri", ["待加密字符串", "your pri key"]);
+     * -e.g: phpunit("Crypt::rsaPriEncrypt", ["待加密字符串", "your pri key"]);
      * 
      * @param string $data
      * @param string $prikey
      * @return void
      */
-    static function encryptRsaPri(string $data, string $prikey){
+    static function rsaPriEncrypt(string $data, string $prikey){
         return Rsa::instance()->setPriKey($prikey)->encryptPrikey($data);
     }
 
     /**
      * [D组]-RSA. 公钥解密
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRsaPri("待加密字符串", "your pri key");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRsaPri("待加密字符串", "your pri key");// '.$hash;
-     * -e.g: phpunit("Crypt::decryptRsaPub", [$hash, "your pub key"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::rsaPriEncrypt("待加密字符串", "your pri key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::rsaPriEncrypt("待加密字符串", "your pri key");// '.$hash;
+     * -e.g: phpunit("Crypt::rsaPubDecrypt", [$hash, "your pub key"]);
      * 
      * @param string $data
      * @param string $pubkey
      * @return void
      */
-    static function decryptRsaPub(string $data, string $pubkey){
+    static function rsaPubDecrypt(string $data, string $pubkey){
         return Rsa::instance()->setPubKey($pubkey)->decryptPubkey($data);
     }
 
     /**
      * [R组]-RSA. 私钥签名
      * 
-     * -e.g: phpunit("Crypt::signRsa", ["待加密字符串", "your pri key"]);
+     * -e.g: phpunit("Crypt::rsaPriSign", ["待加密字符串", "your pri key"]);
      * 
      * @param string $data 待加签数据
      * @param string $prikey
      * @return void
      */
-    static function signRsa(string $data, string $prikey){
+    static function rsaPriSign(string $data, string $prikey){
         return Rsa::instance()->setPriKey($prikey)->sign($data);
     }
 
     /**
      * [R组]-RSA. 公钥验签
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::signRsa("待加密字符串", "your pri key");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::signRsa("待加密字符串", "your pri key");// '.$hash;
-     * -e.g: phpunit("Crypt::verifySignRsa", ["待加密字符串", $hash, "your pub key"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::rsaPriSign("待加密字符串", "your pri key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::rsaPriSign("待加密字符串", "your pri key");// '.$hash;
+     * -e.g: phpunit("Crypt::rsaPubVerifySign", ["待加密字符串", $hash, "your pub key"]);
      * 
      * @param string $data 待验签数据
      * @param string $sign 待验证签名条
      * @param string $pubkey
      * @return void
      */
-    static function verifySignRsa(string $data, string $sign, string $pubkey){
+    static function rsaPubVerifySign(string $data, string $sign, string $pubkey){
         return Rsa::instance()->setPubKey($pubkey)->verify($data, $sign);
     }
     
     /**
      * [F组]-RC4. 字符串加密
      * 
-     * -e.g: phpunit("Crypt::encryptRc4", ["待加密字符串", "your key"]);
+     * -e.g: phpunit("Crypt::rc4Encrypt", ["待加密字符串", "your key"]);
      * 
      * @param string $string 字符明文
      * @param string $key 密钥
      * @return string
      */
-    static function encryptRc4(string $string, string $key=""):string{
+    static function rc4Encrypt(string $string, string $key=""):string{
         return self::cryptRC4($string, "E", $key);
     }
 
     /**
      * [F组]-RC4. 字符串解密
      * 
-     * -e.g: $hash=\Vipkwd\Utils\Crypt::encryptRc4("待加密字符串", "your key");
-     * -e.g: echo 'Vipkwd\Utils\Crypt::encryptRc4("待加密字符串", "your key");// '.$hash;
-     * -e.g: phpunit("Crypt::decryptRc4", [$hash, "your key"]);
+     * -e.g: $hash=\Vipkwd\Utils\Crypt::rc4Encrypt("待加密字符串", "your key");
+     * -e.g: echo 'Vipkwd\Utils\Crypt::rc4Encrypt("待加密字符串", "your key");// '.$hash;
+     * -e.g: phpunit("Crypt::rc4Decrypt", [$hash, "your key"]);
      * 
      * @param string $string 密文
      * @param string $key 密钥
      * @return string
      */
-    static function decryptRc4(string $string, string $key=""):string{
+    static function rc4Decrypt(string $string, string $key=""):string{
         return self::cryptRC4($string, "D", $key);
     }
 
@@ -292,29 +292,6 @@ class Crypt{
         }
     }
 
-    /**
-     * 生成随机密码
-     * 
-     * -e.g: phpunit("Crypt::randomPassword");
-     * -e.g: phpunit("Crypt::randomPassword", [6]);
-     * -e.g: phpunit("Crypt::randomPassword", [6, false]);
-     * 
-     * @param integer $maxLen <16> 生成的密码长度
-     * @param boolean $specialChar <true> 是不包含特殊字符
-     * @return string
-     * 
-     */
-    static function randomPassword(int $maxLen = 16, bool $specialChar = true):string{
-        $default = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $specialChar && $default.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
-        $password = "";
-        $len = strlen($default);
-        while( $maxLen > 0){
-            $password .= substr(str_shuffle($default), mt_rand(0, $len-1), 1);
-            $maxLen--;
-        }
-        return $password;
-    }
     private static function cryptRC4(string $string, string $operation, string $key=''){
         $key=md5($key);
         $key_length=strlen($key);

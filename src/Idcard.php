@@ -1,6 +1,6 @@
 <?php
 /**
- * @name 证件号码
+ * @name 证件号码(大陆/港/澳/台)
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
@@ -19,68 +19,69 @@ class Idcard {
 	/**
      * 中国公民身份证号码最小长度
      */
-	const CHINA_ID_MIN_LENGTH = 15;
+	private const CHINA_ID_MIN_LENGTH = 15;
 	/**
      * 中国公民身份证号码最大长度
      */
-	const CHINA_ID_MAX_LENGTH = 18;
+	private const CHINA_ID_MAX_LENGTH = 18;
 	/**
      * 最低年限
      */
-	const MIN = 1930;
+	private const MIN = 1930;
 	/**
      * 省、直辖市代码表
      */
-	static $cityCode = array ("11","12","13","14","15","21","22","23","31","32","33","34","35","36","37","41","42","43","44","45","46","50","51","52","53","54","61","62","63","64","65","71","81","82","91" );
+	private static $cityCode = array ("11","12","13","14","15","21","22","23","31","32","33","34","35","36","37","41","42","43","44","45","46","50","51","52","53","54","61","62","63","64","65","71","81","82","91" );
 	/**
      * 每位加权因子
      */
-	static $power = array (7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2 );
+	private static $power = array (7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2 );
 	/**
      * 第18位校检码
      */
-	static $verifyCode = array ("1","0","X","9","8","7","6","5","4","3","2" );
+	private static $verifyCode = array ("1","0","X","9","8","7","6","5","4","3","2" );
 	/**
      * 国内身份证校验
      */
-	static $cityCodes = array ("11"=>"北京","12"=>"天津","13"=>"河北","14"=>"山西","15"=>"内蒙古","21"=>"辽宁","22"=>"吉林","23"=>"黑龙江","31"=>"上海","32"=>"江苏","33"=>"浙江","34"=>"安徽","35"=>"福建","36"=>"江西","37"=>"山东","41"=>"河南","42"=>"湖北","43"=>"湖南","44"=>"广东","45"=>"广西","46"=>"海南","50"=>"重庆","51"=>"四川","52"=>"贵州","53"=>"云南","54"=>"西藏","61"=>"陕西","62"=>"甘肃","63"=>"青海","64"=>"宁夏","65"=>"新疆","71"=>"台湾","81"=>"香港","82"=>"澳门","91"=>"国外");
+	private static $cityCodes = array ("11"=>"北京","12"=>"天津","13"=>"河北","14"=>"山西","15"=>"内蒙古","21"=>"辽宁","22"=>"吉林","23"=>"黑龙江","31"=>"上海","32"=>"江苏","33"=>"浙江","34"=>"安徽","35"=>"福建","36"=>"江西","37"=>"山东","41"=>"河南","42"=>"湖北","43"=>"湖南","44"=>"广东","45"=>"广西","46"=>"海南","50"=>"重庆","51"=>"四川","52"=>"贵州","53"=>"云南","54"=>"西藏","61"=>"陕西","62"=>"甘肃","63"=>"青海","64"=>"宁夏","65"=>"新疆","71"=>"台湾","81"=>"香港","82"=>"澳门","91"=>"国外");
 
-    static $twCityCodes = array("A" => ["台北市", 10], "B" => ["台中市", 11], "C" => ["基隆市", 12], "D" => ["台南市", 13], "E" => ["高雄市", 14], "F" => ["台北县", 15], "G" => ["宜兰县", 16], "H" => ["桃园县", 17], "I" => ["嘉义市", 34], "J" => ["新竹县", 18], "K" => ["苗栗县", 19], "L" => ["台中县", 20], "M" => ["南投县", 21], "N" => ["彰化县", 22], "O" => ["新竹市", 35], "P" => ["云林县", 23], "Q" => ["嘉义县", 24], "R" => ["台南县", 25], "S" => ["高雄县", 26], "T" => ["屏东县", 27], "U" => ["花莲县", 28], "V" => ["台东县", 29], "W" => ["金门县", 32], "X" => ["澎湖县", 30], "Y" => ["阳明山管理局", 31], "Z" => ["连江县", 33]);
+    private static $twCityCodes = array("A" => ["台北市", 10], "B" => ["台中市", 11], "C" => ["基隆市", 12], "D" => ["台南市", 13], "E" => ["高雄市", 14], "F" => ["台北县", 15], "G" => ["宜兰县", 16], "H" => ["桃园县", 17], "I" => ["嘉义市", 34], "J" => ["新竹县", 18], "K" => ["苗栗县", 19], "L" => ["台中县", 20], "M" => ["南投县", 21], "N" => ["彰化县", 22], "O" => ["新竹市", 35], "P" => ["云林县", 23], "Q" => ["嘉义县", 24], "R" => ["台南县", 25], "S" => ["高雄县", 26], "T" => ["屏东县", 27], "U" => ["花莲县", 28], "V" => ["台东县", 29], "W" => ["金门县", 32], "X" => ["澎湖县", 30], "Y" => ["阳明山管理局", 31], "Z" => ["连江县", 33]);
     
-    static $hkCityCodes = array("A"=>1,"B"=>2,"C"=>3,"D"=>4,"E"=>5,"F"=>6,"G"=>7,"H"=>8,"I"=>9,"J"=>10,"K"=>11,"L"=>12,"M"=>13,"N"=>14,"O"=>15,"P"=>16,"Q"=>17,"R"=>18,"S"=>19,"T"=>20,"U"=>21,"V"=>22,"W"=>23,"X"=>24,"Y"=>25,"Z"=>26);
+    private static $hkCityCodes = array("A"=>1,"B"=>2,"C"=>3,"D"=>4,"E"=>5,"F"=>6,"G"=>7,"H"=>8,"I"=>9,"J"=>10,"K"=>11,"L"=>12,"M"=>13,"N"=>14,"O"=>15,"P"=>16,"Q"=>17,"R"=>18,"S"=>19,"T"=>20,"U"=>21,"V"=>22,"W"=>23,"X"=>24,"Y"=>25,"Z"=>26);
 	
     /**
-     * 升级15位号码为18位
+     * 随机生成18位证件号码
      * 
-     * @param idCard 15位身份编码
-     * @return 18位身份编码
+     * -e.g:phpunit("Idcard::createIdCard18",[]);echo " <-- 随机号";
+     * -e.g:phpunit("Idcard::createIdCard18",["11"]);echo " <-- 北京";
+     * -e.g:phpunit("Idcard::createIdCard18",['12',"2020-01-02"]); echo " <-- 天津 2020-01-02";
+     * -e.g:phpunit("Idcard::createIdCard18",['13',"2020-02-03",1]); echo " <-- 河北 2020-02-03 男";
+     * -e.g:phpunit("Idcard::createIdCard18",['13','',2]); echo " <-- 河北 女";
+     * -e.g:phpunit("Idcard::createIdCard18",['81']); echo " <-- 香港人在大陆的 居民身份证";
+     *
+     * @param string $prefix2 <""> 俩位省份编码 默认空随机
+     * @param string $birthday <""> 8位出生年月 默认空随机
+     * @param integer $sex <0> 1男 2女 默认0随机
+     * @return string
      */
-	static function conver15CardTo18($idCard) {
-		$idCard18 = "";
-		if (strlen ( $idCard ) != self::CHINA_ID_MIN_LENGTH) {
-			return null;
-		}
-		if (self::isNum ( $idCard )) {
-			// 获取出生年月日
-            $sYear = '19' . substr ( $idCard, 6, 2 );
-            $idCard18 = substr ( $idCard, 0, 6 ) . $sYear . substr ( $idCard, 8 );
-            // 转换字符数组
-            $iArr = str_split ($idCard18);
-            if ($iArr != null) {
-                $iSum17 = self::getPowerSum ( $iArr );
-                // 获取校验位
-                $sVal = self::getCheckCode18 ( $iSum17 );
-                if (strlen ( $sVal ) > 0) {
-                    $idCard18 .= $sVal;
-                } else {
-                    return null;
-                }
-            }
-        } else {
-            return null;
+    static function createIdCard18(string $prefix2="", string $birthday="", int $sex=0):string{
+        if($prefix2 == ""){
+           $prefix2 = array_keys(self::$cityCodes);
+           shuffle($prefix2);
+           $prefix2 = $prefix2[(mt_rand(0, count($prefix2)-1))]; 
         }
-        return $idCard18;
+        $chars = [substr("$prefix2",0, 2)];
+        $chars[]= $chars[0] > 70 ? "0000" : Random::code(4,true);
+        Validate::date($birthday) || $birthday = Random::date("Ymd");
+        $chars[] = preg_replace("/[^0-9]/",'',$birthday);
+        $chars[] = Random::code(2,true);
+        ($sex === 1 || $sex === 2) || $sex = mt_rand(1,2);
+        $chars[] = $sex;
+        $chars = implode('', $chars);
+        $chars .= self::getCheckCode18(self::getPowerSum(str_split($chars)));
+        return $chars;
     }
+
     
     /**
      * 验证身份证是否合法
@@ -101,58 +102,6 @@ class Idcard {
     }
     
     /**
-     * 验证-18位身份证号
-     * -- 大陆居民身份证
-     * -- 港澳台居民居住证
-     * @param int $idCard 身份编码
-     * @return boolean 是否合法
-     */
-    static function validateIdCard18($idCard) {
-
-        if (strlen ( $idCard ) == self::CHINA_ID_MAX_LENGTH) {
-            // 前17位
-            $code17 = substr ( $idCard, 0, 17 );
-            // 第18位
-            $code18 = substr ( $idCard, 17, 1 );
-            if (self::isNum ( $code17 )) {
-                $iArr = str_split ( $code17 );
-                if ($iArr != null) {
-                    $iSum17 = self::getPowerSum ( $iArr );
-                    // 获取校验位
-                    $val = self::getCheckCode18 ( $iSum17 );
-                    if (strlen ( $val ) > 0 && $val == $code18) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * 验证-15位身份证号
-     * @param string $idCard 身份编码
-     * @return boolean 是否合法
-     */
-    static function validateIdCard15($idCard) {
-        if (strlen ( $idCard ) != self::CHINA_ID_MIN_LENGTH) {
-            return false;
-        }
-        if (self::isNum ( $idCard )) {
-            $proCode = substr ( $idCard, 0, 2 );
-            if (! isset ( self::$cityCodes [$proCode] )) {
-                return false;
-            }
-            //升到18位
-            $idCard = self::conver15CardTo18($idCard);
-            return self::validateIdCard18($idCard);
-        } else {
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * 验证-台湾身份证号码
      * 
      * 首位数字(号码第2位)代表性别，男性为1、女性为2；最后一位数字是检验码
@@ -161,6 +110,10 @@ class Idcard {
      * 例如，A234567893，A对应的验证码是10，最后一位数是3。
      * 通算值= 1 + 0*9 + 2*8 + 3*7 + 4*6 + 5*5 + 6*4 + 7*3 + 8*2 + 9*1 = 157，通算值的末尾数是7。则10-7=3，与最后一位数（验证码）相同，身份证号码正确。
      * 反之，A234567890的最后一位是0，就不是有效字号。
+     * 
+     * -e.g:phpunit("Idcard::validateTWCard",["L180370396"]);
+     * -e.g:phpunit("Idcard::validateTWCard",["D289297698"]);
+     * -e.g:phpunit("Idcard::validateTWCard",["I181359189"]);
      * 
      * @param string $idCard 身份证号码
      * @return bool 验证码是否符合
@@ -193,6 +146,10 @@ class Idcard {
      * <p>
      * 将身份证号码全部转换为数字，分别对应乘9-1相加的总和，整除11则证件号码有效
      * </p>
+     * 
+     * -e.g:phpunit("Idcard::validateHKCard",["L2372471"]);
+     * -e.g:phpunit("Idcard::validateHKCard",["N3170894"]);
+     * -e.g:phpunit("Idcard::validateHKCard",["A5447790"]);
      *
      * @param string $idCard 身份证号码
      * @return bool 验证码是否符合
@@ -243,15 +200,17 @@ class Idcard {
         return true;
     }
 
-
     /**
      * 港澳居民 -来往内地通行证
+     * 
+     * -e.g:phpunit("Idcard::validatePmHK",["H60360448"]);
      *
      * @param string $idCard
      * @return boolean
      */
     static function validatePmHK(string $idCard):bool{
-        return preg_match("/^[H|M][0-9]{10}$/i");
+        (strlen($idCard)< 11) && $idCard = str_pad($idCard, 11,"0");
+        return 1 === preg_match("/^[H|M][0-9]{10}$/i", $idCard);
     }
 
     /**
@@ -262,7 +221,7 @@ class Idcard {
      * @return boolean
      */
     static function validatePmTW(string $idCard):bool{
-        return preg_match("/^[1-9][0-9]{7}$/i");
+        return 1 === preg_match("/^[1-9][0-9]{7}$/i", $idCard);
     }
 
     /**
@@ -272,25 +231,58 @@ class Idcard {
      * @return boolean
      */
     static function validatePmCN(string $idCard):bool{
-        return preg_match("/^[LT][0-9]{8}$/i");
+        return 1 === preg_match("/^[LT][0-9]{8}$/i", $idCard);
+    }
+
+    /**
+     * 韩国居民 -身份证号
+     *
+     * @param string $idCard
+     * @return null|string
+     */
+    protected static function validateKRIdcard(string $idCard):?string{
+        // 하정식	100518-1654482	男	11岁	2010年05月18日
+        // 조해권	090821-1930459	男	12岁	2009年08月21日
+        // 조보라	920216-2554891	女	30岁	1992年02月16日
+        // 정옥란	031024-2479466	女	18岁	2003年10月24日
+        // 안선희	810416-2604946	女	40岁	1981年04月16日
+        return null;
     }
 
     /**
      * 获取年龄
      * 
-     * -e.g: phpunit("Idcard::getAgeByIdCard", ["612426198901165783"]);
+     * -e.g: phpunit("Idcard::getAgeByIdCard", ["612426198901165783", true]);echo " <-- 证件生日是农历";
      * -e.g: phpunit("Idcard::getAgeByIdCard", ["441381199908191520"]);
      * 
      * @param string idCard 身份编号
+     * @param boolean isLunar <false> 身份编号是否包含农历生日
      * @return int
      */
-    static function getAgeByIdCard($idCard) {
+    static function getAgeByIdCard($idCard, bool $isLunar = false):int{
         $iAge = 0;
         self::IDFixes($idCard);
-        if (self::validateIdCard($idCard)){   
-            $year = substr ( $idCard, 6, 4 );
-            $iCurrYear = date ( 'Y', time () );
-            $iAge = $iCurrYear - $year;
+        if (self::validateIdCard($idCard)){
+            $birthday = self::getBirthByIdCard($idCard);
+            if($isLunar){
+                //构建今年的农历生日
+                $birth = date('Y', time()). substr( $birthday, 4);
+                //农历转公历
+                $birth = Calendar::toSolar($birth);
+                // 保留公历月日(出身年份回填)
+                $birthday = substr($birthday,0,4). substr($birth,4);
+                //Dev::dumper($birthday,1);
+            }
+            list($year, $month, $day) = explode('-', $birthday);
+            $bYear = intval($year);
+            $bmd = intval("{$month}{$day}");
+            $cYear = intval(date ( 'Y', time ()));
+            $cmd = intval(date ( 'md', time ()));
+            if($cmd < $bmd){
+                $cYear--;
+            }
+            $iAge = $cYear - $bYear;
+            unset($bYear,$bmd, $cYear, $cmd);
         }
         return $iAge;
     }
@@ -370,7 +362,7 @@ class Idcard {
     static function getConstellationById(string $idCard):string{
         self::IDFixes($idCard);
         if (! self::validateIdCard($idCard)) return "";
-        return Lunar::getConstellation( self::getBirthByIdCard($idCard));
+        return Calendar::getConstellation( self::getBirthByIdCard($idCard));
     }
 
     /**
@@ -385,7 +377,7 @@ class Idcard {
     static function getZodiacById(string $idCard):string{
         self::IDFixes($idCard);
         if (! self::validateIdCard($idCard)) return "";
-        return Lunar::getYearZodiac(self::getBirthByIdCard($idCard));
+        return Calendar::getYearZodiac(self::getBirthByIdCard($idCard));
     }
 
     /**
@@ -400,7 +392,7 @@ class Idcard {
     static function getChineseEraById(string $idCard):string{
         self::IDFixes($idCard);
         if (! self::validateIdCard($idCard)) return "";
-        return Lunar::getYearGZ(self::getBirthByIdCard($idCard));
+        return Calendar::getYearGZ(self::getBirthByIdCard($idCard));
     }
 
     /**
@@ -551,5 +543,90 @@ class Idcard {
             $idCard = self::conver15CardTo18($idCard);
         }
         return $idCard;
+    }
+
+    /**
+     * 升级15位号码为18位
+     * 
+     * @param idCard 15位身份编码
+     * @return 18位身份编码
+     */
+	private static function conver15CardTo18($idCard) {
+		$idCard18 = "";
+		if (strlen ( $idCard ) != self::CHINA_ID_MIN_LENGTH) {
+			return null;
+		}
+		if (self::isNum ( $idCard )) {
+			// 获取出生年月日
+            $sYear = '19' . substr ( $idCard, 6, 2 );
+            $idCard18 = substr ( $idCard, 0, 6 ) . $sYear . substr ( $idCard, 8 );
+            // 转换字符数组
+            $iArr = str_split ($idCard18);
+            if ($iArr != null) {
+                $iSum17 = self::getPowerSum ( $iArr );
+                // 获取校验位
+                $sVal = self::getCheckCode18 ( $iSum17 );
+                if (strlen ( $sVal ) > 0) {
+                    $idCard18 .= $sVal;
+                } else {
+                    return null;
+                }
+            }
+        } else {
+            return null;
+        }
+        return $idCard18;
+    }
+
+    /**
+     * 验证-18位身份证号
+     * -- 大陆居民身份证
+     * -- 港澳台居民居住证
+     * @param int $idCard 身份编码
+     * @return boolean 是否合法
+     */
+    private static function validateIdCard18($idCard) {
+
+        if (strlen ( $idCard ) == self::CHINA_ID_MAX_LENGTH) {
+            // 前17位
+            $code17 = substr ( $idCard, 0, 17 );
+            // 第18位
+            $code18 = strtolower(substr($idCard, 17, 1));
+            if (self::isNum ( $code17 )) {
+                $iArr = str_split ( $code17 );
+                if ($iArr != null) {
+                    $iSum17 = self::getPowerSum($iArr);
+                    // 获取校验位
+                    $val = self::getCheckCode18 ($iSum17);
+                    if (strlen ( $val ) > 0 && $val == $code18) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 验证-15位身份证号
+     * @param string $idCard 身份编码
+     * @return boolean 是否合法
+     */
+    private static function validateIdCard15($idCard) {
+        if (strlen ( $idCard ) != self::CHINA_ID_MIN_LENGTH) {
+            return false;
+        }
+        if (self::isNum ( $idCard )) {
+            $proCode = substr ( $idCard, 0, 2 );
+            if (! isset ( self::$cityCodes [$proCode] )) {
+                return false;
+            }
+            //升到18位
+            $idCard = self::conver15CardTo18($idCard);
+            return self::validateIdCard18($idCard);
+        } else {
+            return false;
+        }
+        return true;
     }
 }

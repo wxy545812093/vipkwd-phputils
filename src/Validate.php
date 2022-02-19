@@ -159,7 +159,7 @@ class Validate{
      * @return boolean
      */
     static function date(string $str):bool{
-        return self::exec("/^[1-3]\d{3}(\-|\/)((0[1-9])|(1[0-2]))(\-|\/)((0[1-9])|([1-2]\d)|(3[0-1]))$/", $str);
+        return self::exec("/^[1-3]\d{3}(\-|\/)?((0[1-9])|(1[0-2]))(\-|\/)?((0[1-9])|([1-2]\d)|(3[0-1]))$/", $str);
     }
 
     /**

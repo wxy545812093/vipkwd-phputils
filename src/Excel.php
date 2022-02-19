@@ -504,7 +504,7 @@ class Excel{
      * @param boolean $confirm
      * @return void
      */
-    public function exportDemo(bool $confirm = false){
+    static function exportDemo(bool $confirm = false){
         if($confirm !== true) return;
         $result = array(
             [ "key"=> "relname" , "field" => "姓名"],

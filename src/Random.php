@@ -10,25 +10,25 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Libs\RandomName,Tools,Str as VipkwdStr};
+use Vipkwd\Utils\{Libs\RandomName,Tools};
 
 class Random {
 
     /**
      * 构建一个随机浮点数
      * 
-     * -e.g: phpunit("Random::randomFloat");
-     * -e.g: phpunit("Random::randomFloat",[0,5,0]);
-     * -e.g: phpunit("Random::randomFloat",[0,5,1]);
-     * -e.g: phpunit("Random::randomFloat",[0,5,4]);
-     * -e.g: phpunit("Random::randomFloat",[0,5,6]);
+     * -e.g: phpunit("Random::float");
+     * -e.g: phpunit("Random::float",[0,5,0]);
+     * -e.g: phpunit("Random::float",[0,5,1]);
+     * -e.g: phpunit("Random::float",[0,5,4]);
+     * -e.g: phpunit("Random::float",[0,5,6]);
      * 
      * @param integer $min
      * @param integer $max
      * @param integer $decimal <0> 小数位数
      * @return float
      */
-    static function randomFloat(int $min = -999999999, int $max = 999999999, int $decimal = 10): float {
+    static function float(int $min = -999999999, int $max = 999999999, int $decimal = 10): float {
         if($max < $min){
             throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
         }
@@ -49,15 +49,15 @@ class Random {
     /**
      * 获取随机的时间
      * 
-     * -e.g: phpunit("Random::randomDate");
-     * -e.g: phpunit("Random::randomDate", ["Y-m-d H:i:s"]);
-     * -e.g: phpunit("Random::randomDate", ["Y-m-d H:i"]);
-     * -e.g: phpunit("Random::randomDate", ["Y/m/d H:i:s"]);
+     * -e.g: phpunit("Random::date");
+     * -e.g: phpunit("Random::date", ["Y-m-d H:i:s"]);
+     * -e.g: phpunit("Random::date", ["Y-m-d H:i"]);
+     * -e.g: phpunit("Random::date", ["Y/m/d H:i:s"]);
      * 
      * @param string $format PHP的时间日期格式化字符
      * @return false|string
      */
-    static function randomDate(string $format = 'Y-m-d H:i:s'): string {
+    static function date(string $format = 'Y-m-d H:i:s'): string {
         $timestamp = time() - mt_rand(0, 86400 * 3650);
         return date($format, $timestamp);
     }
@@ -65,12 +65,12 @@ class Random {
     /**
      * 构建随机IP地址
      * 
-     * -e.g: phpunit("Random::randomIp");
-     * -e.g: phpunit("Random::randomIp");
+     * -e.g: phpunit("Random::ip");
+     * -e.g: phpunit("Random::ip");
      * 
      * @return string
      */
-    static function randomIp(): string {
+    static function ip(): string {
         $ipLong = [
             [607649792, 608174079], // 36.56.0.0-36.63.255.255
             [1038614528, 1039007743], // 61.232.0.0-61.237.255.255
@@ -90,12 +90,12 @@ class Random {
     /**
      * 随机生成一个 URL 协议
      * 
-     * -e.g: phpunit("Random::randomProtocol");
-     * -e.g: phpunit("Random::randomProtocol");
+     * -e.g: phpunit("Random::protocol");
+     * -e.g: phpunit("Random::protocol");
      * 
      * @return string
      */
-    static function randomProtocol(): string {
+    static function protocol(): string {
         $proArr = [ 'http', 'ftp', 'gopher', 'mailto', 'mid', 'cid', 'news', 'nntp', 'prospero', 'telnet', 'rlogin', 'tn3270', 'wais' ];
         shuffle($proArr);
         return $proArr[0];
@@ -104,12 +104,12 @@ class Random {
     /**
      * 随机生成一个顶级域名
      * 
-     * -e.g: phpunit("Random::randomTld");
-     * -e.g: phpunit("Random::randomTld");
+     * -e.g: phpunit("Random::tld");
+     * -e.g: phpunit("Random::tld");
      * 
      * @return string
      */
-    static function randomTld(): string {
+    static function tld(): string {
         $tldArr = [
             'com', 'cn', 'xin', 'net', 'top', '在线',
             'xyz', 'wang', 'shop', 'site', 'club', 'cc',
@@ -127,102 +127,111 @@ class Random {
     /**
      * 获取一个随机的域名
      * 
-     * -e.g: phpunit("Random::randomDomain");
-     * -e.g: phpunit("Random::randomDomain");
+     * -e.g: phpunit("Random::domain");
+     * -e.g: phpunit("Random::domain");
      * 
      * @return string
      */
-    static function randomDomain(): string {
+    static function domain(): string {
         $len = mt_rand(6, 16);
-        return strtolower(Strs::randString($len)) . '.' . self::randomTld();
+        return strtolower(self::code($len,false)) . '.' . self::tld();
     }
 
     /**
      * 随机生成一个URL
      * 
-     * -e.g: phpunit("Random::randomUrl");
-     * -e.g: phpunit("Random::randomUrl");
+     * -e.g: phpunit("Random::url");
+     * -e.g: phpunit("Random::url");
      * 
      * @param string $protocol <""> 协议名称
      * @return string
      */
-    static function randomUrl(string $protocol = ''): string {
-        $protocol = $protocol ? $protocol : self::randomProtocol();
-        return $protocol . '://' . self::randomDomain();
+    static function url(string $protocol = ''): string {
+        $protocol = $protocol ? $protocol : self::protocol();
+        return $protocol . '://' . self::domain();
     }
 
     /**
      * 随机生成一个邮箱地址
      * 
-     * -e.g: phpunit("Random::randomEmail");
-     * -e.g: phpunit("Random::randomEmail");
+     * -e.g: phpunit("Random::email");
+     * -e.g: phpunit("Random::email");
      * 
      * @param string $domain <""> 可以指定邮箱域名
      * @return string
      */
-    static function randomEmail(string $domain = ''): string {
+    static function email(string $domain = ''): string {
         $len = mt_rand(6, 16);
-        $domain = $domain ? $domain : self::randomDomain();
-        return Strs::randString($len) . '@' . $domain;
+        $domain = $domain ? $domain : self::domain();
+        return strtolower(self::code($len,false)) . '@' . $domain;
     }
 
     /**
      * 随机生成一个大陆手机号
      * 
-     * -e.g: phpunit("Random::randomPhone");
-     * -e.g: phpunit("Random::randomPhone");
+     * -e.g: phpunit("Random::mobilePhone");
+     * -e.g: phpunit("Random::mobilePhone");
      * 
      * @return string
      */
-    static function randomPhone(): string {
+    static function mobilePhone(): string {
         $prefixArr = [13,14,15,16,17,18,19];
         shuffle($prefixArr);
-        return $prefixArr[0] . VipkwdStr::randomCode(9, true);
+        return $prefixArr[0] . self::code(9, true);
     }
 
     /**
      * 随机创建一个身份证号码
      * 
-     * -e.g: phpunit("Random::randomPhone");
-     * -e.g: phpunit("Random::randomPhone");
+     * -e.g: phpunit("Random::idcard");
+     * -e.g: phpunit("Random::idcard");
      * 
      * @return string
      */
-    static function randomIdcard(bool $validate = false): string {
-        $prefixArr = [
-            11, 12, 13, 14, 15,
-            21, 22, 23,
-            31, 32, 33, 34, 35, 36, 37,
-            41, 42, 43, 44, 45, 46,
-            50, 51, 52, 53, 54,
-            61, 62, 63, 64, 65,
-            71, 81, 82
-        ];
-        shuffle($prefixArr);
-
-        $suffixArr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'X'];
-        shuffle($suffixArr);
-
-        $id = $prefixArr[0] . '0000' . self::randomDate('Ymd') . Strs::randString(3, 1) . $suffixArr[0];
+    static function idcard(bool $validate = false): string {
+        $id = Idcard::createIdCard18();
         if($validate){
             if(!Validate::idcardOfChina($id)){
-                return self::randomIdcard(true);
+                return self::idcard(true);
             }
         }
         return $id;
     }
 
     /**
+     * 生成随机密码
+     * 
+     * -e.g: phpunit("Random::password");
+     * -e.g: phpunit("Random::password", [15]);
+     * -e.g: phpunit("Random::password", [14, false]);
+     * 
+     * @param integer $maxLen <16> 生成的密码长度
+     * @param boolean $specialChar <true> 是否包含特殊字符
+     * @return string
+     * 
+     */
+    static function password(int $maxLen = 16, bool $specialChar = true):string{
+        $default = self::code(62,false);
+        $specialChar && $default.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
+        $password = "";
+        $len = strlen($default);
+        while($maxLen--){
+            $password .= substr(str_shuffle($default), mt_rand(0, $len-1), 1);
+        }
+        return $password;
+    }
+
+    /**
      * 随机生成简体字
      * 
-     * -e.g: phpunit("Random::randomZhChar");
-     * -e.g: phpunit("Random::randomZhChar",[4]);
-     * -e.g: phpunit("Random::randomZhChar",[2]);
+     * -e.g: phpunit("Random::zhChar");
+     * -e.g: phpunit("Random::zhChar",[4]);
+     * -e.g: phpunit("Random::zhChar",[2]);
      * 
      * @param int $length <0>
      * @return string
      */
-    static function randomZhChar(int $length=0): string
+    static function zhChar(int $length=0): string
     {
         $s = '';
         for ($i = 0; $i < $length; $i++) {
@@ -237,63 +246,68 @@ class Random {
     /**
      * 生成随机字符(验证码)
      *
-     * -e.g: phpunit("Random::randomCode");
-     * -e.g: phpunit("Random::randomCode");
-     * -e.g: phpunit("Random::randomCode",[1]);
-     * -e.g: phpunit("Random::randomCode",[4]);
-     * -e.g: phpunit("Random::randomCode",[5]);
-     * -e.g: phpunit("Random::randomCode",[5,true]);
-     * -e.g: phpunit("Random::randomCode",[5,true]);
+     * -e.g: phpunit("Random::code");
+     * -e.g: phpunit("Random::code");
+     * -e.g: phpunit("Random::code",[1]);
+     * -e.g: phpunit("Random::code",[4]);
+     * -e.g: phpunit("Random::code",[5]);
+     * -e.g: phpunit("Random::code",[5,true]);
+     * -e.g: phpunit("Random::code",[5,true]);
      * 
      * @param integer $len
      * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
      * @return string
      */
-    static function randomCode(int $len = 6, bool $onlyDigit = false):string{      
+    static function code(int $len = 6, bool $onlyDigit = false):string{
         $char = '1234567890';
 		if ($onlyDigit === false) {
 			$char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 		}
-		return substr(str_shuffle(str_repeat($char, $len)), 0, $len);
+        $char = str_repeat($char, $len);
+        $_len = ($len % 3)+1;
+        while($_len--){
+            $char = str_shuffle($char);
+        }
+		return substr($char, mt_rand(0, strlen($char)-$len-1), $len);
 	}
 
 
     /**
      * 随机生成马甲昵称
      *
-     * -e.g: phpunit("Random::randomNickName");
-     * -e.g: phpunit("Random::randomNickName");
-     * -e.g: phpunit("Random::randomNickName");
+     * -e.g: phpunit("Random::nickName");
+     * -e.g: phpunit("Random::nickName");
+     * -e.g: phpunit("Random::nickName");
      * 
      * @return string
      */
-    static function randomNickName():string{
+    static function nickName():string{
         return RandomName::getNickName();
     }
 
     /**
      * 随机生成女名
      *
-     * -e.g: phpunit("Random::randomFemaleName");
-     * -e.g: phpunit("Random::randomFemaleName",[false]);
+     * -e.g: phpunit("Random::femaleName");
+     * -e.g: phpunit("Random::femaleName",[false]);
      * 
      * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
      * @return string
      */
-    static function randomFemaleName(bool $surName = true):string{
+    static function femaleName(bool $surName = true):string{
         return RandomName::getFemaleName($surName);
     }   
 
     /**
      * 随机生成男名
      * 
-     * -e.g: phpunit("Random::randomMaleName");
-     * -e.g: phpunit("Random::randomMaleName",[false]);
+     * -e.g: phpunit("Random::maleName");
+     * -e.g: phpunit("Random::maleName",[false]);
      *
      * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
      * @return string
      */
-    static function randomMaleName(bool $surName = true):string{
+    static function maleName(bool $surName = true):string{
         return RandomName::getMaleName($surName);
     }
 

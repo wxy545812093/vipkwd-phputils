@@ -601,4 +601,23 @@ class Str{
         return $toUppercase ? strtoupper($uuid) : strtolower($uuid);
     }
 
+    /**
+     * 检测字符串是否为JSON串
+     *
+     * -e.g: phpunit("Str::isJson",['[{"url":"10musume.com"}]']);
+     * -e.g: phpunit("Str::isJson",['[]']);
+     * -e.g: phpunit("Str::isJson",['[{}]']);
+     * -e.g: phpunit("Str::isJson",['{"site":"91.com"}']);
+     * -e.g: phpunit("Str::isJson",['{}']);
+     * -e.g: phpunit("Str::isJson",['{<>}']);
+     * -e.g: phpunit("Str::isJson",['{{}}']);
+     * 
+     * @param string $str
+     * @return boolean
+     */
+    static function isJson(string $str):bool{
+        @json_decode($str);
+        return (json_last_error() == JSON_ERROR_NONE);
+    }
+
 }

@@ -31,7 +31,7 @@ class Position{
 	const  EE = 0.00669342162296594323;
 	/**
 	 * WGS-84坐标系-to-火星系 (GCJ-02)
-   * World Geodetic System ==> Mars Geodetic System
+	 * World Geodetic System ==> Mars Geodetic System
 	 *
 	 * @param float $lat
 	 * @param float $lon
@@ -104,7 +104,7 @@ class Position{
 
 	/**
 	 * 火星系(GCJ-02)-to-百度系(BD-09)
-   * 将 GCJ-02 坐标转换成 BD-09 坐标
+     * 将 GCJ-02 坐标转换成 BD-09 坐标
 	 *
 	 * @param float $gg_lat
 	 * @param float $gg_lon
@@ -134,7 +134,7 @@ class Position{
 
 	/**
 	 * 百度系(BD-09)-to-火星系(GCJ-02)
-   * 将 BD-09 坐标转换成GCJ-02坐标
+	 * 将 BD-09 坐标转换成GCJ-02坐标
 	 *
 	 * @param float $bd_lat
 	 * @param float $bd_lon
@@ -167,7 +167,8 @@ class Position{
 	/**
 	 * 变换坐标
 	 *
-   * -e.g: phpunit("Position::transform",[23.45833,116.397128]);
+	 * -e.g: phpunit("Position::transform",[23.45833,116.397128]);
+	 * 
 	 * @param double $lat
 	 * @param double $lon
 	 * @return array

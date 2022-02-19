@@ -43,32 +43,6 @@ class Arr{
 	}
 
     /**
-     * 对象转数组
-     * 
-     * -e.g: $data=(object)[ "a"=>50, "b"=>true, "c"=>null ];
-     * -e.g: phpunit("Arr::toArray", [$data]);
-     * 
-     * @param object|array $object 对象
-     * 
-     * @return array
-     */
-    static function toArray($object){
-        if(is_object($object)){
-            $arr = (array)$object;
-        }else if(is_array($object)){
-            $arr = [];
-            foreach($object as $k => $v){
-                $arr[$k] = self::toArray($v);
-            }
-        }else{
-            return $object;
-        }
-        unset($object);
-        return $arr;
-        //return json_decode(json_encode($object), true);
-    }
-
-    /**
      * 排列组合（适用多规格SKU生成）
      * 
      * @param array $input 排列的数组
@@ -154,23 +128,6 @@ class Arr{
     }
 
     /**
-     * XML转数组
-     * 
-     * -e.g: phpunit("Arr::xmlToArray", ["<vipkwd><a>110</a><b>120</b><c><d>true</d></c></vipkwd>"]);
-     * 
-     * @param string $xml xml
-     *
-     * @return array
-     */
-    static function xmlToArray(string $xml): array{
-        //禁止引用外部xml实体
-        libxml_disable_entity_loader(true);
-        $xmlString = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $result = json_decode(json_encode($xmlString), true);
-        return $result;
-    }
-
-    /**
      * 数组转XML
      * 
      * -e.g: $arr=[];
@@ -179,37 +136,37 @@ class Arr{
      * -e.g: $arr[]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
      * -e.g: $arr["key"]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
      * -e.g: echo "含语法填充:";
-     * -e.g: phpunit("Arr::arrayToXml", [$arr]);
+     * -e.g: phpunit("Arr::toXml", [$arr]);
      * -e.g: echo "无语法填充:";
-     * -e.g: phpunit("Arr::arrayToXml", [$arr, false]);
+     * -e.g: phpunit("Arr::toXml", [$arr, false]);
      * 
      * @param array $input 数组
      * @param bool $syntax <true> 是否填充xml语法头
      * 
      * @return string
      */
-    static function arrayToXml(array $input, $syntax = true): string{
+    static function toXml(array $input, $syntax = true): string{
         $toXml = function($input)use(&$toXml){
             if(is_array($input)){
-                $str = '';
+                $str = ' len="'.count($input).'">';
                 foreach ($input as $k => $v){
-                    if($k >0 || $k === 0){
-                        $k = "item".$k;
+                    //索引数组填补 节点名称
+                    if( ($k > 0 && $k == intval($k)) || $k === 0){
+                        $k = "idx".$k;
                     }
-                    $str .= '<' . $k . '>';
+                    $str .= '<' . $k;
                     $str .= $toXml($v);
                     $str .='</' . $k . '>';
                 }
                 return $str;
             }
-            return $input;
+            return '>'.$input;
         };
-        $str = ($syntax ? '<?xml version="1.0" encoding="utf-8"?>' : '').'<vipkwd>';
+        $input = Obj::toArray($input);
+        $str = ($syntax ? '<?xml version="1.0" encoding="utf-8"?>' : '').'<vipkwd';
         $str .= $toXml($input);
         $str .= '</vipkwd>';
         return $str;
     }
-
-
 
 }

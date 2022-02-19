@@ -103,7 +103,7 @@ trait Develop{
             $txt = rtrim($txt, ',');
         }
         echo " Vipkwd\\Utils\\{$classMethod}($txt); // ";
-        self::dumper(call_user_func_array("Vipkwd\\Utils\\{$classMethod}", $args), false, false);
+        self::dump(call_user_func_array("Vipkwd\\Utils\\{$classMethod}", $args), false, false);
     }
 
     static function br(){

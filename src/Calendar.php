@@ -8,8 +8,7 @@
  */
 declare(strict_types = 1);
 namespace Vipkwd\Utils;
-class Lunar 
-{
+class Calendar{
     //定义公历月分天数
     private static $_SMDay = array(1 => 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
     //农历从1950年开始
@@ -45,18 +44,20 @@ class Lunar
     /**
      * 公历转农历(Sdate：公历日期)
      * 
-     * -e.g: phpunit("Lunar::S2L", ["20190423"]);
-     * -e.g: phpunit("Lunar::S2L", ["20200423"]);
-     * -e.g: phpunit("Lunar::S2L", ["2019-04-23"]);
-     * -e.g: phpunit("Lunar::S2L", ["2019/04/23"]);
-     * -e.g: phpunit("Lunar::S2L", ["2019年04月23日"]);
-     * -e.g: phpunit("Lunar::S2L", ["1989-02-21"]);
-     * -e.g: phpunit("Lunar::S2L", ["1989-02-11"]);
+     * -e.g: phpunit("Calendar::toLunar", ["20190423"]);
+     * -e.g: phpunit("Calendar::toLunar", ["20200423"]);
+     * -e.g: phpunit("Calendar::toLunar", ["2019-04-23"]);
+     * -e.g: phpunit("Calendar::toLunar", ["2019/04/23"]);
+     * -e.g: phpunit("Calendar::toLunar", ["2019年04月23日"]);
+     * -e.g: phpunit("Calendar::toLunar", ["2019年04月23日", false]);
+     * -e.g: phpunit("Calendar::toLunar", ["1989-02-21"]);
+     * -e.g: phpunit("Calendar::toLunar", ["1989-02-11"]);
      *
      * @param string $date  格式：Y([^0-9]+)?m([^0-9]+)?d([^0-9]+)?
-     * @return void
+     * @param boolean $toChar <true> 是不返回农历表示法
+     * @return string
      */
-    static function S2L(string $date)
+    static function toLunar(string $date, bool $toChar=true):string
     {
         list($year, $month, $day) = self::dateFixes($date, true);
         if ($year <= 1951 || $month <= 0 || $day <= 0 || $year >= 2051) {
@@ -100,7 +101,9 @@ class Lunar
             }
         }
         // return mktime(0, 0, 0, intval($Lmonth), intval($Lday), intval($Lyear));
-        $Ldate = $Lyear."-".$Lmonth."-".$Lday;
+        if(!$toChar){
+            return $Ldate = $Lyear."-".$Lmonth."-".$Lday;
+        }
         $Ldate = self::LYearName($Lyear)."年".self::LMonName($Lmonth)."月".self::LDayName($Lday);
         if( 0 < self::getLeapMonth($year)) $Ldate.="(闰)";
         return $Ldate;
@@ -108,14 +111,13 @@ class Lunar
     /**
      * 农历转公历(date:农历日期;type:是否闰月)
      * 
-     * -e.g: phpunit("Lunar::L2S", ["1989-01-16"]);
+     * -e.g: phpunit("Calendar::toSolar", ["2000-01-15"]);
      * 
      * @param [type] $date
      * @param integer $type
      * @return void
      */
-    static function L2S($date, $type = 0)
-    {
+    static function toSolar($date, $type = 0){
         list($year, $month, $day) = explode("-", $date);
         if ($year <= 1951 || $month <= 0 || $day <= 0 || $year >= 2051) {
             return false;
@@ -169,8 +171,8 @@ class Lunar
     /**
      * 获取干支纪年
      * 
-     * -e.g: phpunit("Lunar::getYearGZ",["2019"]);
-     * -e.g: phpunit("Lunar::getYearGZ",[2020]);
+     * -e.g: phpunit("Calendar::getYearGZ",["2019"]);
+     * -e.g: phpunit("Calendar::getYearGZ",[2020]);
      * 
      * @param string $year
      */
@@ -187,8 +189,8 @@ class Lunar
     /**
      * 根据阴历年获取生肖
      * 
-     * -e.g: phpunit("Lunar::getYearZodiac",["2019"]);
-     * -e.g: phpunit("Lunar::getYearZodiac",[2020]);
+     * -e.g: phpunit("Calendar::getYearZodiac",["2019"]);
+     * -e.g: phpunit("Calendar::getYearZodiac",[2020]);
      * 
      * @param string $year 阴历年
      */
@@ -204,11 +206,11 @@ class Lunar
     /**
      * 获取星座
      *
-     * -e.g: phpunit("Lunar::getConstellation",["2019-04-24"]);
-     * -e.g: phpunit("Lunar::getConstellation",["2019/04/24"]);
-     * -e.g: phpunit("Lunar::getConstellation",["2019.04.24"]);
-     * -e.g: phpunit("Lunar::getConstellation",["2019年04月24日"]);
-     * -e.g: phpunit("Lunar::getConstellation",["20190424"]);
+     * -e.g: phpunit("Calendar::getConstellation",["2019-04-24"]);
+     * -e.g: phpunit("Calendar::getConstellation",["2019/04/24"]);
+     * -e.g: phpunit("Calendar::getConstellation",["2019.04.24"]);
+     * -e.g: phpunit("Calendar::getConstellation",["2019年04月24日"]);
+     * -e.g: phpunit("Calendar::getConstellation",["20190424"]);
      * 
      * @param string $date
      * @return string
@@ -249,8 +251,8 @@ class Lunar
     /**
      * 获取阳历月份的天数
      * 
-     * -e.g: phpunit("Lunar::getSolarMonthDays",["2019","4"]);
-     * -e.g: phpunit("Lunar::getSolarMonthDays",["2019","04"]);
+     * -e.g: phpunit("Calendar::getSolarMonthDays",["2019","4"]);
+     * -e.g: phpunit("Calendar::getSolarMonthDays",["2019","04"]);
      * 
      * @param string $year 阳历-年
      * @param string $month 阳历-月
@@ -267,10 +269,10 @@ class Lunar
      * 
      * - 返回0 无闰月
      *
-     * -e.g: phpunit("Lunar::getLeapMonthDays",["2020"]);
-     * -e.g: phpunit("Lunar::getLeapMonthDays",["2019"]);
-     * -e.g: phpunit("Lunar::getLeapMonthDays",["2018"]);
-     * -e.g: phpunit("Lunar::getLeapMonthDays",["2017"]);
+     * -e.g: phpunit("Calendar::getLeapMonthDays",["2020"]);
+     * -e.g: phpunit("Calendar::getLeapMonthDays",["2019"]);
+     * -e.g: phpunit("Calendar::getLeapMonthDays",["2018"]);
+     * -e.g: phpunit("Calendar::getLeapMonthDays",["2017"]);
      * 
      * 
      * @param string $year
@@ -290,10 +292,10 @@ class Lunar
      * 
      * - 返回0 无闰月
      *
-     * -e.g: phpunit("Lunar::getLeapMonth",["2020"]);
-     * -e.g: phpunit("Lunar::getLeapMonth",["2019"]);
-     * -e.g: phpunit("Lunar::getLeapMonth",["2018"]);
-     * -e.g: phpunit("Lunar::getLeapMonth",["2017"]);
+     * -e.g: phpunit("Calendar::getLeapMonth",["2020"]);
+     * -e.g: phpunit("Calendar::getLeapMonth",["2019"]);
+     * -e.g: phpunit("Calendar::getLeapMonth",["2018"]);
+     * -e.g: phpunit("Calendar::getLeapMonth",["2017"]);
      * 
      * @param [type] $year
      * @return int
@@ -306,12 +308,12 @@ class Lunar
     /**
      * 日历综合方法
      *
-     * -e.g: phpunit("Lunar::getDateLunar",["2019-04-23"]);
+     * -e.g: phpunit("Calendar::getDateCalendar",["2019-04-23"]);
      * 
      * @param string $date
      * @return array
      */
-    static function getDateLunar(string $date):array{
+    static function getDateCalendar(string $date):array{
         list($year, $month, $day) = self::dateFixes($date);
         return [
             "origin" => $date,
@@ -322,8 +324,8 @@ class Lunar
             "constellation" => self::getConstellation( implode("-",[$year, $month, $day]) ),
             "yearZodiac"=> self::getYearZodiac($year),
             "yearGZ"=> self::getYearGZ($year),
-            "l2s"=> self::L2S( implode("-",[$year, $month, $day]) ),
-            "s2l"=> self::S2L( implode("-",[$year, $month, $day]) ),
+            "toSolar"=> self::toSolar( implode("-",[$year, $month, $day]) ),
+            "toLunar"=> self::toLunar( implode("-",[$year, $month, $day]) ),
         ];
     }
 
@@ -416,11 +418,4 @@ class Lunar
         }
         return $day;
     }
-
 }
-
-// header("Content-Type:text/html;charset=utf-8");
-// $lunar = new Lunar();
-// $month = $lunar->convertSolarToLunar('2017', '03', '09');//将阳历转换为阴历
-// echo '<pre>';
-// print_r($month);
