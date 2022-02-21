@@ -1,6 +1,6 @@
 <?php
 
-namespace Vipkwd\Utils\Libs;
+namespace Vipkwd\Utils\Libs\Qrcode;
 
 /*
  * PHP QR Code encoder
@@ -97,7 +97,7 @@ namespace Vipkwd\Utils\Libs;
 	define('QR_FORMAT_TEXT', 0);
 	define('QR_FORMAT_PNG',  1);
 	
-	class qrstr {
+	class Qrstr {
 		public static function set(&$srctab, $x, $y, $repl, $replLen = false) {
 			$srctab[$y] = substr_replace($srctab[$y], ($replLen !== false)?substr($repl,0,$replLen):$repl, $x, ($replLen !== false)?$replLen:strlen($repl));
 		}
@@ -157,153 +157,153 @@ namespace Vipkwd\Utils\Libs;
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-    class QRtools {
-    
-        //----------------------------------------------------------------------
-        public static function binarize($frame)
-        {
-            $len = count($frame);
-            foreach ($frame as &$frameLine) {
-                
-                for($i=0; $i<$len; $i++) {
-                    $frameLine[$i] = (ord($frameLine[$i])&1)?'1':'0';
-                }
-            }
-            
-            return $frame;
-        }
-        
-        //----------------------------------------------------------------------
-        public static function tcpdfBarcodeArray($code, $mode = 'QR,L', $tcPdfVersion = '4.5.037')
-        {
-            $barcode_array = array();
-            
-            if (!is_array($mode))
-                $mode = explode(',', $mode);
-                
-            $eccLevel = 'L';
-                
-            if (count($mode) > 1) {
-                $eccLevel = $mode[1];
-            }
-                
-            $qrTab = QRcode::text($code, false, $eccLevel);
-            $size = count($qrTab);
-                
-            $barcode_array['num_rows'] = $size;
-            $barcode_array['num_cols'] = $size;
-            $barcode_array['bcode'] = array();
-                
-            foreach ($qrTab as $line) {
-                $arrAdd = array();
-                foreach(str_split($line) as $char)
-                    $arrAdd[] = ($char=='1')?1:0;
-                $barcode_array['bcode'][] = $arrAdd;
-            }
-                    
-            return $barcode_array;
-        }
-        
-        //----------------------------------------------------------------------
-        public static function clearCache()
-        {
-            self::$frames = array();
-        }
-        
-        //----------------------------------------------------------------------
-        public static function buildCache()
-        {
-			QRtools::markTime('before_build_cache');
-			
-			$mask = new QRmask();
-            for ($a=1; $a <= QRSPEC_VERSION_MAX; $a++) {
-                $frame = QRspec::newFrame($a);
-                if (QR_IMAGE) {
-                    $fileName = QR_CACHE_DIR.'frame_'.$a.'.png';
-                    QRimage::png(self::binarize($frame), $fileName, 1, 0);
-                }
-				
-				$width = count($frame);
-				$bitMask = array_fill(0, $width, array_fill(0, $width, 0));
-				for ($maskNo=0; $maskNo<8; $maskNo++)
-					$mask->makeMaskNo($maskNo, $width, $frame, $bitMask, true);
-            }
-			
-			QRtools::markTime('after_build_cache');
-        }
+class Qrtools {
 
-        //----------------------------------------------------------------------
-        public static function log($outfile, $err)
-        {
-            if (QR_LOG_DIR !== false) {
-                if ($err != '') {
-                    if ($outfile !== false) {
-                        file_put_contents(QR_LOG_DIR.basename($outfile).'-errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
-                    } else {
-                        file_put_contents(QR_LOG_DIR.'errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
-                    }
-                }    
+    //----------------------------------------------------------------------
+    public static function binarize($frame)
+    {
+        $len = count($frame);
+        foreach ($frame as &$frameLine) {
+            
+            for($i=0; $i<$len; $i++) {
+                $frameLine[$i] = (ord($frameLine[$i])&1)?'1':'0';
             }
         }
         
-        //----------------------------------------------------------------------
-        public static function dumpMask($frame) 
-        {
-            $width = count($frame);
-            for($y=0;$y<$width;$y++) {
-                for($x=0;$x<$width;$x++) {
-                    echo ord($frame[$y][$x]).',';
-                }
-            }
-        }
-        
-        //----------------------------------------------------------------------
-        public static function markTime($markerId)
-        {
-            list($usec, $sec) = explode(" ", microtime());
-            $time = ((float)$usec + (float)$sec);
-            
-            if (!isset($GLOBALS['qr_time_bench']))
-                $GLOBALS['qr_time_bench'] = array();
-            
-            $GLOBALS['qr_time_bench'][$markerId] = $time;
-        }
-        
-        //----------------------------------------------------------------------
-        public static function timeBenchmark()
-        {
-            self::markTime('finish');
-        
-            $lastTime = 0;
-            $startTime = 0;
-            $p = 0;
-
-            echo '<table cellpadding="3" cellspacing="1">
-                    <thead><tr style="border-bottom:1px solid silver"><td colspan="2" style="text-align:center">BENCHMARK</td></tr></thead>
-                    <tbody>';
-
-            foreach($GLOBALS['qr_time_bench'] as $markerId=>$thisTime) {
-                if ($p > 0) {
-                    echo '<tr><th style="text-align:right">till '.$markerId.': </th><td>'.number_format($thisTime-$lastTime, 6).'s</td></tr>';
-                } else {
-                    $startTime = $thisTime;
-                }
-                
-                $p++;
-                $lastTime = $thisTime;
-            }
-            
-            echo '</tbody><tfoot>
-                <tr style="border-top:2px solid black"><th style="text-align:right">TOTAL: </th><td>'.number_format($lastTime-$startTime, 6).'s</td></tr>
-            </tfoot>
-            </table>';
-        }
-        
+        return $frame;
     }
     
-    //##########################################################################
+    //----------------------------------------------------------------------
+    public static function tcpdfBarcodeArray($code, $mode = 'QR,L', $tcPdfVersion = '4.5.037')
+    {
+        $barcode_array = array();
+        
+        if (!is_array($mode))
+            $mode = explode(',', $mode);
+            
+        $eccLevel = 'L';
+            
+        if (count($mode) > 1) {
+            $eccLevel = $mode[1];
+        }
+            
+        $qrTab = Qrcode::text($code, false, $eccLevel);
+        $size = count($qrTab);
+            
+        $barcode_array['num_rows'] = $size;
+        $barcode_array['num_cols'] = $size;
+        $barcode_array['bcode'] = array();
+            
+        foreach ($qrTab as $line) {
+            $arrAdd = array();
+            foreach(str_split($line) as $char)
+                $arrAdd[] = ($char=='1')?1:0;
+            $barcode_array['bcode'][] = $arrAdd;
+        }
+                
+        return $barcode_array;
+    }
     
-    QRtools::markTime('start');
+    //----------------------------------------------------------------------
+    public static function clearCache()
+    {
+        self::$frames = array();
+    }
+    
+    //----------------------------------------------------------------------
+    public static function buildCache()
+    {
+        Qrtools::markTime('before_build_cache');
+        
+        $mask = new Qrmask();
+        for ($a=1; $a <= QRSPEC_VERSION_MAX; $a++) {
+            $frame = Qrspec::newFrame($a);
+            if (QR_IMAGE) {
+                $fileName = QR_CACHE_DIR.'frame_'.$a.'.png';
+                Qrimage::png(self::binarize($frame), $fileName, 1, 0);
+            }
+            
+            $width = count($frame);
+            $bitMask = array_fill(0, $width, array_fill(0, $width, 0));
+            for ($maskNo=0; $maskNo<8; $maskNo++)
+                $mask->makeMaskNo($maskNo, $width, $frame, $bitMask, true);
+        }
+        
+        Qrtools::markTime('after_build_cache');
+    }
+
+    //----------------------------------------------------------------------
+    public static function log($outfile, $err)
+    {
+        if (QR_LOG_DIR !== false) {
+            if ($err != '') {
+                if ($outfile !== false) {
+                    file_put_contents(QR_LOG_DIR.basename($outfile).'-errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
+                } else {
+                    file_put_contents(QR_LOG_DIR.'errors.txt', date('Y-m-d H:i:s').': '.$err, FILE_APPEND);
+                }
+            }    
+        }
+    }
+    
+    //----------------------------------------------------------------------
+    public static function dumpMask($frame) 
+    {
+        $width = count($frame);
+        for($y=0;$y<$width;$y++) {
+            for($x=0;$x<$width;$x++) {
+                echo ord($frame[$y][$x]).',';
+            }
+        }
+    }
+    
+    //----------------------------------------------------------------------
+    public static function markTime($markerId)
+    {
+        list($usec, $sec) = explode(" ", microtime());
+        $time = ((float)$usec + (float)$sec);
+        
+        if (!isset($GLOBALS['qr_time_bench']))
+            $GLOBALS['qr_time_bench'] = array();
+        
+        $GLOBALS['qr_time_bench'][$markerId] = $time;
+    }
+    
+    //----------------------------------------------------------------------
+    public static function timeBenchmark()
+    {
+        self::markTime('finish');
+    
+        $lastTime = 0;
+        $startTime = 0;
+        $p = 0;
+
+        echo '<table cellpadding="3" cellspacing="1">
+                <thead><tr style="border-bottom:1px solid silver"><td colspan="2" style="text-align:center">BENCHMARK</td></tr></thead>
+                <tbody>';
+
+        foreach($GLOBALS['qr_time_bench'] as $markerId=>$thisTime) {
+            if ($p > 0) {
+                echo '<tr><th style="text-align:right">till '.$markerId.': </th><td>'.number_format($thisTime-$lastTime, 6).'s</td></tr>';
+            } else {
+                $startTime = $thisTime;
+            }
+            
+            $p++;
+            $lastTime = $thisTime;
+        }
+        
+        echo '</tbody><tfoot>
+            <tr style="border-top:2px solid black"><th style="text-align:right">TOTAL: </th><td>'.number_format($lastTime-$startTime, 6).'s</td></tr>
+        </tfoot>
+        </table>';
+    }
+    
+}
+
+//##########################################################################
+
+Qrtools::markTime('start');
     
 
 
@@ -353,7 +353,7 @@ namespace Vipkwd\Utils\Libs;
     define('QRCAP_REMINDER',     2);
     define('QRCAP_EC',           3);
 
-    class QRspec {
+    class Qrspec {
     
         public static $capacity = array(
             array(  0,    0, 0, array(   0,    0,    0,    0)),
@@ -605,7 +605,7 @@ namespace Vipkwd\Utils\Libs;
             $xStart = $ox-2;
             
             for($y=0; $y<5; $y++) {
-                QRstr::set($frame, $xStart, $yStart+$y, $finder[$y]);
+                Qrstr::set($frame, $xStart, $yStart+$y, $finder[$y]);
             }
         }
 
@@ -716,7 +716,7 @@ namespace Vipkwd\Utils\Libs;
             );                            
             
             for($y=0; $y<7; $y++) {
-                QRstr::set($frame, $ox, $oy+$y, $finder[$y]);
+                Qrstr::set($frame, $ox, $oy+$y, $finder[$y]);
             }
         }
 
@@ -744,14 +744,14 @@ namespace Vipkwd\Utils\Libs;
             
             $setPattern = str_repeat("\xc0", 8);
             
-            QRstr::set($frame, 0, 7, $setPattern);
-            QRstr::set($frame, $width-8, 7, $setPattern);
-            QRstr::set($frame, 0, $width - 8, $setPattern);
+            Qrstr::set($frame, 0, 7, $setPattern);
+            Qrstr::set($frame, $width-8, 7, $setPattern);
+            Qrstr::set($frame, 0, $width - 8, $setPattern);
         
             // Format info
             $setPattern = str_repeat("\x84", 9);
-            QRstr::set($frame, 0, 8, $setPattern);
-            QRstr::set($frame, $width - 8, 8, $setPattern, 8);
+            Qrstr::set($frame, 0, 8, $setPattern);
+            Qrstr::set($frame, $width - 8, 8, $setPattern, 8);
             
             $yOffset = $width - 8;
 
@@ -937,7 +937,7 @@ namespace Vipkwd\Utils\Libs;
  
     define('QR_IMAGE', true);
 
-    class QRimage {
+    class Qrimage {
     
         //----------------------------------------------------------------------
         public static function png($frame, $filename = false, $pixelPerPoint = 4, $outerFrame = 4,$saveandprint=FALSE) 
@@ -1043,7 +1043,7 @@ namespace Vipkwd\Utils\Libs;
     define('STRUCTURE_HEADER_BITS',  20);
     define('MAX_STRUCTURED_SYMBOLS', 16);
 
-    class QRinputItem {
+    class QrinputItem {
     
         public $mode;
         public $size;
@@ -1058,7 +1058,7 @@ namespace Vipkwd\Utils\Libs;
                 $setData = array_merge($setData, array_fill(0,$size-count($setData),0));
             }
         
-            if(!QRinput::check($mode, $size, $setData)) {
+            if(!Qrinput::check($mode, $size, $setData)) {
                 throw new Exception('Error m:'.$mode.',s:'.$size.',d:'.join(',',$setData));
                 return null;
             }
@@ -1075,11 +1075,11 @@ namespace Vipkwd\Utils\Libs;
             try {
             
                 $words = (int)($this->size / 3);
-                $bs = new QRbitstream();
+                $bs = new Qrbitstream();
                 
                 $val = 0x1;
                 $bs->appendNum(4, $val);
-                $bs->appendNum(QRspec::lengthIndicator(QR_MODE_NUM, $version), $this->size);
+                $bs->appendNum(Qrspec::lengthIndicator(QR_MODE_NUM, $version), $this->size);
 
                 for($i=0; $i<$words; $i++) {
                     $val  = (ord($this->data[$i*3  ]) - ord('0')) * 100;
@@ -1110,20 +1110,20 @@ namespace Vipkwd\Utils\Libs;
         {
             try {
                 $words = (int)($this->size / 2);
-                $bs = new QRbitstream();
+                $bs = new Qrbitstream();
                 
                 $bs->appendNum(4, 0x02);
-                $bs->appendNum(QRspec::lengthIndicator(QR_MODE_AN, $version), $this->size);
+                $bs->appendNum(Qrspec::lengthIndicator(QR_MODE_AN, $version), $this->size);
 
                 for($i=0; $i<$words; $i++) {
-                    $val  = (int)QRinput::lookAnTable(ord($this->data[$i*2  ])) * 45;
-                    $val += (int)QRinput::lookAnTable(ord($this->data[$i*2+1]));
+                    $val  = (int)Qrinput::lookAnTable(ord($this->data[$i*2  ])) * 45;
+                    $val += (int)Qrinput::lookAnTable(ord($this->data[$i*2+1]));
 
                     $bs->appendNum(11, $val);
                 }
 
                 if($this->size & 1) {
-                    $val = QRinput::lookAnTable(ord($this->data[$words * 2]));
+                    $val = Qrinput::lookAnTable(ord($this->data[$words * 2]));
                     $bs->appendNum(6, $val);
                 }
         
@@ -1139,10 +1139,10 @@ namespace Vipkwd\Utils\Libs;
         public function encodeMode8($version)
         {
             try {
-                $bs = new QRbitstream();
+                $bs = new Qrbitstream();
 
                 $bs->appendNum(4, 0x4);
-                $bs->appendNum(QRspec::lengthIndicator(QR_MODE_8, $version), $this->size);
+                $bs->appendNum(Qrspec::lengthIndicator(QR_MODE_8, $version), $this->size);
 
                 for($i=0; $i<$this->size; $i++) {
                     $bs->appendNum(8, ord($this->data[$i]));
@@ -1164,7 +1164,7 @@ namespace Vipkwd\Utils\Libs;
                 $bs = new QRbitrtream();
                 
                 $bs->appendNum(4, 0x8);
-                $bs->appendNum(QRspec::lengthIndicator(QR_MODE_KANJI, $version), (int)($this->size / 2));
+                $bs->appendNum(Qrspec::lengthIndicator(QR_MODE_KANJI, $version), (int)($this->size / 2));
 
                 for($i=0; $i<$this->size; $i+=2) {
                     $val = (ord($this->data[$i]) << 8) | ord($this->data[$i+1]);
@@ -1192,7 +1192,7 @@ namespace Vipkwd\Utils\Libs;
         public function encodeModeStructure()
         {
             try {
-                $bs =  new QRbitstream();
+                $bs =  new Qrbitstream();
                 
                 $bs->appendNum(4, 0x03);
                 $bs->appendNum(4, ord($this->data[1]) - 1);
@@ -1216,16 +1216,16 @@ namespace Vipkwd\Utils\Libs;
                 $version = 1;
 
             switch($this->mode) {
-                case QR_MODE_NUM:        $bits = QRinput::estimateBitsModeNum($this->size);    break;
-                case QR_MODE_AN:        $bits = QRinput::estimateBitsModeAn($this->size);    break;
-                case QR_MODE_8:            $bits = QRinput::estimateBitsMode8($this->size);    break;
-                case QR_MODE_KANJI:        $bits = QRinput::estimateBitsModeKanji($this->size);break;
+                case QR_MODE_NUM:        $bits = Qrinput::estimateBitsModeNum($this->size);    break;
+                case QR_MODE_AN:        $bits = Qrinput::estimateBitsModeAn($this->size);    break;
+                case QR_MODE_8:            $bits = Qrinput::estimateBitsMode8($this->size);    break;
+                case QR_MODE_KANJI:        $bits = Qrinput::estimateBitsModeKanji($this->size);break;
                 case QR_MODE_STRUCTURE:    return STRUCTURE_HEADER_BITS;            
                 default:
                     return 0;
             }
 
-            $l = QRspec::lengthIndicator($this->mode, $version);
+            $l = Qrspec::lengthIndicator($this->mode, $version);
             $m = 1 << $l;
             $num = (int)(($this->size + $m - 1) / $m);
 
@@ -1240,17 +1240,17 @@ namespace Vipkwd\Utils\Libs;
             try {
             
                 unset($this->bstream);
-                $words = QRspec::maximumWords($this->mode, $version);
+                $words = Qrspec::maximumWords($this->mode, $version);
                 
                 if($this->size > $words) {
                 
-                    $st1 = new QRinputItem($this->mode, $words, $this->data);
-                    $st2 = new QRinputItem($this->mode, $this->size - $words, array_slice($this->data, $words));
+                    $st1 = new QrinputItem($this->mode, $words, $this->data);
+                    $st2 = new QrinputItem($this->mode, $this->size - $words, array_slice($this->data, $words));
 
                     $st1->encodeBitStream($version);
                     $st2->encodeBitStream($version);
                     
-                    $this->bstream = new QRbitstream();
+                    $this->bstream = new Qrbitstream();
                     $this->bstream->append($st1->bstream);
                     $this->bstream->append($st2->bstream);
                     
@@ -1286,7 +1286,7 @@ namespace Vipkwd\Utils\Libs;
     
     //##########################################################################
 
-    class QRinput {
+    class Qrinput {
 
         public $items;
         
@@ -1344,7 +1344,7 @@ namespace Vipkwd\Utils\Libs;
         }
         
         //----------------------------------------------------------------------
-        public function appendEntry(QRinputItem $entry)
+        public function appendEntry(QrinputItem $entry)
         {
             $this->items[] = $entry;
         }
@@ -1353,7 +1353,7 @@ namespace Vipkwd\Utils\Libs;
         public function append($mode, $size, $data)
         {
             try {
-                $entry = new QRinputItem($mode, $size, $data);
+                $entry = new QrinputItem($mode, $size, $data);
                 $this->items[] = $entry;
                 return 0;
             } catch (Exception $e) {
@@ -1376,7 +1376,7 @@ namespace Vipkwd\Utils\Libs;
             $buf = array($size, $index, $parity);
             
             try {
-                $entry = new QRinputItem(QR_MODE_STRUCTURE, 3, buf);
+                $entry = new QrinputItem(QR_MODE_STRUCTURE, 3, buf);
                 array_unshift($this->items, $entry);
                 return 0;
             } catch (Exception $e) {
@@ -1549,7 +1549,7 @@ namespace Vipkwd\Utils\Libs;
             do {
                 $prev = $version;
                 $bits = $this->estimateBitStreamSize($prev);
-                $version = QRspec::getMinimumVersion((int)(($bits + 7) / 8), $this->level);
+                $version = Qrspec::getMinimumVersion((int)(($bits + 7) / 8), $this->level);
                 if ($version < 0) {
                     return -1;
                 }
@@ -1561,7 +1561,7 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public static function lengthOfCode($mode, $version, $bits)
         {
-            $payload = $bits - 4 - QRspec::lengthIndicator($mode, $version);
+            $payload = $bits - 4 - Qrspec::lengthIndicator($mode, $version);
             switch($mode) {
                 case QR_MODE_NUM:
                     $chunks = (int)($payload / 10);
@@ -1594,7 +1594,7 @@ namespace Vipkwd\Utils\Libs;
                     break;
             }
             
-            $maxsize = QRspec::maximumWords($mode, $version);
+            $maxsize = Qrspec::maximumWords($mode, $version);
             if($size < 0) $size = 0;
             if($size > $maxsize) $size = $maxsize;
 
@@ -1632,7 +1632,7 @@ namespace Vipkwd\Utils\Libs;
                 if($bits < 0) 
                     return -1;
                     
-                $ver = QRspec::getMinimumVersion((int)(($bits + 7) / 8), $this->level);
+                $ver = Qrspec::getMinimumVersion((int)(($bits + 7) / 8), $this->level);
                 if($ver < 0) {
                     throw new Exception('WRONG VERSION');
                     return -1;
@@ -1650,7 +1650,7 @@ namespace Vipkwd\Utils\Libs;
         public function appendPaddingBit(&$bstream)
         {
             $bits = $bstream->size();
-            $maxwords = QRspec::getDataLength($this->version, $this->level);
+            $maxwords = Qrspec::getDataLength($this->version, $this->level);
             $maxbits = $maxwords * 8;
 
             if ($maxbits == $bits) {
@@ -1664,7 +1664,7 @@ namespace Vipkwd\Utils\Libs;
             $bits += 4;
             $words = (int)(($bits + 7) / 8);
 
-            $padding = new QRbitstream();
+            $padding = new Qrbitstream();
             $ret = $padding->appendNum($words * 8 - $bits + 4, 0);
             
             if($ret < 0) 
@@ -1698,7 +1698,7 @@ namespace Vipkwd\Utils\Libs;
                 return null;
             }
 
-            $bstream = new QRbitstream();
+            $bstream = new Qrbitstream();
             
             foreach($this->items as $item) {
                 $ret = $bstream->append($item->bstream);
@@ -1776,159 +1776,159 @@ namespace Vipkwd\Utils\Libs;
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
      
-    class QRbitstream {
+class Qrbitstream {
+
+    public $data = array();
     
-        public $data = array();
-        
-        //----------------------------------------------------------------------
-        public function size()
-        {
-            return count($this->data);
-        }
-        
-        //----------------------------------------------------------------------
-        public function allocate($setLength)
-        {
-            $this->data = array_fill(0, $setLength, 0);
-            return 0;
-        }
+    //----------------------------------------------------------------------
+    public function size()
+    {
+        return count($this->data);
+    }
     
-        //----------------------------------------------------------------------
-        public static function newFromNum($bits, $num)
-        {
-            $bstream = new QRbitstream();
-            $bstream->allocate($bits);
-            
-            $mask = 1 << ($bits - 1);
-            for($i=0; $i<$bits; $i++) {
-                if($num & $mask) {
-                    $bstream->data[$i] = 1;
+    //----------------------------------------------------------------------
+    public function allocate($setLength)
+    {
+        $this->data = array_fill(0, $setLength, 0);
+        return 0;
+    }
+
+    //----------------------------------------------------------------------
+    public static function newFromNum($bits, $num)
+    {
+        $bstream = new Qrbitstream();
+        $bstream->allocate($bits);
+        
+        $mask = 1 << ($bits - 1);
+        for($i=0; $i<$bits; $i++) {
+            if($num & $mask) {
+                $bstream->data[$i] = 1;
+            } else {
+                $bstream->data[$i] = 0;
+            }
+            $mask = $mask >> 1;
+        }
+
+        return $bstream;
+    }
+    
+    //----------------------------------------------------------------------
+    public static function newFromBytes($size, $data)
+    {
+        $bstream = new Qrbitstream();
+        $bstream->allocate($size * 8);
+        $p=0;
+
+        for($i=0; $i<$size; $i++) {
+            $mask = 0x80;
+            for($j=0; $j<8; $j++) {
+                if($data[$i] & $mask) {
+                    $bstream->data[$p] = 1;
                 } else {
-                    $bstream->data[$i] = 0;
+                    $bstream->data[$p] = 0;
                 }
+                $p++;
                 $mask = $mask >> 1;
             }
+        }
 
-            return $bstream;
+        return $bstream;
+    }
+    
+    //----------------------------------------------------------------------
+    public function append(Qrbitstream $arg)
+    {
+        if (is_null($arg)) {
+            return -1;
         }
         
-        //----------------------------------------------------------------------
-        public static function newFromBytes($size, $data)
-        {
-            $bstream = new QRbitstream();
-            $bstream->allocate($size * 8);
-            $p=0;
-
-            for($i=0; $i<$size; $i++) {
-                $mask = 0x80;
-                for($j=0; $j<8; $j++) {
-                    if($data[$i] & $mask) {
-                        $bstream->data[$p] = 1;
-                    } else {
-                        $bstream->data[$p] = 0;
-                    }
-                    $p++;
-                    $mask = $mask >> 1;
-                }
-            }
-
-            return $bstream;
-        }
-        
-        //----------------------------------------------------------------------
-        public function append(QRbitstream $arg)
-        {
-            if (is_null($arg)) {
-                return -1;
-            }
-            
-            if($arg->size() == 0) {
-                return 0;
-            }
-            
-            if($this->size() == 0) {
-                $this->data = $arg->data;
-                return 0;
-            }
-            
-            $this->data = array_values(array_merge($this->data, $arg->data));
-
+        if($arg->size() == 0) {
             return 0;
         }
         
-        //----------------------------------------------------------------------
-        public function appendNum($bits, $num)
-        {
-            if ($bits == 0) 
-                return 0;
-
-            $b = QRbitstream::newFromNum($bits, $num);
-            
-            if(is_null($b))
-                return -1;
-
-            $ret = $this->append($b);
-            unset($b);
-
-            return $ret;
-        }
-
-        //----------------------------------------------------------------------
-        public function appendBytes($size, $data)
-        {
-            if ($size == 0) 
-                return 0;
-
-            $b = QRbitstream::newFromBytes($size, $data);
-            
-            if(is_null($b))
-                return -1;
-
-            $ret = $this->append($b);
-            unset($b);
-
-            return $ret;
+        if($this->size() == 0) {
+            $this->data = $arg->data;
+            return 0;
         }
         
-        //----------------------------------------------------------------------
-        public function toByte()
-        {
-        
-            $size = $this->size();
+        $this->data = array_values(array_merge($this->data, $arg->data));
 
-            if($size == 0) {
-                return array();
-            }
-            
-            $data = array_fill(0, (int)(($size + 7) / 8), 0);
-            $bytes = (int)($size / 8);
-
-            $p = 0;
-            
-            for($i=0; $i<$bytes; $i++) {
-                $v = 0;
-                for($j=0; $j<8; $j++) {
-                    $v = $v << 1;
-                    $v |= $this->data[$p];
-                    $p++;
-                }
-                $data[$i] = $v;
-            }
-            
-            if($size & 7) {
-                $v = 0;
-                for($j=0; $j<($size & 7); $j++) {
-                    $v = $v << 1;
-                    $v |= $this->data[$p];
-                    $p++;
-                }
-                $data[$bytes] = $v;
-            }
-
-            return $data;
-        }
-
+        return 0;
     }
+    
+    //----------------------------------------------------------------------
+    public function appendNum($bits, $num)
+    {
+        if ($bits == 0) 
+            return 0;
+
+        $b = Qrbitstream::newFromNum($bits, $num);
+        
+        if(is_null($b))
+            return -1;
+
+        $ret = $this->append($b);
+        unset($b);
+
+        return $ret;
+    }
+
+    //----------------------------------------------------------------------
+    public function appendBytes($size, $data)
+    {
+        if ($size == 0) 
+            return 0;
+
+        $b = Qrbitstream::newFromBytes($size, $data);
+        
+        if(is_null($b))
+            return -1;
+
+        $ret = $this->append($b);
+        unset($b);
+
+        return $ret;
+    }
+    
+    //----------------------------------------------------------------------
+    public function toByte()
+    {
+    
+        $size = $this->size();
+
+        if($size == 0) {
+            return array();
+        }
+        
+        $data = array_fill(0, (int)(($size + 7) / 8), 0);
+        $bytes = (int)($size / 8);
+
+        $p = 0;
+        
+        for($i=0; $i<$bytes; $i++) {
+            $v = 0;
+            for($j=0; $j<8; $j++) {
+                $v = $v << 1;
+                $v |= $this->data[$p];
+                $p++;
+            }
+            $data[$i] = $v;
+        }
+        
+        if($size & 7) {
+            $v = 0;
+            for($j=0; $j<($size & 7); $j++) {
+                $v = $v << 1;
+                $v |= $this->data[$p];
+                $p++;
+            }
+            $data[$bytes] = $v;
+        }
+
+        return $data;
+    }
+
+}
 
 
 
@@ -1969,289 +1969,289 @@ namespace Vipkwd\Utils\Libs;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
-    class QRsplit {
+class Qrsplit {
 
-        public $dataStr = '';
-        public $input;
-        public $modeHint;
+    public $dataStr = '';
+    public $input;
+    public $modeHint;
 
-        //----------------------------------------------------------------------
-        public function __construct($dataStr, $input, $modeHint) 
-        {
-            $this->dataStr  = $dataStr;
-            $this->input    = $input;
-            $this->modeHint = $modeHint;
-        }
+    //----------------------------------------------------------------------
+    public function __construct($dataStr, $input, $modeHint) 
+    {
+        $this->dataStr  = $dataStr;
+        $this->input    = $input;
+        $this->modeHint = $modeHint;
+    }
+    
+    //----------------------------------------------------------------------
+    public static function isdigitat($str, $pos)
+    {    
+        if ($pos >= strlen($str))
+            return false;
         
-        //----------------------------------------------------------------------
-        public static function isdigitat($str, $pos)
-        {    
-            if ($pos >= strlen($str))
-                return false;
+        return ((ord($str[$pos]) >= ord('0'))&&(ord($str[$pos]) <= ord('9')));
+    }
+    
+    //----------------------------------------------------------------------
+    public static function isalnumat($str, $pos)
+    {
+        if ($pos >= strlen($str))
+            return false;
             
-            return ((ord($str[$pos]) >= ord('0'))&&(ord($str[$pos]) <= ord('9')));
-        }
-        
-        //----------------------------------------------------------------------
-        public static function isalnumat($str, $pos)
-        {
-            if ($pos >= strlen($str))
-                return false;
-                
-            return (QRinput::lookAnTable(ord($str[$pos])) >= 0);
-        }
+        return (Qrinput::lookAnTable(ord($str[$pos])) >= 0);
+    }
 
-        //----------------------------------------------------------------------
-        public function identifyMode($pos)
-        {
-            if ($pos >= strlen($this->dataStr)) 
-                return QR_MODE_NUL;
-                
-            $c = $this->dataStr[$pos];
+    //----------------------------------------------------------------------
+    public function identifyMode($pos)
+    {
+        if ($pos >= strlen($this->dataStr)) 
+            return QR_MODE_NUL;
             
-            if(self::isdigitat($this->dataStr, $pos)) {
-                return QR_MODE_NUM;
-            } else if(self::isalnumat($this->dataStr, $pos)) {
-                return QR_MODE_AN;
-            } else if($this->modeHint == QR_MODE_KANJI) {
-            
-                if ($pos+1 < strlen($this->dataStr)) 
-                {
-                    $d = $this->dataStr[$pos+1];
-                    $word = (ord($c) << 8) | ord($d);
-                    if(($word >= 0x8140 && $word <= 0x9ffc) || ($word >= 0xe040 && $word <= 0xebbf)) {
-                        return QR_MODE_KANJI;
-                    }
+        $c = $this->dataStr[$pos];
+        
+        if(self::isdigitat($this->dataStr, $pos)) {
+            return QR_MODE_NUM;
+        } else if(self::isalnumat($this->dataStr, $pos)) {
+            return QR_MODE_AN;
+        } else if($this->modeHint == QR_MODE_KANJI) {
+        
+            if ($pos+1 < strlen($this->dataStr)) 
+            {
+                $d = $this->dataStr[$pos+1];
+                $word = (ord($c) << 8) | ord($d);
+                if(($word >= 0x8140 && $word <= 0x9ffc) || ($word >= 0xe040 && $word <= 0xebbf)) {
+                    return QR_MODE_KANJI;
                 }
             }
+        }
 
-            return QR_MODE_8;
-        } 
+        return QR_MODE_8;
+    } 
+    
+    //----------------------------------------------------------------------
+    public function eatNum()
+    {
+        $ln = Qrspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
+
+        $p = 0;
+        while(self::isdigitat($this->dataStr, $p)) {
+            $p++;
+        }
         
-        //----------------------------------------------------------------------
-        public function eatNum()
-        {
-            $ln = QRspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
+        $run = $p;
+        $mode = $this->identifyMode($p);
+        
+        if($mode == QR_MODE_8) {
+            $dif = Qrinput::estimateBitsModeNum($run) + 4 + $ln
+                    + Qrinput::estimateBitsMode8(1)         // + 4 + l8
+                    - Qrinput::estimateBitsMode8($run + 1); // - 4 - l8
+            if($dif > 0) {
+                return $this->eat8();
+            }
+        }
+        if($mode == QR_MODE_AN) {
+            $dif = Qrinput::estimateBitsModeNum($run) + 4 + $ln
+                    + Qrinput::estimateBitsModeAn(1)        // + 4 + la
+                    - Qrinput::estimateBitsModeAn($run + 1);// - 4 - la
+            if($dif > 0) {
+                return $this->eatAn();
+            }
+        }
+        
+        $ret = $this->input->append(QR_MODE_NUM, $run, str_split($this->dataStr));
+        if($ret < 0)
+            return -1;
 
-            $p = 0;
-            while(self::isdigitat($this->dataStr, $p)) {
+        return $run;
+    }
+    
+    //----------------------------------------------------------------------
+    public function eatAn()
+    {
+        $la = Qrspec::lengthIndicator(QR_MODE_AN,  $this->input->getVersion());
+        $ln = Qrspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
+
+        $p = 0;
+        
+        while(self::isalnumat($this->dataStr, $p)) {
+            if(self::isdigitat($this->dataStr, $p)) {
+                $q = $p;
+                while(self::isdigitat($this->dataStr, $q)) {
+                    $q++;
+                }
+                
+                $dif = Qrinput::estimateBitsModeAn($p) // + 4 + la
+                        + Qrinput::estimateBitsModeNum($q - $p) + 4 + $ln
+                        - Qrinput::estimateBitsModeAn($q); // - 4 - la
+                        
+                if($dif < 0) {
+                    break;
+                } else {
+                    $p = $q;
+                }
+            } else {
                 $p++;
             }
+        }
+
+        $run = $p;
+
+        if(!self::isalnumat($this->dataStr, $p)) {
+            $dif = Qrinput::estimateBitsModeAn($run) + 4 + $la
+                    + Qrinput::estimateBitsMode8(1) // + 4 + l8
+                    - Qrinput::estimateBitsMode8($run + 1); // - 4 - l8
+            if($dif > 0) {
+                return $this->eat8();
+            }
+        }
+
+        $ret = $this->input->append(QR_MODE_AN, $run, str_split($this->dataStr));
+        if($ret < 0)
+            return -1;
+
+        return $run;
+    }
+    
+    //----------------------------------------------------------------------
+    public function eatKanji()
+    {
+        $p = 0;
+        
+        while($this->identifyMode($p) == QR_MODE_KANJI) {
+            $p += 2;
+        }
+        
+        $ret = $this->input->append(QR_MODE_KANJI, $p, str_split($this->dataStr));
+        if($ret < 0)
+            return -1;
+
+        return $run;
+    }
+
+    //----------------------------------------------------------------------
+    public function eat8()
+    {
+        $la = Qrspec::lengthIndicator(QR_MODE_AN, $this->input->getVersion());
+        $ln = Qrspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
+
+        $p = 1;
+        $dataStrLen = strlen($this->dataStr);
+        
+        while($p < $dataStrLen) {
             
-            $run = $p;
             $mode = $this->identifyMode($p);
-            
-            if($mode == QR_MODE_8) {
-                $dif = QRinput::estimateBitsModeNum($run) + 4 + $ln
-                     + QRinput::estimateBitsMode8(1)         // + 4 + l8
-                     - QRinput::estimateBitsMode8($run + 1); // - 4 - l8
-                if($dif > 0) {
-                    return $this->eat8();
+            if($mode == QR_MODE_KANJI) {
+                break;
+            }
+            if($mode == QR_MODE_NUM) {
+                $q = $p;
+                while(self::isdigitat($this->dataStr, $q)) {
+                    $q++;
                 }
-            }
-            if($mode == QR_MODE_AN) {
-                $dif = QRinput::estimateBitsModeNum($run) + 4 + $ln
-                     + QRinput::estimateBitsModeAn(1)        // + 4 + la
-                     - QRinput::estimateBitsModeAn($run + 1);// - 4 - la
-                if($dif > 0) {
-                    return $this->eatAn();
-                }
-            }
-            
-            $ret = $this->input->append(QR_MODE_NUM, $run, str_split($this->dataStr));
-            if($ret < 0)
-                return -1;
-
-            return $run;
-        }
-        
-        //----------------------------------------------------------------------
-        public function eatAn()
-        {
-            $la = QRspec::lengthIndicator(QR_MODE_AN,  $this->input->getVersion());
-            $ln = QRspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
-
-            $p = 0;
-            
-            while(self::isalnumat($this->dataStr, $p)) {
-                if(self::isdigitat($this->dataStr, $p)) {
-                    $q = $p;
-                    while(self::isdigitat($this->dataStr, $q)) {
-                        $q++;
-                    }
-                    
-                    $dif = QRinput::estimateBitsModeAn($p) // + 4 + la
-                         + QRinput::estimateBitsModeNum($q - $p) + 4 + $ln
-                         - QRinput::estimateBitsModeAn($q); // - 4 - la
-                         
-                    if($dif < 0) {
-                        break;
-                    } else {
-                        $p = $q;
-                    }
-                } else {
-                    $p++;
-                }
-            }
-
-            $run = $p;
-
-            if(!self::isalnumat($this->dataStr, $p)) {
-                $dif = QRinput::estimateBitsModeAn($run) + 4 + $la
-                     + QRinput::estimateBitsMode8(1) // + 4 + l8
-                      - QRinput::estimateBitsMode8($run + 1); // - 4 - l8
-                if($dif > 0) {
-                    return $this->eat8();
-                }
-            }
-
-            $ret = $this->input->append(QR_MODE_AN, $run, str_split($this->dataStr));
-            if($ret < 0)
-                return -1;
-
-            return $run;
-        }
-        
-        //----------------------------------------------------------------------
-        public function eatKanji()
-        {
-            $p = 0;
-            
-            while($this->identifyMode($p) == QR_MODE_KANJI) {
-                $p += 2;
-            }
-            
-            $ret = $this->input->append(QR_MODE_KANJI, $p, str_split($this->dataStr));
-            if($ret < 0)
-                return -1;
-
-            return $run;
-        }
-
-        //----------------------------------------------------------------------
-        public function eat8()
-        {
-            $la = QRspec::lengthIndicator(QR_MODE_AN, $this->input->getVersion());
-            $ln = QRspec::lengthIndicator(QR_MODE_NUM, $this->input->getVersion());
-
-            $p = 1;
-            $dataStrLen = strlen($this->dataStr);
-            
-            while($p < $dataStrLen) {
-                
-                $mode = $this->identifyMode($p);
-                if($mode == QR_MODE_KANJI) {
+                $dif = Qrinput::estimateBitsMode8($p) // + 4 + l8
+                        + Qrinput::estimateBitsModeNum($q - $p) + 4 + $ln
+                        - Qrinput::estimateBitsMode8($q); // - 4 - l8
+                if($dif < 0) {
                     break;
-                }
-                if($mode == QR_MODE_NUM) {
-                    $q = $p;
-                    while(self::isdigitat($this->dataStr, $q)) {
-                        $q++;
-                    }
-                    $dif = QRinput::estimateBitsMode8($p) // + 4 + l8
-                         + QRinput::estimateBitsModeNum($q - $p) + 4 + $ln
-                         - QRinput::estimateBitsMode8($q); // - 4 - l8
-                    if($dif < 0) {
-                        break;
-                    } else {
-                        $p = $q;
-                    }
-                } else if($mode == QR_MODE_AN) {
-                    $q = $p;
-                    while(self::isalnumat($this->dataStr, $q)) {
-                        $q++;
-                    }
-                    $dif = QRinput::estimateBitsMode8($p)  // + 4 + l8
-                         + QRinput::estimateBitsModeAn($q - $p) + 4 + $la
-                         - QRinput::estimateBitsMode8($q); // - 4 - l8
-                    if($dif < 0) {
-                        break;
-                    } else {
-                        $p = $q;
-                    }
                 } else {
-                    $p++;
+                    $p = $q;
                 }
-            }
-
-            $run = $p;
-            $ret = $this->input->append(QR_MODE_8, $run, str_split($this->dataStr));
-            
-            if($ret < 0)
-                return -1;
-
-            return $run;
-        }
-
-        //----------------------------------------------------------------------
-        public function splitString()
-        {
-            while (strlen($this->dataStr) > 0)
-            {
-                if($this->dataStr == '')
-                    return 0;
-
-                $mode = $this->identifyMode(0);
-                
-                switch ($mode) {
-                    case QR_MODE_NUM: $length = $this->eatNum(); break;
-                    case QR_MODE_AN:  $length = $this->eatAn(); break;
-                    case QR_MODE_KANJI:
-                        if ($hint == QR_MODE_KANJI)
-                                $length = $this->eatKanji();
-                        else    $length = $this->eat8();
-                        break;
-                    default: $length = $this->eat8(); break;
-                
+            } else if($mode == QR_MODE_AN) {
+                $q = $p;
+                while(self::isalnumat($this->dataStr, $q)) {
+                    $q++;
                 }
-
-                if($length == 0) return 0;
-                if($length < 0)  return -1;
-                
-                $this->dataStr = substr($this->dataStr, $length);
-            }
-        }
-
-        //----------------------------------------------------------------------
-        public function toUpper()
-        {
-            $stringLen = strlen($this->dataStr);
-            $p = 0;
-            
-            while ($p<$stringLen) {
-                $mode = self::identifyMode(substr($this->dataStr, $p), $this->modeHint);
-                if($mode == QR_MODE_KANJI) {
-                    $p += 2;
+                $dif = Qrinput::estimateBitsMode8($p)  // + 4 + l8
+                        + Qrinput::estimateBitsModeAn($q - $p) + 4 + $la
+                        - Qrinput::estimateBitsMode8($q); // - 4 - l8
+                if($dif < 0) {
+                    break;
                 } else {
-                    if (ord($this->dataStr[$p]) >= ord('a') && ord($this->dataStr[$p]) <= ord('z')) {
-                        $this->dataStr[$p] = chr(ord($this->dataStr[$p]) - 32);
-                    }
-                    $p++;
+                    $p = $q;
                 }
+            } else {
+                $p++;
             }
-
-            return $this->dataStr;
         }
 
-        //----------------------------------------------------------------------
-        public static function splitStringToQRinput($string, QRinput $input, $modeHint, $casesensitive = true)
+        $run = $p;
+        $ret = $this->input->append(QR_MODE_8, $run, str_split($this->dataStr));
+        
+        if($ret < 0)
+            return -1;
+
+        return $run;
+    }
+
+    //----------------------------------------------------------------------
+    public function splitString()
+    {
+        while (strlen($this->dataStr) > 0)
         {
-            if(is_null($string) || $string == '\0' || $string == '') {
-                throw new Exception('empty string!!!');
+            if($this->dataStr == '')
+                return 0;
+
+            $mode = $this->identifyMode(0);
+            
+            switch ($mode) {
+                case QR_MODE_NUM: $length = $this->eatNum(); break;
+                case QR_MODE_AN:  $length = $this->eatAn(); break;
+                case QR_MODE_KANJI:
+                    if ($hint == QR_MODE_KANJI)
+                            $length = $this->eatKanji();
+                    else    $length = $this->eat8();
+                    break;
+                default: $length = $this->eat8(); break;
+            
             }
 
-            $split = new QRsplit($string, $input, $modeHint);
+            if($length == 0) return 0;
+            if($length < 0)  return -1;
             
-            if(!$casesensitive)
-                $split->toUpper();
-                
-            return $split->splitString();
+            $this->dataStr = substr($this->dataStr, $length);
         }
     }
 
+    //----------------------------------------------------------------------
+    public function toUpper()
+    {
+        $stringLen = strlen($this->dataStr);
+        $p = 0;
+        
+        while ($p<$stringLen) {
+            $mode = self::identifyMode(substr($this->dataStr, $p), $this->modeHint);
+            if($mode == QR_MODE_KANJI) {
+                $p += 2;
+            } else {
+                if (ord($this->dataStr[$p]) >= ord('a') && ord($this->dataStr[$p]) <= ord('z')) {
+                    $this->dataStr[$p] = chr(ord($this->dataStr[$p]) - 32);
+                }
+                $p++;
+            }
+        }
+
+        return $this->dataStr;
+    }
+
+    //----------------------------------------------------------------------
+    public static function splitStringToQRinput($string, Qrinput $input, $modeHint, $casesensitive = true)
+    {
+        if(is_null($string) || $string == '\0' || $string == '') {
+            throw new Exception('empty string!!!');
+        }
+
+        $split = new Qrsplit($string, $input, $modeHint);
+        
+        if(!$casesensitive)
+            $split->toUpper();
+            
+        return $split->splitString();
+    }
+}
 
 
-//---- qrrscode.php -----------------------------
+
+//---- Qrrscode.php -----------------------------
 
 
 
@@ -2285,7 +2285,7 @@ namespace Vipkwd\Utils\Libs;
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
  
-    class QRrsItem {
+    class QrrsItem {
     
         public $mm;                  // Bits per symbol 
         public $nn;                  // Symbols per block (= (1<<mm)-1) 
@@ -2326,7 +2326,7 @@ namespace Vipkwd\Utils\Libs;
             if($nroots < 0 || $nroots >= (1<<$symsize))          return $rs; // Can't have more roots than symbol values!
             if($pad < 0 || $pad >= ((1<<$symsize) -1 - $nroots)) return $rs; // Too much padding
 
-            $rs = new QRrsItem();
+            $rs = new QrrsItem();
             $rs->mm = $symsize;
             $rs->nn = (1<<$symsize)-1;
             $rs->pad = $pad;
@@ -2441,7 +2441,7 @@ namespace Vipkwd\Utils\Libs;
     
     //##########################################################################
     
-    class QRrs {
+    class Qrrs {
     
         public static $items = array();
         
@@ -2459,7 +2459,7 @@ namespace Vipkwd\Utils\Libs;
                 return $rs;
             }
 
-            $rs = QRrsItem::init_rs_char($symsize, $gfpoly, $fcr, $prim, $nroots, $pad);
+            $rs = QrrsItem::init_rs_char($symsize, $gfpoly, $fcr, $prim, $nroots, $pad);
             array_unshift(self::$items, $rs);
 
             return $rs;
@@ -2468,7 +2468,7 @@ namespace Vipkwd\Utils\Libs;
 
 
 
-//---- qrmask.php -----------------------------
+//---- Qrmask.php -----------------------------
 
 
 
@@ -2504,7 +2504,7 @@ namespace Vipkwd\Utils\Libs;
 	define('N3', 40);
 	define('N4', 10);
 
-	class QRmask {
+	class Qrmask {
 	
 		public $runLength = array();
 		
@@ -2518,7 +2518,7 @@ namespace Vipkwd\Utils\Libs;
         public function writeFormatInformation($width, &$frame, $mask, $level)
         {
             $blacks = 0;
-            $format =  QRspec::getFormatInfo($mask, $level);
+            $format =  Qrspec::getFormatInfo($mask, $level);
 
             for($i=0; $i<8; $i++) {
                 if($format & 1) {
@@ -2835,13 +2835,13 @@ namespace Vipkwd\Utils\Libs;
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
  
-    class QRrsblock {
+    class Qrrsblock {
         public $dataLength;
         public $data = array();
         public $eccLength;
         public $ecc = array();
         
-        public function __construct($dl, $data, $el, &$ecc, QRrsItem $rs)
+        public function __construct($dl, $data, $el, &$ecc, QrrsItem $rs)
         {
             $rs->encode_rs_char($data, $ecc);
         
@@ -2854,7 +2854,7 @@ namespace Vipkwd\Utils\Libs;
     
     //##########################################################################
 
-    class QRrawcode {
+    class Qrrawcode {
         public $version;
         public $datacode = array();
         public $ecccode = array();
@@ -2866,7 +2866,7 @@ namespace Vipkwd\Utils\Libs;
         public $b1;
         
         //----------------------------------------------------------------------
-        public function __construct(QRinput $input)
+        public function __construct(Qrinput $input)
         {
             $spec = array(0,0,0,0,0);
             
@@ -2875,14 +2875,14 @@ namespace Vipkwd\Utils\Libs;
                 throw new Exception('null imput string');
             }
 
-            QRspec::getEccSpec($input->getVersion(), $input->getErrorCorrectionLevel(), $spec);
+            Qrspec::getEccSpec($input->getVersion(), $input->getErrorCorrectionLevel(), $spec);
 
             $this->version = $input->getVersion();
-            $this->b1 = QRspec::rsBlockNum1($spec);
-            $this->dataLength = QRspec::rsDataLength($spec);
-            $this->eccLength = QRspec::rsEccLength($spec);
+            $this->b1 = Qrspec::rsBlockNum1($spec);
+            $this->dataLength = Qrspec::rsDataLength($spec);
+            $this->eccLength = Qrspec::rsEccLength($spec);
             $this->ecccode = array_fill(0, $this->eccLength, 0);
-            $this->blocks = QRspec::rsBlockNum($spec);
+            $this->blocks = Qrspec::rsBlockNum($spec);
             
             $ret = $this->init($spec);
             if($ret < 0) {
@@ -2896,17 +2896,17 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public function init(array $spec)
         {
-            $dl = QRspec::rsDataCodes1($spec);
-            $el = QRspec::rsEccCodes1($spec);
-            $rs = QRrs::init_rs(8, 0x11d, 0, 1, $el, 255 - $dl - $el);
+            $dl = Qrspec::rsDataCodes1($spec);
+            $el = Qrspec::rsEccCodes1($spec);
+            $rs = Qrrs::init_rs(8, 0x11d, 0, 1, $el, 255 - $dl - $el);
             
 
             $blockNo = 0;
             $dataPos = 0;
             $eccPos = 0;
-            for($i=0; $i<QRspec::rsBlockNum1($spec); $i++) {
+            for($i=0; $i<Qrspec::rsBlockNum1($spec); $i++) {
                 $ecc = array_slice($this->ecccode,$eccPos);
-                $this->rsblocks[$blockNo] = new QRrsblock($dl, array_slice($this->datacode, $dataPos), $el,  $ecc, $rs);
+                $this->rsblocks[$blockNo] = new Qrrsblock($dl, array_slice($this->datacode, $dataPos), $el,  $ecc, $rs);
                 $this->ecccode = array_merge(array_slice($this->ecccode,0, $eccPos), $ecc);
                 
                 $dataPos += $dl;
@@ -2914,18 +2914,18 @@ namespace Vipkwd\Utils\Libs;
                 $blockNo++;
             }
 
-            if(QRspec::rsBlockNum2($spec) == 0)
+            if(Qrspec::rsBlockNum2($spec) == 0)
                 return 0;
 
-            $dl = QRspec::rsDataCodes2($spec);
-            $el = QRspec::rsEccCodes2($spec);
-            $rs = QRrs::init_rs(8, 0x11d, 0, 1, $el, 255 - $dl - $el);
+            $dl = Qrspec::rsDataCodes2($spec);
+            $el = Qrspec::rsEccCodes2($spec);
+            $rs = Qrrs::init_rs(8, 0x11d, 0, 1, $el, 255 - $dl - $el);
             
             if($rs == NULL) return -1;
             
-            for($i=0; $i<QRspec::rsBlockNum2($spec); $i++) {
+            for($i=0; $i<Qrspec::rsBlockNum2($spec); $i++) {
                 $ecc = array_slice($this->ecccode,$eccPos);
-                $this->rsblocks[$blockNo] = new QRrsblock($dl, array_slice($this->datacode, $dataPos), $el, $ecc, $rs);
+                $this->rsblocks[$blockNo] = new Qrrsblock($dl, array_slice($this->datacode, $dataPos), $el, $ecc, $rs);
                 $this->ecccode = array_merge(array_slice($this->ecccode,0, $eccPos), $ecc);
                 
                 $dataPos += $dl;
@@ -2963,14 +2963,14 @@ namespace Vipkwd\Utils\Libs;
 
     //##########################################################################
     
-    class QRcode {
+    class Qrcode {
     
         public $version;
         public $width;
         public $data; 
         
         //----------------------------------------------------------------------
-        public function encodeMask(QRinput $input, $mask)
+        public function encodeMask(Qrinput $input, $mask)
         {
             if($input->getVersion() < 0 || $input->getVersion() > QRSPEC_VERSION_MAX) {
                 throw new Exception('wrong version');
@@ -2979,15 +2979,15 @@ namespace Vipkwd\Utils\Libs;
                 throw new Exception('wrong level');
             }
 
-            $raw = new QRrawcode($input);
+            $raw = new Qrrawcode($input);
             
-            QRtools::markTime('after_raw');
+            Qrtools::markTime('after_raw');
             
             $version = $raw->version;
-            $width = QRspec::getWidth($version);
-            $frame = QRspec::newFrame($version);
+            $width = Qrspec::getWidth($version);
+            $frame = Qrspec::newFrame($version);
             
-            $filler = new FrameFiller($width, $frame);
+            $filler = new Framefiller($width, $frame);
             if(is_null($filler)) {
                 return NULL;
             }
@@ -3003,12 +3003,12 @@ namespace Vipkwd\Utils\Libs;
                 }
             }
             
-            QRtools::markTime('after_filler');
+            Qrtools::markTime('after_filler');
             
             unset($raw);
             
             // remainder bits
-            $j = QRspec::getRemainder($version);
+            $j = Qrspec::getRemainder($version);
             for($i=0; $i<$j; $i++) {
                 $addr = $filler->next();
                 $filler->setFrameAt($addr, 0x02);
@@ -3019,7 +3019,7 @@ namespace Vipkwd\Utils\Libs;
             
             
             // masking
-            $maskObj = new QRmask();
+            $maskObj = new Qrmask();
             if($mask < 0) {
             
                 if (QR_FIND_BEST_MASK) {
@@ -3035,7 +3035,7 @@ namespace Vipkwd\Utils\Libs;
                 return NULL;
             }
             
-            QRtools::markTime('after_mask');
+            Qrtools::markTime('after_mask');
             
             $this->version = $version;
             $this->width = $width;
@@ -3045,7 +3045,7 @@ namespace Vipkwd\Utils\Libs;
         }
     
         //----------------------------------------------------------------------
-        public function encodeInput(QRinput $input)
+        public function encodeInput(Qrinput $input)
         {
             return $this->encodeMask($input, -1);
         }
@@ -3058,7 +3058,7 @@ namespace Vipkwd\Utils\Libs;
                 return NULL;
             }
 
-            $input = new QRinput($version, $level);
+            $input = new Qrinput($version, $level);
             if($input == NULL) return NULL;
 
             $ret = $input->append($input, QR_MODE_8, strlen($string), str_split($string));
@@ -3078,10 +3078,10 @@ namespace Vipkwd\Utils\Libs;
                 return NULL;
             }
 
-            $input = new QRinput($version, $level);
+            $input = new Qrinput($version, $level);
             if($input == NULL) return NULL;
 
-            $ret = QRsplit::splitStringToQRinput($string, $input, $hint, $casesensitive);
+            $ret = Qrsplit::splitStringToQRinput($string, $input, $hint, $casesensitive);
             if($ret < 0) {
                 return NULL;
             }
@@ -3092,28 +3092,28 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public static function png($text, $outfile = false, $level = QR_ECLEVEL_L, $size = 3, $margin = 4, $saveandprint=false) 
         {
-            $enc = QRencode::factory($level, $size, $margin);
+            $enc = Qrencode::factory($level, $size, $margin);
             return $enc->encodePNG($text, $outfile, $saveandprint=false);
         }
 
         //----------------------------------------------------------------------
         public static function text($text, $outfile = false, $level = QR_ECLEVEL_L, $size = 3, $margin = 4) 
         {
-            $enc = QRencode::factory($level, $size, $margin);
+            $enc = Qrencode::factory($level, $size, $margin);
             return $enc->encode($text, $outfile);
         }
 
         //----------------------------------------------------------------------
         public static function raw($text, $outfile = false, $level = QR_ECLEVEL_L, $size = 3, $margin = 4) 
         {
-            $enc = QRencode::factory($level, $size, $margin);
+            $enc = Qrencode::factory($level, $size, $margin);
             return $enc->encodeRAW($text, $outfile);
         }
     }
     
     //##########################################################################
     
-    class FrameFiller {
+    class Framefiller {
     
         public $width;
         public $frame;
@@ -3203,7 +3203,7 @@ namespace Vipkwd\Utils\Libs;
     
     //##########################################################################    
     
-    class QRencode {
+    class Qrencode {
     
         public $casesensitive = true;
         public $eightbit = false;
@@ -3220,7 +3220,7 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public static function factory($level = QR_ECLEVEL_L, $size = 3, $margin = 4)
         {
-            $enc = new QRencode();
+            $enc = new Qrencode();
             $enc->size = $size;
             $enc->margin = $margin;
             
@@ -3255,7 +3255,7 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public function encodeRAW($intext, $outfile = false) 
         {
-            $code = new QRcode();
+            $code = new Qrcode();
 
             if($this->eightbit) {
                 $code->encodeString8bit($intext, $this->version, $this->level);
@@ -3269,7 +3269,7 @@ namespace Vipkwd\Utils\Libs;
         //----------------------------------------------------------------------
         public function encode($intext, $outfile = false) 
         {
-            $code = new QRcode();
+            $code = new Qrcode();
 
             if($this->eightbit) {
                 $code->encodeString8bit($intext, $this->version, $this->level);
@@ -3277,12 +3277,12 @@ namespace Vipkwd\Utils\Libs;
                 $code->encodeString($intext, $this->version, $this->level, $this->hint, $this->casesensitive);
             }
             
-            QRtools::markTime('after_encode');
+            Qrtools::markTime('after_encode');
             
             if ($outfile!== false) {
-                file_put_contents($outfile, join("\n", QRtools::binarize($code->data)));
+                file_put_contents($outfile, join("\n", Qrtools::binarize($code->data)));
             } else {
-                return QRtools::binarize($code->data);
+                return Qrtools::binarize($code->data);
             }
         }
         
@@ -3297,15 +3297,15 @@ namespace Vipkwd\Utils\Libs;
                 ob_end_clean();
                 
                 if ($err != '')
-                    QRtools::log($outfile, $err);
+                    Qrtools::log($outfile, $err);
                 
                 $maxSize = (int)(QR_PNG_MAXIMUM_SIZE / (count($tab)+2*$this->margin));
                 
-                QRimage::png($tab, $outfile, min(max(1, $this->size), $maxSize), $this->margin,$saveandprint);
+                Qrimage::png($tab, $outfile, min(max(1, $this->size), $maxSize), $this->margin,$saveandprint);
             
             } catch (Exception $e) {
             
-                QRtools::log($outfile, $e->getMessage());
+                Qrtools::log($outfile, $e->getMessage());
             
             }
         }

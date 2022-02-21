@@ -10,10 +10,10 @@
 // +----------------------------------------------------------------------
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils\Libs\image\gif;
+namespace Vipkwd\Utils\Libs\Image\Gif;
+// https://github.com/Sybio/GifCreator
 
-class Encoder
-{
+class Encoder {
     public $GIF = "GIF89a"; /* GIF header 6 bytes    */
     public $VER = "GIFEncoder V2.05"; /* Encoder version        */
     public $BUF = [];

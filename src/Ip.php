@@ -126,6 +126,7 @@ class Ip{
      * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1"]);
      * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1",25]);
      * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1/25"]);
+     * -e.g: phpunit("Ip::getIpRangeWithMask", ["66.42.48.0", 20]);
      * 
      * @param string $ipv4 格式：192.168.1.1 或 192.168.1.0/24
      * @param integer $mask
@@ -170,6 +171,7 @@ class Ip{
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1",24]);
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1/24"]);
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1/25"]);
+    * -e.g: phpunit("Ip::ipv4InMaskArea", ["66.42.52.88","66.42.48.0/20"]);
     *
     * @param string $ipv4  "192.168.1.115"
     * @param string $maskArea 支持携带掩码("192.168.1.1/24")
@@ -250,6 +252,8 @@ class Ip{
      *
      * -e.g: phpunit("Ip::getIpInfo",["1.2.4.8"]);
      * -e.g: phpunit("Ip::getIpInfo", ["127.0.0.1"]);
+     * -e.g: phpunit("Ip::getIpInfo", ["66.42.52.88"]);
+     * -e.g: phpunit("Ip::getIpInfo", ["120.235.131.155"]);
      * 
      * @param string $ip
      * @return array

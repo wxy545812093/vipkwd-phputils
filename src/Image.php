@@ -1,6 +1,6 @@
 <?php
 /**
- * @name Thinkphp图像处理类（水印,剪裁 ...）
+ * @name TP图像处理类（水印,剪裁 ...）
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
@@ -18,7 +18,6 @@
 // +----------------------------------------------------------------------
 
 /*
-
 $image = Vipkwd\Utils\Image::open('./image.jpg');
 $image->crop(...)
     ->thumb(...)
@@ -29,8 +28,8 @@ $image->crop(...)
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Libs\image\Exception as ImageException;
-use Vipkwd\Utils\Libs\image\gif\Gif;
+use Vipkwd\Utils\Libs\Image\Exception as ImageException;
+use Vipkwd\Utils\Libs\Image\Gif\Gif;
 // use \Exception;
 
 class Image{

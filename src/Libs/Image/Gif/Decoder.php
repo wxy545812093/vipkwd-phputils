@@ -10,7 +10,8 @@
 // +----------------------------------------------------------------------
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils\Libs\image\gif;
+namespace Vipkwd\Utils\Libs\Image\Gif;
+// https://github.com/Sybio/GifFrameExtractor
 
 class Decoder {
     public $GIF_buffer = [];

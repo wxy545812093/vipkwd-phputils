@@ -288,34 +288,6 @@ class Tools{
         return $mail->Send() ? true : $mail->ErrorInfo;
     }
 
-    /**
-     * 生成二维码
-     * 
-     * outfile === false, header输出png
-     * outfile !== false && saveAndPrint === true, 保存到 outfile指向地址 并header输出
-     * outfile !== file && saveAndPrint !== true, 仅保存到 outfile指向地址
-     * 
-     * @param string  $text 二维码内容
-     * @param boolean|string  $outFile 文件
-     * @param string  $level 纠错级别 L:7% M:15% Q:25% H:30%
-     * @param integer  $size 二维码大小
-     * @param integer  $margin 边距常量
-     * @param boolean  $saveAndPrint
-     *
-     * @return void
-     */
-    static public function qrcode(string $text, $outFile = false, string $level = "7%", int $size = 6, int $margin = 2, bool $saveAndPrint = false){
-        QRcode::png($text, $outFile, $level, $size, $margin, $saveAndPrint);
-        exit;
-    }
-
- 
-    
-
-
-
-
-
 
     /**
      * session管理函数

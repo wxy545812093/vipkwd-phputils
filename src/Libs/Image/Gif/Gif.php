@@ -10,7 +10,7 @@
 // +----------------------------------------------------------------------
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils\Libs\image\gif;
+namespace Vipkwd\Utils\Libs\Image\Gif;
 
 class Gif{
     /**
@@ -33,8 +33,7 @@ class Gif{
      * @param string $mod 图片数据类型
      * @throws \Exception
      */
-    public function __construct($src = null, $mod = 'url')
-    {
+    public function __construct($src = null, $mod = 'url'){
         if (!is_null($src)) {
             if ('url' == $mod && is_file($src)) {
                 $src = file_get_contents($src);
@@ -56,8 +55,7 @@ class Gif{
      * @param  string $stream 二进制数据流
      * @return mixed        获取到的数据
      */
-    public function image($stream = null)
-    {
+    public function image($stream = null){
         if (is_null($stream)) {
             $current = current($this->frames);
             return false === $current ? reset($this->frames) : $current;
@@ -70,8 +68,7 @@ class Gif{
      *
      * @return string 当前帧数据
      */
-    public function nextImage()
-    {
+    public function nextImage(){
         return next($this->frames);
     }
 

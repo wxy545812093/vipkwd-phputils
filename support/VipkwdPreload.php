@@ -18,3 +18,4 @@ function phpunit($class, $paramsArray){
     return \Vipkwd\Utils\Dev::phpunit($class, $paramsArray);
 }
 define('VIPKWD_UTILS_LIB_ROOT', realpath(__DIR__ .'/../'));
+#include_once(__DIR__."/VipkwdException.php.whoops");

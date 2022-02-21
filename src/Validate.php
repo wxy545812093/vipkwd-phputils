@@ -371,6 +371,77 @@ class Validate{
         return $result;
     }
 
+    const HYPHENS = ['‐', '-', ' ']; // regular dash, authentic hyphen (rare!) and space
+
+    /**
+     * IMEI验证
+     * -- LUHN算法
+     * 
+     * @param mixed $imei
+     *
+     * @return bool
+     */
+    static function imei($imei){
+        $imei = self::unDecorate($imei, ['‐', '-', ' ']);
+        // for IMEI only; IMEISV = EMEI+1, and not Luhn check
+        $length = 15;
+        // IMEISV?
+        if ($length + 1 === strlen($imei)) {
+            $expr = sprintf('/\\d{%d}/i', $length + 1);
+
+            return boolval(preg_match($expr, $imei));
+        }
+        // IMEI?
+        return self::Luhn($imei, $length, 2, 10);
+    }
+
+    /**
+     * 验证境外信用卡
+     *
+     * @param string $creditCard
+     *
+     * @return bool
+     */
+    static function creditCard(string $creditCard):bool{
+        if ('' === trim($creditCard)) {
+            return false;
+        }
+        if (!boolval(preg_match('/.*[1-9].*/', $creditCard))) {
+            return false;
+        }
+        //longueur de la chaine $creditCard
+        $length = strlen($creditCard);
+        //resultat de l'addition de tous les chiffres
+        $tot = 0;
+        for ($i = $length - 1; $i >= 0; --$i) {
+            $digit = substr($creditCard, $i, 1);
+            if ((($length - $i) % 2) == 0) {
+                $digit = (int) $digit * 2;
+                ($digit > 9) && $digit = $digit - 9;
+            }
+            $tot += (int) $digit;
+        }
+        return ($tot % 10) == 0;
+    }
+
+    /**
+     * MAC 地址验证
+     *
+     * Could be separated by hyphens or colons.
+     * Could be both lowercase or uppercase letters.
+     * Mixed upper/lower cases and hyphens/colons are not allowed.
+     *
+     * @see http://en.wikipedia.org/wiki/MAC_address#Notational_conventions
+     *
+     * @param string $macAddr
+     *
+     * @return bool
+     */
+    static function macAddr($macAddr):bool{
+        $pattern = '/^(([a-f0-9]{2}-){5}[a-f0-9]{2}|([A-F0-9]{2}-){5}[A-Z0-9]{2}|([a-f0-9]{2}:){5}[a-z0-9]{2}|([A-F0-9]{2}:){5}[A-Z0-9]{2})$/';
+        return boolval(preg_match($pattern, $macAddr));
+    }
+
     /**
      * 执行自定义正则
      *
@@ -388,6 +459,41 @@ class Validate{
             //throw new \Exception($e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Luhn算法通用验证器
+     *
+     * @param string $value
+     * @param integer $length
+     * @param integer $weight
+     * @param integer $divider
+     * @param array $hyphens
+     * @return boolean
+     */
+    static function luhn(string $value, int $length, int $weight, int $divider, array $hyphens = ['‐', '-', ' ']): bool{
+        $value = self::unDecorate($value, $hyphens);
+        $digits = substr($value, 0, $length - 1);
+        $check = substr($value, $length - 1, 1);
+        $expr = sprintf('/\\d{%d}/i', $length);
+        if (!preg_match($expr, $value)) {
+            return false;
+        }
+        $sum = 0;
+        $len = strlen($digits);
+        for ($i = 0; $i < $len; ++$i) {
+            if (0 === $i % 2) {
+                $add = (int) substr($digits, $i, 1);
+            } else {
+                $add = $weight * (int) substr($digits, $i, 1);
+                if (10 <= $add) { // '18' = 1+8 = 9, etc.
+                    $strAdd = strval($add);
+                    $add = intval($strAdd[0]) + intval($strAdd[1]);
+                }
+            }
+            $sum += $add;
+        }
+        return 0 === ($sum + $check) % $divider;
     }
 
     /**
@@ -428,5 +534,17 @@ class Validate{
             $minLength-=$prefixLength;
             $maxLength-=$prefixLength;
         }
+    }
+
+    /**
+     * @param mixed $input: null or string
+     */
+    private static function unDecorate($input, array $hyphens = []):string{
+        $hyphensLength = count($hyphens);
+        // removing hyphens
+        for ($i = 0; $i < $hyphensLength; ++$i) {
+            $input = str_replace($hyphens[$i], '', $input);
+        }
+        return $input;
     }
 }

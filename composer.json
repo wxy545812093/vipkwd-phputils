@@ -15,7 +15,8 @@
     "license": "MIT",
     "require": {
         "php": ">=7.0",
-        "awesomite/var-dumper": "dev-master",
+        "awesomite/var-dumper": "^1.5",
+        "jenssegers/imagehash": "^0.8",
         "lys/php-shard-upload": "^4.4",
         "phpmailer/phpmailer": "6.1.6",
         "phpoffice/phpspreadsheet": "*",
@@ -27,18 +28,20 @@
             "Vipkwd\\Utils\\": ["src/","support/libs/"]
         },
         "files": [
-            "support/VipkwdException.php",
-            "support/VipkwdPreload.php"
+            "support/VipkwdPreload.php",
+            "support/VipkwdException.php"
         ]
     },
     "minimum-stability": "dev",
     "scripts": {
         "post-install-cmd": [
             "chmod +x artisan",
-            "@php -r \"file_exists('./index.php') || copy('index.php', 'index.php1');\""
+            "@php -r \"file_exists('./index.php') && copy('index.php', 'index.php1');\""
         ],
         "post-root-package-install": [],
-        "post-autoload-dump": [],
+        "post-autoload-dump": [
+            "@php -r \"include_once('support/VipkwdException.php');\""
+        ],
         "post-package-install": [],
         "post-package-update": []
     },
