@@ -115,7 +115,23 @@ class Date{
         }
     }
 
+    /**
+     * 日期返回 "1994-02-26T00:00:00+08:00"
+     *
+     * -e.g: phpunit("Date::iso8601",["2022-02-23"]);
+     * 
+     * @param string $date
+     * @return string
+     */
+    static function iso8601(string $date):string{
+        if(self::isRealDate($date)){
+            return self::dateTimeInstance($date)->format('c');
+        }
+        return $date;
+    }
+
     private static function dateTimeInstance($date){
         return new \DateTime($date, new \DateTimeZone(self::$timeZone));
     }
+    
 }

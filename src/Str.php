@@ -620,4 +620,39 @@ class Str{
         return (json_last_error() == JSON_ERROR_NONE);
     }
 
+    /**
+     * 获取(最大)相似度文本
+     * 
+     * -e.g: $items = ["foo", "bar", "baz"];
+     * -e.g: phpunit("Str::getSuggestion",[$items, "fo"]);
+     * -e.g: phpunit("Str::getSuggestion",[$items, "barr"]);
+     * -e.g: phpunit("Str::getSuggestion",[$items, "baz"]);
+     * 
+     * @param string[]  $possibilities 查找列表
+     * @param string $value 查找文字
+     * 
+     * @return string|null
+     */
+	static function getSuggestion(array $possibilities, string $value): ?string{
+		$best = null;
+		$min = (strlen($value) / 4 + 1) * 10 + .1;
+		foreach (array_unique($possibilities) as $item) {
+			if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) < $min) {
+				$min = $len;
+				$best = $item;
+			}
+		}
+
+		return $best;
+	}
+
+    /**
+     * 转换HTML代码为文本
+     *
+     * @param string $html
+     * @return string
+     */
+	static function htmlToText(string $html): string{
+		return html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+	}
 }

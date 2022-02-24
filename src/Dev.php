@@ -14,4 +14,22 @@ namespace Vipkwd\Utils;
 class Dev{
     const SEPA = \DIRECTORY_SEPARATOR;
     use \Vipkwd\Utils\Libs\Develop;
+
+    /**
+	 *   Returns the last occurred PHP error or an empty string if no error occurred. Unlike error_get_last(),
+	 * it is nit affected by the PHP directive html_errors and always returns text, not HTML.
+	 */
+    /**
+     * 自定义前次错误捕获器(异于error_get_last)
+     *
+     * @return string
+     */
+	static function getLastError(): string{
+		$message = error_get_last()['message'] ?? '';
+		$message = ini_get('html_errors') ? Str::htmlToText($message) : $message;
+		$message = preg_replace('#^\w+\(.*?\): #', '', $message);
+		return $message;
+	}
+
+
 }

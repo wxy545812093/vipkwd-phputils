@@ -12,7 +12,7 @@ namespace Vipkwd\Utils;
 
 use PhpShardUpload\ShardUpload;
 // use PhpShardUpload\Components\FileDownload;
-use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\{Tools,Dev};
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class File{
@@ -347,7 +347,7 @@ class File{
     }
 
     /**
-     * 获取服务器支持最大上传文件大小（bytes)
+     * 获取服务器支持最大上传文件大小(bytes)
      * 
      * response: -1 没有上传大小限制
      *
@@ -382,7 +382,7 @@ class File{
     }
 
     /**
-	 * 获取指定目录下所有的文件，包括子目录下的文件
+	 * 获取指定目录下所有的文件(包括子目录)
 	 *
 	 * @param string $dir
 	 * @return array
@@ -405,7 +405,7 @@ class File{
 	}
 
 	/**
-	 * 递归指定目录下所有的文件，包括子目录下的文件
+	 * 递归指定目录下所有的文件(包括子目录)
 	 *
 	 * @param string   $dir
 	 * @param callable $callback
@@ -481,7 +481,7 @@ class File{
      * @return boolean
      */
     static function isImage(string $filename):bool{
-        if(!file_exists($filename)){
+        if(!self::exists($filename)){
             return false;
         }
         $mimetype = exif_imagetype($filename);
@@ -518,6 +518,210 @@ class File{
         $filepath = self::realpath($filepath);
         return file_exists($filepath);
     }
+
+    /**
+     * 检测$path是否为绝对路径
+     * 
+     * -e.g: phpunit("File::isAbsolutePath", ["./www"]);
+     * -e.g: phpunit("File::isAbsolutePath", ["/backup"]);
+     * 
+     * @param string $path
+     * @return boolean
+     */
+    static function isAbsolutePath(string $path): bool{
+		return (bool) preg_match('#([a-z]:)?[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
+	}
+
+    /**
+     * 规范化路径中的 .. 和目录分隔符 .
+     * 
+     * -e.g: phpunit("File::normalizePath",["/file/."]);
+     * -e.g: phpunit("File::normalizePath",["\\file\dx\.."]);
+     * -e.g: phpunit("File::normalizePath",["/file/../.."]);
+     * -e.g: phpunit("File::normalizePath",["file/../../bar"]);
+     *
+     * @param string $path
+     * @return string
+     */
+	static function normalizePath(string $path): string{
+		$parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
+		$res = [];
+		foreach ($parts as $part) {
+			if ($part === '..' && $res && end($res) !== '..' && end($res) !== '') {
+				array_pop($res);
+			} elseif ($part !== '.') {
+				$res[] = $part;
+			}
+		}
+
+		return $res === ['']
+			? DIRECTORY_SEPARATOR
+			: implode(DIRECTORY_SEPARATOR, $res);
+	}
+
+
+	/**
+     * 连接并规范化路径数组串
+     * 
+     * -e.g: phpunit("File::joinPaths",["a", "\b", "file.txt"]);
+     * -e.g: phpunit("File::joinPaths",["/a/", "/b/"]);
+     * -e.g: phpunit("File::joinPaths",["/a/", "/../b"]);
+     * 
+     * @param string ...$paths
+     * @return string
+     */
+	static function joinPaths(string ...$paths): string{
+		return self::normalizePath(implode('/', $paths));
+	}
+
+    /**
+     * 创建目录
+     *
+     * @param string $dir
+     * @param integer $mode <0777>
+     * 
+	 * @throws \Exception  on error occurred
+     * @return boolean
+     */
+    static function createDir(string $dir, int $mode = 0777): bool{
+		try{
+            !is_dir($dir) && @mkdir($dir, $mode, true);
+            return is_dir($dir);
+        }catch(\Exception $e){
+            return false;
+        }
+	}
+
+    /**
+     * 复制文件或目录
+     *
+     * @param string $origin 源目标
+     * @param string $target 新目标
+     * @param boolean $overwrite <true> 是否覆盖
+     * 
+	 * @throws \Exception  on error occurred
+     * @return void
+     */
+	static function copy(string $origin, string $target, bool $overwrite = true): void{
+		if (stream_is_local($origin) && !self::exists($origin)) {
+			throw new \Exception(sprintf("File or directory '%s' not found.", self::normalizePath($origin)));
+
+		} elseif (!$overwrite && self::exists($target)) {
+			throw new \Exception(sprintf("File or directory '%s' already exists.", self::normalizePath($target)));
+
+		} elseif (is_dir($origin)) {
+			static::createDir($target);
+			foreach (new \FilesystemIterator($target) as $item) {
+				static::delete($item->getPathname());
+			}
+
+			foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($origin, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $item) {
+				if ($item->isDir()) {
+					static::createDir($target . '/' . $iterator->getSubPathName());
+				} else {
+					static::copy($item->getPathname(), $target . '/' . $iterator->getSubPathName());
+				}
+			}
+		} else {
+			static::createDir(self::dirname($target));
+			if (
+				($s = @fopen($origin, 'rb'))
+				&& ($d = @fopen($target, 'wb'))
+				&& @stream_copy_to_stream($s, $d) === false
+			) { // @ is escalated to exception
+				throw new \Exception(sprintf(
+					"Unable to copy file '%s' to '%s'. %s",
+					self::normalizePath($origin),
+					self::normalizePath($target),
+					Dev::getLastError()
+				));
+			}
+		}
+	}
+
+    /**
+     * 移动文件/目录
+     *
+     * @param string $origin 源目标
+     * @param string $target 新目标
+     * @param boolean $overwrite <true> 是否覆盖
+     * 
+	 * @throws \Exception  on error occurred
+     * @return void
+     */
+    static function rename(string $origin, string $target, bool $overwrite = true):void{
+		if (!$overwrite && self::exists($target)) {
+			throw new \Exception(sprintf("File or directory '%s' already exists.", self::normalizePath($target)));
+
+		} elseif (!self::exists($origin)) {
+			throw new \Exception(sprintf("File or directory '%s' not found.", self::normalizePath($origin)));
+
+		} else {
+			static::createDir(self::dirname($target));
+			if (self::realpath($origin) !== self::realpath($target)) {
+				static::delete($target);
+			}
+
+			if (!@rename($origin, $target)) { // @ is escalated to exception
+				throw new \Exception(sprintf(
+					"Unable to rename file or directory '%s' to '%s'. %s",
+					self::normalizePath($origin),
+					self::normalizePath($target),
+					Dev::getLastError()
+				));
+			}
+		}
+	}
+
+    /**
+	 * 从文件读取内容
+     * 
+     * @param string $file
+     * 
+	 * @throws \Exception  on error occurred
+     * @return string
+	 */
+	static function read(string $file): string{
+		$content = @file_get_contents($file); // @ is escalated to exception
+		if ($content === false) {
+			throw new \Exception(sprintf(
+				"Unable to read file '%s'. %s",
+				self::normalizePath($file),
+				Dev::getLastError()
+			));
+		}
+		return $content;
+	}
+
+    /**
+     * 字符串写入到文件
+     *
+     * @param string $file
+     * @param string $content 
+     * @param integer|null $mode <0666>
+     * 
+	 * @throws \Exception  on error occurred
+     * @return void
+     */
+    static function write(string $file, string $content, ?int $mode = 0666): void{
+		static::createDir(self::dirname($file));
+		if (@file_put_contents($file, $content) === false) { // @ is escalated to exception
+			throw new \Exception(sprintf(
+				"Unable to write file '%s'. %s",
+				self::normalizePath($file),
+				Dev::getLastError()
+			));
+		}
+
+		if ($mode !== null && !@chmod($file, $mode)) { // @ is escalated to exception
+			throw new \Exception(sprintf(
+				"Unable to chmod file '%s' to mode %s. %s",
+				self::normalizePath($file),
+				decoct($mode),
+				Dev::getLastError()
+			));
+		}
+	}
 }
 
 

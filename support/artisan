@@ -1,6 +1,12 @@
 #!/usr/bin/env php
 <?php
-$composerFile = __DIR__.'/composer.json';
+
+$dir = __DIR__.'/../';
+$vikwdUtilsPath = realpath($dir).'/vipkwd/utils';
+if(is_dir($vikwdUtilsPath)){
+    $dir = $vikwdUtilsPath;
+}
+$composerFile = $dir.'/composer.json';
 if(!file_exists($composerFile)){
     echo "\r\n";
     echo sprintf("\033[31m  Missing file: composer.json \033[0m");
@@ -63,7 +69,7 @@ function libcheck($lib){
 if(!class_exists("Symfony\\Component\\Console\\Application")){
     libcheck("symfony/console");
 }
-if(!class_exists("Vipkwd\\Utils\\Console")){
+if(!class_exists("Vipkwd\\Command\\Console")){
     libcheck("vipkwd/utils");
 }
 
@@ -90,5 +96,9 @@ $application = new Symfony\Component\Console\Application(VIPKWD_PACKAGE_NAME, VI
 | or another output device for the developers. Here goes nothing!
 |
 */
-$application->add(new Vipkwd\Utils\Console());
+
+foreach(glob(VIPKWD_UTILS_LIB_ROOT.'/support/command/*.php') as $file){
+   $class  = "Vipkwd\\Command\\".substr(basename($file), 0, -4);
+   $application->add(new $class());
+}
 $application->run();

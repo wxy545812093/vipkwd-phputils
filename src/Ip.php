@@ -85,8 +85,7 @@ class Ip{
      * IPv4长整型转IP地址
      *
      * -e.g: $bigint=ip2long("127.0.0.1");
-     * -e.g: echo "\$bigint --> ".$bigint;
-     * 
+     * -e.g: echo "\$bigint --> {$bigint}";
      * -e.g: phpunit("Ip::long2ip",[$bigint]);
      * 
      * @param integer $bigint
@@ -244,21 +243,21 @@ class Ip{
      * @return string
      */
     static function randomIp(): string {
-        return Random::randomIp();
+        return Random::ip();
     }
 
     /**
      * 获取IP信息
      *
-     * -e.g: phpunit("Ip::getIpInfo",["1.2.4.8"]);
-     * -e.g: phpunit("Ip::getIpInfo", ["127.0.0.1"]);
-     * -e.g: phpunit("Ip::getIpInfo", ["66.42.52.88"]);
-     * -e.g: phpunit("Ip::getIpInfo", ["120.235.131.155"]);
+     * -e.g: phpunit("Ip::getInfo",["1.2.4.8"]);
+     * -e.g: phpunit("Ip::getInfo", ["127.0.0.1"]);
+     * -e.g: phpunit("Ip::getInfo", ["66.42.52.88"]);
+     * -e.g: phpunit("Ip::getInfo", ["120.235.131.155"]);
      * 
      * @param string $ip
      * @return array
      */
-    static function getIpInfo(string $ip): array{
+    static function getInfo(string $ip): array{
         $qqwryPath = VIPKWD_UTILS_LIB_ROOT.'/support/qqwry.dat';
         $iplocation = new Helper_IpLocation($qqwryPath);
         $location = $iplocation->getlocation( $ip );

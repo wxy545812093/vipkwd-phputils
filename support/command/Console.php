@@ -8,7 +8,7 @@
  */
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils;
+namespace Vipkwd\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,11 +17,12 @@ use Symfony\Component\Console\Input\{
 	InputArgument,
 	InputInterface
 };
-use Vipkwd\Utils\{Str,Dev};
+use \Vipkwd\Utils\{Str,Dev};
 // use \Exception;
 
 class Console extends Command {
 	
+	private static $nameSpace = '\\Vipkwd\\Utils\\';
 	private static $methodsOrderBy = true;
 	private static $showList = true;
 	private static $showMethod = false;
@@ -33,22 +34,27 @@ class Console extends Command {
 		"__destruct",
 		"__set",
 		"__get",
-		"__call"
+		"__call",
+		"__callStatic",
+		"__getSuggestion"
 	];
 
 	protected function configure(){
 		// return $this->__default_configure();
-		$this->setName( self::getConsoleName() )
+		$this->setName("dump")
 			->setDescription('Show the class list of <info>Vipkwd/utils</info> package')
 			->setHelp('This command allow you to View/Show the doc of class methods list')
 			->addArgument('className', InputArgument::OPTIONAL, 'Show the method list of "className".',"")
 			->addOption("method", "m", InputOption::VALUE_OPTIONAL,'Show the "method" method in "className" class.',"")
 			->addOption("eg", "", InputOption::VALUE_OPTIONAL,'Test the method in "className" class.',"-")
 		;
+		// $this->setName("dump:task")
+		// 	->setDescription('导入/更新扩展资源')
+		// 	->setHelp('导入/更新扩展资源')
+		// ;
 
 	}
 	protected function execute(InputInterface $input, OutputInterface $output){
-
 		// 你想要做的任何操作
 		$className = trim($input->getArgument('className'));
 		$method = trim($input->getOption('method') ?? "");
@@ -65,7 +71,7 @@ class Console extends Command {
 			$className = ucfirst($className);
 			if(!file_exists( static::getSrcPath() .'/'.$className.".php")){
 				$output->writeln('');
-				$output->writeln('[Notice] Class "<info>'.$className.'</info>" not found in Package.');
+				$output->writeln('[Notice] Class "<info>'.self::$nameSpace.$className.'</info>" not found in Package.');
 				$output->writeln('');
 				return 1;
 			}
@@ -74,12 +80,12 @@ class Console extends Command {
 			if($method != ""){
 				self::$showMethod = $method;
 				self::$testMethod = $eg != "-";
-				self::parseClass($className, $input, $output, 0, $classDescript=null);
+				self::parseClass($className, 0, $classDescript=null);
 				self::output($input, $output);
 				return 1;
 			}
 		}
-		self::buildMethodListDoc($input, $output, $className);
+		self::buildMethodListDoc($className);
 		self::output($input, $output);
 		return 1;
 
@@ -125,11 +131,9 @@ class Console extends Command {
 			}
 		}
 	}
-	private static function buildMethodListDoc(&$input, &$output, $cmd){
+
+	private static function buildMethodListDoc($cmd){
 		$path = static::getSrcPath();
-		// $output->writeln(self::createTRLine("+", "-"));
-		// $output->writeln(self::createTRLine("|",true, true));
-		// $output->writeln(self::createTRLine("+", "-"));
 		self::$writelnLines[] = ["+", "-"];
 		self::$writelnLines[] = ["|",true, true];
 		self::$writelnLines[] = ["+", "-"];
@@ -156,14 +160,13 @@ class Console extends Command {
 			$classFile = explode("/", $classFile);
 			$filename=array_pop($classFile);
 			unset($classFile);
-			self::parseClass( str_replace(".php","", $filename), $input, $output, $index, $classDescript);
+			self::parseClass( str_replace(".php","", $filename), $index, $classDescript);
 		};
-		// $output->writeln(self::createTRLine("+", "-"));
 		self::$writelnLines[] = ["+", "-"];
 	}
 
-	private static function parseClass($class, &$input, &$output, $index, $classDescript=null){
-		$className = str_ireplace("\\Libs", "", __NAMESPACE__) ."\\".$class;
+	private static function parseClass($class, $index, $classDescript=null){
+		$className = self::$nameSpace.$class;
 		$class = new \ReflectionClass($className);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		//剔除未公开的方法
@@ -174,27 +177,21 @@ class Console extends Command {
 			unset($k,$method);
 		}
 		if( self::$showList === true){
-			// $output->writeln(self::createTRLine("|", [
-			// 	"Idx" => str_pad(strval($index+1), 2, "0", STR_PAD_LEFT),
-			// 	"Namespace" => $class->getNamespaceName(),
-			// 	"Class" => $class->getShortName(),
-			// 	"Method" => "Et: ".count($methods),
-			// 	"Type" => "#",
-			// 	"Arguments" => "#",
-			// 	"Eg" => "#",
-			// 	"Comment" => $classDescript,
-			// ]));
 			self::$writelnLines[] = ["|", [
 				"Idx" => str_pad(strval($index+1), 2, " ", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => "Et: ".count($methods),
-				"Type" => "#",
-				"Arguments" => "#",
-				"Eg" => "#",
-				"Comment" => $classDescript,
+				"Type" => "-",
+				"Arguments" => "-",
+				"Eg" => "-",
+				"Comment" => trim($classDescript),
 			]];
-			return;
+			// if($class->getShortName() == "Qrcodes"){
+			// 	Dev::dumper(self::$writelnLines);
+			// 	Dev::dumper($class,1);
+			// }
+			return null;
 		}
 
 		//统计被忽略的方法有多少个
@@ -216,6 +213,7 @@ class Console extends Command {
 			}
 			unset($methodsSort);
 		}
+		$__index = 1;
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
 			$comment = $method->getDocComment();
@@ -254,51 +252,48 @@ class Console extends Command {
 			foreach ($params as $param){
 				$arguments[$position] = $param->getName();
 				//参数是否设置了默认参数，如果设置了，则获取其默认值
-				$defaults[$position] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : NULL;
+				$defaults[$position] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : "...NuLl";//TODO 标识必传参数
+				// Dev::dump($param->getClass());
 				$position++;
 			}
-
 			// ------args-------
 			$args = "";
 			if(!empty($arguments)){
+				$args_seper = ', ';
 				foreach($arguments as $idx => $field){
-					$args .=',$'.$field;
+					$args .= $args_seper.'$'.$field;
 					switch(strtolower(gettype($defaults[$idx]))){
 						case "boolean": $args .= ('='.($defaults[$idx] === true ? "true" : "false")); break;
-						case "string": 	$args .= ('="'.$defaults[$idx].'"'); break;
+						case "string":
+							//TODO 标识必传参数
+							if($defaults[$idx] != "...NuLl"){
+								$args .= ('="'.$defaults[$idx].'"'); 
+							}
+							break;
 						case "array": 	$args .= ('=[]'); break;
 						case "object": 	$args .= ('={}'); break;
-						
-						case "null": 	break;
-						// case "null": 	$args .= ('=null'); break;
-
-						default: 		$args .= ('='.$defaults[$idx]); break;
+						case "null": 	$args .= ('=null'); break;
+						default:
+							// if ($defaults[$idx] instanceof \Closure){
+							// 	$args .= ('=\Closure');
+							// }elseif(is_callable($defaults[$idx])){
+							// 	$args .= ('=fn()');
+							// }else{
+								$args .= ('='.$defaults[$idx]);
+							// }
+							break;
 					}
 				}
-				$args = ltrim($args, ', ');
+				$args = ltrim($args, $args_seper);
 			}
 
 			if(self::$showMethod != false){
-				// $output->writeln(self::createTRLine("+", "-"));
-				// $output->writeln(self::createTRLine("|",true, true));
-				// $output->writeln(self::createTRLine("+", "-"));
 				self::$writelnLines[] = ["+", "-"];
 				self::$writelnLines[] = ["|",true, true];
 				self::$writelnLines[] = ["+", "-"];
 			}
-
-			// $output->writeln(self::createTRLine("|", [
-			// 	"Idx" => ($index+1)."",
-			// 	"Namespace" => $class->getNamespaceName(),
-			// 	"Class" => $class->getShortName(),
-			// 	"Method" => $method->getName(),
-			// 	"Type" => $method->isStatic() ? "static" : "public",
-			// 	"Arguments" => $args,
-			// 	"Eg" => $eg,
-			// 	"Comment" => $doc,
-			// ]));
 			self::$writelnLines[] = ["|", [
-				"Idx" => str_pad(strval($index+1), 2, " ", STR_PAD_LEFT),
+				"Idx" => str_pad(strval($__index++), 2, " ", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => $method->getName(),
@@ -309,14 +304,11 @@ class Console extends Command {
 			]];
 			
 			if(self::$showMethod !== false){
-				// $output->writeln(self::createTRLine("+", "-"));
 				self::$writelnLines[] = ["+", "-"];
-				// $output->writeln("");
 				self::$writelnLines[] = "";
 				if($comment != ""){
 					$comment = preg_replace("|(\ +)\/\*\*|","/**", $comment);
 					$comment = preg_replace("|(\ +)\*|"," *", $comment);
-					// $output->writeln($comment);
 					self::$writelnLines[] = $comment;
 				}
 
@@ -336,19 +328,12 @@ class Console extends Command {
 					$text.="(";
 					$args = explode(',', $args);
 				}
-				// $output->writeln($text);
 				self::$writelnLines[] = $text;
 				foreach($args as $var){
-					// $output->writeln("");
-					// $output->writeln("    {$var}");
 					self::$writelnLines[] = "    {$var}";
 				}
-				// !empty($args) && $output->writeln(")");
 				!empty($args) && self::$writelnLines[] = ")";
 
-				// $output->writeln("");
-				// $output->writeln(self::createTDText(100));
-				// $output->writeln("");
 				self::$writelnLines[] = "";
 				self::$writelnLines[] = self::createTDText(100);
 				self::$writelnLines[] = "";
@@ -357,7 +342,6 @@ class Console extends Command {
 		}
 		//类中没有枚举到指定方法(或级别不是 public|static)；
 		if(count($methods) == $methodContinues && self::$showMethod !== false){
-			// $output->writeln( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
 			self::$writelnLines[] = ( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
 		}
 	}
@@ -459,48 +443,6 @@ class Console extends Command {
 	}
 
 	private static function getSrcPath(){
-			return VIPKWD_UTILS_LIB_ROOT ."/src/";
-	}
-	
-	private static function getConsoleName(){
-		return "dump";
-	}
-
-	/**
-	 * console的标准配置demo
-	 *
-	 * @return void
-	 */
-	private function __default_configure(){
-		// 命令的名称 ("php artisan" 后面的部分)
-		// 运行 "php artisan list" 时的简短描述
-		// 运行命令时使用 "--help" 选项时的完整命令描述
-		// 配置一个参数
-		// 配置一个可选参数
-		$this->setName('model:create')
-			->setDescription('Create a new model')
-			->setHelp('This command allow you to create models...')
-			->addArgument('name', InputArgument::REQUIRED, 'what\'s model you want to create?')
-			->addArgument('optional', InputArgument::OPTIONAL, 'this is a optional argument', "")
-			->addOption("show", null, InputOption::VALUE_OPTIONAL,"Overwrite the argument 'show'")
-			;
-	}
-	/**
-	 * console的标准响应demo
-	 *
-	 * @param object $input
-	 * @param object $output
-	 * @return int
-	 */
-	private function __default_execute(&$input, &$output){
-		// 你想要做的任何操作
-		$optional_argument = $input->getArgument('optional');
-		$output->writeln('creating...');
-		$output->writeln('created ' . $input->getArgument('name') . ' model success !');
-		if ($optional_argument){
-			$output->writeln('optional argument is ' . $optional_argument);
-		}
-		$output->writeln('<info>the end.</info>'.$input->getOption('show'));
-		return 1;
+		return VIPKWD_UTILS_LIB_ROOT ."/src/";
 	}
 }
