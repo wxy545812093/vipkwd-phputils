@@ -1,7 +1,10 @@
 #!/usr/bin/env php
 <?php
 
-$dir = __DIR__.'/../';
+$dir = realpath(__DIR__.'/../');
+if(is_dir($dir.'/vipkwd/utils')){
+    $dir = $dir.'/vipkwd/utils';
+}
 $composerFile = $dir.'/composer.json';
 if(!file_exists($composerFile)){
     echo "\r\n";
@@ -94,7 +97,7 @@ $application = new Symfony\Component\Console\Application(VIPKWD_PACKAGE_NAME, VI
 */
 
 foreach(glob(VIPKWD_UTILS_LIB_ROOT.'/support/command/*.php') as $file){
-   $class  = "Vipkwd\\Command\\".substr(basename($file), 0, -4);
+   $class  = "\\Vipkwd\\Command\\".substr(basename($file), 0, -4);
    $application->add(new $class());
 }
 $application->run();
