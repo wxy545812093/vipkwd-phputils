@@ -28,7 +28,7 @@ if(!function_exists("devdump")){
 !defined('VIPKWD_UTILS_LIB_ROOT') && define('VIPKWD_UTILS_LIB_ROOT', realpath(__DIR__ .'/../'));
 #include_once(__DIR__."/VipkwdException.php.whoops");
 
-$vendor = realpath(__DIR__ .'/../');
+$vendor = realpath(__DIR__ .'/../../../');
 if( basename($vendor) == "vendor" && is_dir($vendor.'/bin')){
     file_put_contents($vendor.'/bin/vipkwd', file_get_contents("artisan"));
     @chmod($vendor.'/bin/vipkwd', 0777);
