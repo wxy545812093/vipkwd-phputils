@@ -14,12 +14,12 @@ A PHP common toolkit.
 
 ## 安装使用
 ```shell
-composer require vipkwd/utils
+composer require vipkwd/utils[:dev-dev]
 ```
 
-## Artisan Command
+## Artisan Command: vipkwd
 ```shell
-yipeng@mbp vipkwd-utils % ./artisan
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd
 
 Vipkwd/utils 1.1.0
 
@@ -43,7 +43,7 @@ Available commands:
 
 ### [dump] 查看工具类列表
 ```shell
-yipeng@mbp vipkwd-utils % ./artisan dump
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump
 ```
 
 Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
@@ -85,7 +85,7 @@ Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
 
 ### [Class] 查看类方法列表
 ```shell
-yipeng@mbp vipkwd-utils % ./artisan dump Arr   
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump Arr   
 ```
 
 Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
@@ -103,7 +103,7 @@ Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
 ### [ -m method ] 查看方法详细
 ```shell
 
-yipeng@mbp vipkwd-utils % ./artisan dump Arr -m toXml
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump Arr -m toXml
 ```
 
 Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
@@ -141,7 +141,7 @@ Vipkwd\Utils\Arr::toXml(
 ### [--eg] 执行测试用例
 ```shell
 
-yipeng@mbp vipkwd-utils % ./artisan dump Arr -m toXml --eg
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump Arr -m toXml --eg
 ------------------------------------------------------------------------
 [01] [•] $arr=[];
 [02] [•] $arr[]=["name"=>"张叁","roomId"=> "2-2-301", "carPlace"=> ["C109","C110"] ];
@@ -153,7 +153,7 @@ yipeng@mbp vipkwd-utils % ./artisan dump Arr -m toXml --eg
 [08] 无语法填充:
 [09] Vipkwd\Utils\Arr::toXml(Array,false); // <vipkwd len="4"><idx0 len="3"><name>张叁</name><roomId>2-2-301</roomId><carPlace len="2"><idx0>C109</idx0><idx1>C110</idx1></carPlace></idx0><idx1 len="3"><name>李思</name><roomId>9-1-806</roomId><carPlace len="1"><idx0>H109</idx0></carPlace></idx1><idx2 len="3"><name>王武</name><roomId>9-1-807</roomId><carPlace len="0"></carPlace></idx2><key len="3"><name>王武</name><roomId>9-1-807</roomId><carPlace len="0"></carPlace></key></vipkwd>
 ---------------------------------------------------------------------------------------------------- 
-yipeng@mbp vipkwd-utils %
+yipeng@mbp vipkwd-framework %
 ```
 
 ## 实例
