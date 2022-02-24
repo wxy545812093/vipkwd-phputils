@@ -174,6 +174,9 @@ class Console extends Command {
 			if($method->isProtected() || $method->isPrivate()){
 				unset($methods[$k]);
 			}
+			if( self::shieldMethod($method->getName(), "")){
+				unset($methods[$k]);
+			}
 			unset($k,$method);
 		}
 		if( self::$showList === true){
@@ -182,9 +185,9 @@ class Console extends Command {
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
 				"Method" => "Et: ".count($methods),
-				"Type" => "-",
-				"Arguments" => "-",
-				"Eg" => "-",
+				"Type" => ".",
+				"Arguments" => ".",
+				"Eg" => ".",
 				"Comment" => trim($classDescript),
 			]];
 			// if($class->getShortName() == "Qrcodes"){

@@ -20,14 +20,14 @@ use Symfony\Component\Console\Input\{
 use Vipkwd\Utils\{Str, File, Dev};
 // use \Exception;
 
-class TaskLoad extends Command {
+class LoadAssets extends Command {
 
 	use TaskUtils9973200;
 
 	private $mapsApi = "http://dl.vipkwd.com/vipkwd-cdn/maps.php";
 
 	protected function configure(){
-		$this->setName("task:load")
+		$this->setName("load:assets")
 			->setDescription('Install/update assetes for utils')
 			->setHelp('Install/update assetes for utils')
 		;
