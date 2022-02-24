@@ -138,8 +138,7 @@ class File{
      */
     static public function download(string $filename, $rename=null, int $downloadSpeed = 1, bool $breakpoint = true){
         // 验证文件
-        if(!is_file($filename)||!is_readable($filename)) 
-        {
+        if(!is_file($filename)||!is_readable($filename)) {
             return false;
         }
 
@@ -177,12 +176,9 @@ class File{
         // 校验是否限速(文件超过0.5M自动限速为 0.5Mb/s )
         $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed,1) : 0.5) * 1024 * 1024;
 
-        if( $fileSize <= $limit )
-        {
+        if( $fileSize <= $limit ){
             readfile($filename);
-        }
-        else
-        {
+        }else{
             // 读取文件资源
             $file = fopen($filename, 'rb');
 
@@ -209,8 +205,7 @@ class File{
             }
 
             // 下载
-            while (!feof($file) && $fileSize - $count > 0) 
-            {
+            while (!feof($file) && $fileSize - $count > 0) {
                 $res = fread($file, $limit);
                 $count += $limit;
                 echo $res;
@@ -578,12 +573,12 @@ class File{
      * 创建目录
      *
      * @param string $dir
-     * @param integer $mode <0777>
+     * @param integer $mode <0755>
      * 
 	 * @throws \Exception  on error occurred
      * @return boolean
      */
-    static function createDir(string $dir, int $mode = 0777): bool{
+    static function createDir(string $dir, int $mode = 0755): bool{
 		try{
             !is_dir($dir) && @mkdir($dir, $mode, true);
             return is_dir($dir);
@@ -721,6 +716,57 @@ class File{
 				Dev::getLastError()
 			));
 		}
+	}
+
+    /**
+     * 下载网络文件
+     *
+     * @param string $url
+     * @param string $saveNameWithPath  保存文件名 /folder/path/filename
+     * @return string|null
+     */
+    static function downloadHttpFile(string $url, string $saveNameWithPath):?string{
+		// 设置超时时间
+		set_time_limit(24 * 60 * 60);
+
+        $saveNameWithPath = realpath($saveNameWithPath);
+        $destination_folder = rtrim(dirname($saveNameWithPath),'/') . '/';
+        $saveName = basename($saveNameWithPath);
+		// 文件下载保存目录，默认为当前文件目录
+		if (!is_dir($destination_folder)) {
+			// 判断目录是否存在
+			self::createDir($destination_folder);
+			// 如果没有就建立目录
+		}
+		$newfname = rtrim($destination_folder,'/'). '/' . ($saveName ?? basename($url));
+		// 取得文件的名称
+		$file = fopen($url, "rb");
+		// 远程下载文件，二进制模式
+		if ($file) {
+			// 如果下载成功
+			$newf = fopen($newfname, "wb");
+			// 远在文件文件
+			if ($newf) {
+				// 如果文件保存成功
+				while (!feof($file)) {
+					// 判断附件写入是否完整
+					fwrite($newf, fread($file, 1024 * 8), 1024 * 8);
+					// 没有写完就继续
+				}
+			}
+		}
+		if ($file) {
+			fclose($file);
+			// 关闭远程文件
+		}
+		if ($newf) {
+			fclose($newf);
+			// 关闭本地文件
+		}
+        if(file_exists($newfname)){
+            return $newfname;
+        }
+		return null;
 	}
 }
 

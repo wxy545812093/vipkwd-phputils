@@ -17,11 +17,15 @@ use Symfony\Component\Console\Input\{
 	InputArgument,
 	InputInterface
 };
-use Vipkwd\Utils\{Str,Dev};
+use Vipkwd\Utils\{Str, File, Dev};
 // use \Exception;
 
 class TaskLoad extends Command {
-	
+
+	use TaskUtils9973200;
+
+	private $mapsApi = "http://dl.vipkwd.com/vipkwd-cdn/maps.php";
+
 	protected function configure(){
 		$this->setName("task:load")
 			->setDescription('Install/update assetes for utils')
@@ -29,7 +33,26 @@ class TaskLoad extends Command {
 		;
 	}
 	protected function execute(InputInterface $input, OutputInterface $output){
-		include_once(__DIR__.'/../VipkwdTask.php');
+		$width = 60;
+		self::smartPad($width);
+		// echo "----".str_pad("任务构建",56,'·',STR_PAD_BOTH)."----".PHP_EOL;
+		$maps = json_decode(file_get_contents($this->mapsApi),true);
+		
+		$idx = 1;
+		foreach($maps as $file => $map){
+			$sfile = self::buildPath($file);
+			$key = file_exists($sfile) ? hash_file('md5', $sfile) : null;
+			if($key != $map['hash']){
+				self::smartPad($width, "-> {$idx} Update {$file} ### ");
+				File::downloadHttpFile($map['url'], $sfile);
+				self::smartPad($width, "   ### (Completed)","###", '└');
+				usleep(600);
+			}else{
+				self::smartPad($width, "-> {$idx} Update {$file} ### (Skiped)");
+			}
+			$idx++;
+		}
+		self::smartPad($width);
 		return 1;
 	}
 
@@ -69,5 +92,21 @@ class TaskLoad extends Command {
 		}
 		$output->writeln('<info>the end.</info>'.$input->getOption('show'));
 		return 1;
+	}
+}
+
+trait TaskUtils9973200 {
+
+	private static function buildPath($file){
+		return realpath(__DIR__.'/../').'/'. ltrim( $file, '/');;
+	}
+
+	private static function smartPad($width, $text=null, $seper = '###', $prefix=''){
+		if($text === null){
+			echo str_pad("", $width ,"-").PHP_EOL;
+		}else{
+			$pad = implode('',array_pad([], ($width - strlen($text) - (strlen($prefix)/3) + strlen($seper)), "·"));
+			echo str_replace( $seper, $prefix . $pad ,$text).PHP_EOL;
+		}
 	}
 }
