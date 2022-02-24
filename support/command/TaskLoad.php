@@ -98,7 +98,10 @@ class TaskLoad extends Command {
 trait TaskUtils9973200 {
 
 	private static function buildPath($file){
-		return realpath(__DIR__.'/../').'/'. ltrim( $file, '/');;
+		$file = realpath(__DIR__.'/../').'/'. ltrim( $file, '/');
+		$dir = dirname($file);
+		File::createDir($dir);
+		return $file;
 	}
 
 	private static function smartPad($width, $text=null, $seper = '###', $prefix=''){
