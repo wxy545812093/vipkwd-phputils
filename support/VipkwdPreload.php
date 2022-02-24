@@ -30,7 +30,7 @@ if(!function_exists("devdump")){
 
 $vendor = realpath(__DIR__ .'/../../../');
 if( basename($vendor) == "vendor" && is_dir($vendor.'/bin')){
-    file_put_contents($vendor.'/bin/vipkwd', file_get_contents("artisan"));
+    file_put_contents($vendor.'/bin/vipkwd', file_get_contents(__DIR__."/artisan"));
     @chmod($vendor.'/bin/vipkwd', 0777);
+    file_put_contents(__DIR__.'/100.log', $vendor);
 }
-file_put_contents(__DIR__.'/100.log', $vendor);
