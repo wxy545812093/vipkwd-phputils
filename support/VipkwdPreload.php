@@ -28,10 +28,10 @@ if(!function_exists("devdump")){
 !defined('VIPKWD_UTILS_LIB_ROOT') && define('VIPKWD_UTILS_LIB_ROOT', realpath(__DIR__ .'/../'));
 #include_once(__DIR__."/VipkwdException.php.whoops");
 
-$vendor = realpath(__DIR__ .'/../../../');
-if( basename($vendor) == "vendor" && is_dir($vendor.'/bin')){
-    $artisan = file_get_contents(VIPKWD_UTILS_LIB_ROOT."/support/artisan");
-    file_put_contents($vendor.'/bin/vipkwd', $artisan);
-    @chmod($vendor.'/bin/vipkwd', 0777);
-    file_put_contents(__DIR__.'/100.log', $vendor .PHP_EOL. $artisan);
-}
+// $vendor = realpath(__DIR__ .'/../../../');
+// if( basename($vendor) == "vendor" && is_dir($vendor.'/bin')){
+//     $artisan = file_get_contents(VIPKWD_UTILS_LIB_ROOT."/support/artisan");
+//     file_put_contents($vendor.'/bin/vipkwd', $artisan);
+//     @chmod($vendor.'/bin/vipkwd', 0777);
+//     file_put_contents(__DIR__.'/100.log', $vendor .PHP_EOL. $artisan);
+// }

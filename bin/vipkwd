@@ -2,10 +2,6 @@
 <?php
 
 $dir = __DIR__.'/../';
-$vikwdUtilsPath = realpath($dir).'/vipkwd/utils';
-if(is_dir($vikwdUtilsPath)){
-    $dir = $vikwdUtilsPath;
-}
 $composerFile = $dir.'/composer.json';
 if(!file_exists($composerFile)){
     echo "\r\n";

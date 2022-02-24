@@ -23,6 +23,7 @@
         "symfony/console": "^5.3",
         "zoujingli/ip2region": "^1.0"
     },
+    "bin":["bin/vipkwd"],
     "autoload": {
         "psr-4": {
             "Vipkwd\\Utils\\": ["src/"],
@@ -40,9 +41,7 @@
         "post-autoload-dump": [
             "@php -r \"@include('support/VipkwdPreload.php');\""
         ],
-        "post-package-install": [
-            "composer run-script post-autoload-dump"
-        ],
+        "post-package-install": [],
         "post-package-update": []
     },
     "config": {
