@@ -728,10 +728,13 @@ class File{
     static function downloadHttpFile(string $url, string $saveNameWithPath):?string{
 		// 设置超时时间
 		set_time_limit(24 * 60 * 60);
-
-        $saveNameWithPath = realpath($saveNameWithPath);
+        if(false !== realpath($saveNameWithPath)){
+            $saveNameWithPath = realpath($saveNameWithPath);
+            // Dev::dumper($saveNameWithPath,1);
+        }
         $destination_folder = rtrim(dirname($saveNameWithPath),'/') . '/';
         $saveName = basename($saveNameWithPath);
+        
 		// 文件下载保存目录，默认为当前文件目录
 		if (!is_dir($destination_folder)) {
 			// 判断目录是否存在
