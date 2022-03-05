@@ -13,6 +13,7 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use Vipkwd\Utils\Str as VipkwdStr;
+use Vipkwd\Utils\Libs\Net\{Request, Response};
 use \Exception;
 use \Closure;
 
@@ -94,5 +95,55 @@ class Http{
         $result = curl_exec($ch);
         curl_close($ch);
         return $result;
-    }  
+
+        // $data = array ('foo' => 'bar');
+        // $data = http_build_query($data);
+
+        // $opts = array (
+        //     'http' => array (
+        //         'method' => 'POST',
+        //         'header'=> 'Content-type: application/x-www-form-urlencodedrn',
+        //         'Content-Length: '. strlen($data) . "\r\n",
+        //         'content' => $data
+        //     )
+        // );
+
+        // $context = stream_context_create($opts);
+        // $html = file_get_contents('http://localhost/e/admin/test.html', false, $context);
+    }
+    
+    /**
+     * Request 请求处理类
+     *
+     * -e.g: phpunit("Http::request");
+     * 
+     * @param array $config
+     * @return Object
+     */
+    static function request(array $config = []):Object{
+        return new Request($config);
+    }
+
+    /**
+     * Response 请求响应类
+     *
+     * -e.g: phpunit("Http::response");
+     * 
+     * @param array $config
+     * @return Object
+     */
+    static function response(array $config = []):Object{
+        return new Response($config);
+    }
+
+    /**
+     * 发送请求状态
+     *
+     * @param integer $code
+     * @return void
+     */
+    static function sendCode(int $code){
+        $response = self::response();
+        isset($response::$codes[$code]) && header("HTTP/1.1 {$code} ". $response::$codes[$code]);
+    }
 }

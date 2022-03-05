@@ -46,5 +46,8 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "optimize-autoloader": true
+    },
+    "require-dev": {
+        "thiagoalessio/tesseract_ocr": "dev-main"
     }
 }

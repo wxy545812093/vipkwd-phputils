@@ -52,7 +52,7 @@ class Str{
      * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES,"utf-8"]);
      *
      * @param string $value
-     * @param mixed $flags
+     * @param mixed $flags <ENT_QUOTES>
      * @param string $encoding
      * @return string
      */
@@ -268,17 +268,17 @@ class Str{
      * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 12]);
      * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 16]);
      *
-     * @param string $string
+     * @param string $str
      * @param integer $length
      * @param string $padStr
      * @param int $padType
      * @return string
      */
-    static function strPadPlus(string $string, int $length, string $padStr=" ", $padType=STR_PAD_RIGHT): string{
+    static function strPadPlus(string $str, int $length, string $padStr=" ", $padType=STR_PAD_RIGHT): string{
         //探测字符里的中文
-		preg_match_all('/[\x7f-\xff]+/', $string, $matches);
+		preg_match_all('/[\x7f-\xff]+/', $str, $matches);
 		if(!empty($matches[0])){
-			$rel_len = self::strLenPlus($string);
+			$rel_len = self::strLenPlus($str);
 			//统计中文字的实际个数
 			$zh_str_totals = self::strLenPlus(implode("",$matches[0]));
 			//剩下的就是非中文字符个数
@@ -290,18 +290,18 @@ class Str{
 			//生成计算长度的虚拟字符串
 			$tmp_txt = str_pad("^&.!",$rel_len, "#");
 			//实际字符串替换虚拟字符串（实现还原 外部字符）
-			$string = str_replace(
+			$str = str_replace(
                 /* 用需求字符替换掉 常规填充字符中 的虚拟字符*/
                 $tmp_txt,
-                $string,
+                $str,
                 /*常规填充*/
                 str_pad($tmp_txt, $length, $padStr,$padType)
             );
 			unset($rel_len, $zh_str_totals, $un_zh_str_totals, $tmp_txt);
 		}else{
-			$string = str_pad($string, $length, $padStr, $padType);
+			$str = str_pad($str, $length, $padStr, $padType);
 		}
-        return $string;
+        return $str;
     }
 
     /**
@@ -325,65 +325,65 @@ class Str{
      * -e.g: phpunit("Str::autoCharset", ["张三","bgk","utf-8"]);
      * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","bgk"]);
      * 
-     * @param string|array $string
+     * @param string|array $str
      * @param string $fromCharset
      * @param string $toCharset
      * @return string
      */
-    static function autoCharset($string, string $fromCharset = 'gbk', string $toCharset = 'utf-8'): string {
+    static function autoCharset($str, string $fromCharset = 'gbk', string $toCharset = 'utf-8'): string {
         $fromCharset = strtoupper($fromCharset) == 'UTF8' ? 'utf-8' : $fromCharset;
         $toCharset = strtoupper($toCharset) == 'UTF8' ? 'utf-8' : $toCharset;
-        if (strtoupper($fromCharset) === strtoupper($toCharset) || empty($string) || (is_scalar($string) && !is_string($string))) {
+        if (strtoupper($fromCharset) === strtoupper($toCharset) || empty($str) || (is_scalar($str) && !is_string($str))) {
             //如果编码相同或者非字符串标量则不转换
-            return $string;
+            return $str;
         }
-        if (is_string($string)) {
+        if (is_string($str)) {
             if (function_exists('mb_convert_encoding')) {
-                return mb_convert_encoding($string, $toCharset, $fromCharset);
+                return mb_convert_encoding($str, $toCharset, $fromCharset);
             } elseif (function_exists('iconv')) {
-                return iconv($fromCharset, $toCharset, $string);
+                return iconv($fromCharset, $toCharset, $str);
             } else {
-                return $string;
+                return $str;
             }
-        } elseif (is_array($string)) {
-            foreach ($string as $key => $val) {
+        } elseif (is_array($str)) {
+            foreach ($str as $key => $val) {
                 $_key = self::autoCharset($key, $fromCharset, $toCharset);
-                $string[$_key] = self::autoCharset($val, $fromCharset, $toCharset);
+                $str[$_key] = self::autoCharset($val, $fromCharset, $toCharset);
                 if ($key != $_key)
-                    unset($string[$key]);
+                    unset($str[$key]);
             }
-            return $string;
+            return $str;
         } else {
-            return $string;
+            return $str;
         }
     }
 
     /**
      * 文本搜索高亮标注
      * 
-     * -e.g: $input="uh~,这里不仅有alipay,youtube.com,还有10musume.com, alipay";
-     * -e.g: $field="text";
+     * -e.g: $str="uh~,这里不仅有alipay,youtube.com,还有10musume.com, alipay";
+     * -e.g: $field="field1";
      * -e.g: $search=array();
-     * -e.g: $search["values"]=[ "text" => ["%alipay","u%","%com%","%youtu"] ];
+     * -e.g: $search["values"]=[ "field1" => ["%alipay","u%","%com%","%youtu"] ];
      * 
-     * -e.g: $search["operators"]=["text" => "like"];
-     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
-     * 
-     * 
-     * -e.g: $search["operators"]=["text" => "like%"];
-     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
+     * -e.g: $search["operators"]=["field1" => "like"];
+     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
      * 
      * 
-     * -e.g: $search["operators"]=["text" => "eq"];
-     * -e.g: phpunit("Str::markSearchWords",[$input, $field, $search]);
+     * -e.g: $search["operators"]=["field1" => "like%"];
+     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
+     * 
+     * 
+     * -e.g: $search["operators"]=["field1" => "eq"];
+     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
      *
-     * @param string $input
-     * @param string $field
-     * @param array $search
+     * @param string $str
+     * @param string $field 搜索字段名
+     * @param array $search 搜索模式配置
      * @return string
      */
-    static function markSearchWords(string $input, string $field, array $search):string{
-        $output = self::htmlEncode($input);
+    static function markSearchWords(string $str, string $field, array $search):string{
+        $output = self::htmlEncode($str);
         if(isset($search['values'][$field]) && is_array($search['values'][$field])){
             // build one regex that matches (all) search words
             $regex = '/';
@@ -411,9 +411,9 @@ class Str{
 
             // split the string into parts that match and should be highlighted and parts in between
             // $fldBetweenParts: the parts that don't match (might contain empty strings)
-            $fldBetweenParts = preg_split($regex, $input);
+            $fldBetweenParts = preg_split($regex, $str);
             // $fldFoundParts[0]: the parts that match
-            preg_match_all($regex, $input, $fldFoundParts);
+            preg_match_all($regex, $str, $fldFoundParts);
 
             // stick the parts together
             $output = '';
@@ -434,7 +434,7 @@ class Str{
      * -e.g: phpunit("Str::contains", ["你好阿","你好"]);
      * -e.g: phpunit("Str::contains", ["你好阿",["好","你"]]);
      * 
-     * @param string       $haystack
+     * @param string $haystack
      * @param string|array $needles
      * 
      * @return bool
@@ -492,17 +492,17 @@ class Str{
     /**
      * 汉字转拼音
      *
-     * -e.g: phpunit("Str::zhToPy", ["你好阿"]);
-     * -e.g: phpunit("Str::zhToPy", ["你好阿","head"]);
-     * -e.g: phpunit("Str::zhToPy", ["你好阿","all"]);
-     * -e.g: phpunit("Str::zhToPy", ["你好阿","one"]);
+     * -e.g: phpunit("Str::getPinyin", ["你好阿"]);
+     * -e.g: phpunit("Str::getPinyin", ["你好阿","head"]);
+     * -e.g: phpunit("Str::getPinyin", ["你好阿","all"]);
+     * -e.g: phpunit("Str::getPinyin", ["你好阿","one"]);
      * 
-     * @param string $text
+     * @param string $str
      * @param string $type [head:首字母|all:全拼音]
      * @return string
      */
-    static function zhToPy(string $text, string $type = 'head'):string{
-        $result = ZhToPy::encode($text, $type);
+    static function getPinyin(string $str, string $type = 'head'):string{
+        $result = ZhToPy::encode($str, $type);
         return strtolower($result);//返回结果转小写
     }
 
@@ -525,13 +525,13 @@ class Str{
      * -e.g: phpunit("Str::isUtf8", ["张三"]);
      * -e.g: phpunit("Str::isUtf8", ["123"]);
      * 
-     * @param string $string 字符串
+     * @param string $str 字符串
      * @return Boolean
      */
-    static function isUtf8(string $string): bool {
-        $len = strlen($string);
+    static function isUtf8(string $str): bool {
+        $len = strlen($str);
         for ($i = 0; $i < $len; $i++) {
-            $c = ord($string[$i]);
+            $c = ord($str[$i]);
             if ($c > 128) {
                 if (($c >= 254)) return false;
                 elseif ($c >= 252) $bits = 6;
@@ -543,7 +543,7 @@ class Str{
                 if (($i + $bits) > $len) return false;
                 while ($bits > 1) {
                     $i++;
-                    $b = ord($string[$i]);
+                    $b = ord($str[$i]);
                     if ($b < 128 || $b > 191) return false;
                     $bits--;
                 }
@@ -621,12 +621,14 @@ class Str{
     }
 
     /**
-     * 获取(最大)相似度文本
+     * 获取(最大)相似度文本(不支持中文)
      * 
-     * -e.g: $items = ["foo", "bar", "baz"];
+     * -e.g: $items = ["foo", "bar", "baz","你好"];
      * -e.g: phpunit("Str::getSuggestion",[$items, "fo"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "barr"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "baz"]);
+     * -e.g: phpunit("Str::getSuggestion",[$items, "好"]);
+     * -e.g: phpunit("Str::getSuggestion",[$items, "你"]);
      * 
      * @param string[]  $possibilities 查找列表
      * @param string $value 查找文字
@@ -637,12 +639,11 @@ class Str{
 		$best = null;
 		$min = (strlen($value) / 4 + 1) * 10 + .1;
 		foreach (array_unique($possibilities) as $item) {
-			if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) < $min) {
+			if ($item !== $value && ($len = \levenshtein($item, $value, 10, 11, 10)) < $min) {
 				$min = $len;
 				$best = $item;
 			}
 		}
-
 		return $best;
 	}
 

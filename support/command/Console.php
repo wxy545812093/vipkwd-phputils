@@ -12,6 +12,7 @@ namespace Vipkwd\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Input\{
 	InputOption,
 	InputArgument,
@@ -22,6 +23,8 @@ use \Vipkwd\Utils\{Str,Dev};
 
 class Console extends Command {
 	
+	private static $_input = null;
+	private static $_output = null;
 	private static $nameSpace = '\\Vipkwd\\Utils\\';
 	private static $methodsOrderBy = true;
 	private static $showList = true;
@@ -30,7 +33,7 @@ class Console extends Command {
 	private static $writelnLines = [];
 	private static $writelnWidths = [];
 	private static $shieldMethods = [
-		"__construct",
+		// "__construct",
 		"__destruct",
 		"__set",
 		"__get",
@@ -54,25 +57,28 @@ class Console extends Command {
 		// ;
 
 	}
+	
 	protected function execute(InputInterface $input, OutputInterface $output){
+		self::$_input = $input;
+		self::$_output = $output;
 		// 你想要做的任何操作
-		$className = trim($input->getArgument('className'));
-		$method = trim($input->getOption('method') ?? "");
-		$eg = trim($input->getOption('eg') ?? "");
+		$className = trim(self::$_input->getArgument('className'));
+		$method = trim(self::$_input->getOption('method') ?? "");
+		$eg = trim(self::$_input->getOption('eg') ?? "");
 
 		//纠正短选项使用了 长选项的等于号("=") 问题;
 		$method = str_replace('=',"", $method);
 		$eg = str_replace('=',"", $eg);
 		self::$showList = true;
-		self::$showMethod = false;	
+		self::$showMethod = false;
 		if($className == ""){
 			$className = "list";
 		}else{
 			$className = ucfirst($className);
 			if(!file_exists( static::getSrcPath() .'/'.$className.".php")){
-				$output->writeln('');
-				$output->writeln('[Notice] Class "<info>'.self::$nameSpace.$className.'</info>" not found in Package.');
-				$output->writeln('');
+				self::$_output->writeln('');
+				self::$_output->writeln('[Notice] Class "<info>'.self::$nameSpace.$className.'</info>" not found in Package.');
+				self::$_output->writeln('');
 				return 1;
 			}
 			self::$showList = false;
@@ -81,18 +87,18 @@ class Console extends Command {
 				self::$showMethod = $method;
 				self::$testMethod = $eg != "-";
 				self::parseClass($className, 0, $classDescript=null);
-				self::output($input, $output);
+				self::output();
 				return 1;
 			}
 		}
 		self::buildMethodListDoc($className);
-		self::output($input, $output);
+		self::output();
 		return 1;
 
-		// return $this->__default_execute($input, $output);
+		// return $this->__default_execute();
 	}
 
-	private function output(&$input, &$output){
+	private function output(){
 		$widths = [
 			"Idx" 		=> 0,
 			"Namespace" => 0,
@@ -125,9 +131,9 @@ class Console extends Command {
 		self::$writelnWidths = $widths;
 		foreach(self::$writelnLines as $line){
 			if(is_array($line)){
-				$output->writeln(self::createTRLine($line[0], $line[1], $line[2] ?? false));
+				self::$_output->writeln(self::createTRLine($line[0], $line[1], $line[2] ?? false));
 			}else{
-				$output->writeln($line);
+				self::$_output->writeln($line);
 			}
 		}
 	}
@@ -165,8 +171,8 @@ class Console extends Command {
 		self::$writelnLines[] = ["+", "-"];
 	}
 
-	private static function parseClass($class, $index, $classDescript=null){
-		$className = self::$nameSpace.$class;
+	private static function parseClass($Class, $index, $classDescript=null){
+		$className = self::$nameSpace.$Class;
 		$class = new \ReflectionClass($className);
 		$methods = $class->getMethods(\ReflectionMethod::IS_STATIC + \ReflectionMethod::IS_PUBLIC);
 		//剔除未公开的方法
@@ -220,13 +226,18 @@ class Console extends Command {
 		//遍历所有的方法
 		foreach ($methods as $index => $method) {
 			$comment = $method->getDocComment();
+			$comment = implode(PHP_EOL,array_map(function($v){
+				$v = trim($v);
+				return substr($v, 0,1) == '/' ? $v : " $v";
+			}, explode(PHP_EOL, is_string($comment)? $comment : "-")));
 
-			if( self::shieldMethod($method->getName(), "$comment") || (self::$showMethod !== false && $method->getName() != self::$showMethod )){
+			$flag = $method->getName() != self::$showMethod;
+			if( self::shieldMethod($method->getName(), "$comment") || (self::$showMethod !== false && $flag )){
 				$methodContinues ++;
 				continue;
 			}
 			//获取并解析方法注释
-			$doc = explode("\r\n", is_string($comment)? $comment : "-");
+			$doc = explode(PHP_EOL, is_string($comment)? $comment : "-");
 			if(count($doc) < 2){
 				$doc = explode("\n", is_string($comment)? $comment : "\n--");
 			}
@@ -332,10 +343,11 @@ class Console extends Command {
 					$args = explode(',', $args);
 				}
 				self::$writelnLines[] = $text;
-				foreach($args as $var){
-					self::$writelnLines[] = "    {$var}";
+				
+				foreach($args as $k => $var){
+					self::$writelnLines[] = '    '.trim($var). ( count($args) == $k+1 ? '' : ',');
 				}
-				!empty($args) && self::$writelnLines[] = ")";
+				!empty($args) && self::$writelnLines[] = ");";
 
 				self::$writelnLines[] = "";
 				self::$writelnLines[] = self::createTDText(100);
@@ -345,7 +357,47 @@ class Console extends Command {
 		}
 		//类中没有枚举到指定方法(或级别不是 public|static)；
 		if(count($methods) == $methodContinues && self::$showMethod !== false){
-			self::$writelnLines[] = ( "-- !!! Warning: <info>".$className."::".self::$showMethod ."()</info> method does not exist or does not expose access rights.");
+
+			$_alternatives = [];
+			$methods = array_map(function($method)use(&$_alternatives){
+				self::$showMethod = preg_replace("/[^A-Z0-9_]/i",'', self::$showMethod);
+				// self::$showMethod = preg_replace("/[^A-Z0-9_*]/i",'', self::$showMethod);
+				// $str = str_replace('*','(.*)', self::$showMethod);
+				try{
+					// preg_match("/{$str}/i", $method->name, $matches);
+					// if(isset($matches[0]) && isset($matches[1]) && !empty($matches[0])){
+					// 	$_alternatives[] = $matches[0];
+					// }
+					if(self::$showMethod && false !== stripos($method->name, self::$showMethod) && strlen(self::$showMethod) >=3){
+						$_alternatives[] = $method->name;
+					}
+				}catch(\Exception $e){}
+				return $method->name;
+			}, $methods);
+
+			$alternative = Str::getSuggestion($methods, self::$showMethod);
+			
+			$style = new SymfonyStyle(self::$_input, self::$_output);
+			$style->block(sprintf("\n%s::%s() method does not exist or does not expose access rights..\n", $className, self::$showMethod), null, 'error');
+			if($alternative === null && !empty($_alternatives)){
+				$alternative = $_alternatives[0];
+				if(count($_alternatives) > 1){
+					$_alternatives[] = "quit cli command";
+					$method = $style->choice(sprintf('But have found the following methods, please choose[index/name] one of them? '), $_alternatives, array_key_last($_alternatives) );
+					if($method == 'quit cli command'){
+						return ;
+					}
+					self::$showMethod = $method;
+					self::parseClass($Class, 0, $classDescript);
+					return ;
+				}
+			};
+			if($alternative !== null){
+				if ($style->confirm(sprintf('Do you want to run "%s" instead? ', $alternative), false)) {
+					self::$showMethod = $alternative;
+					self::parseClass($Class, 0, $classDescript);
+				}
+			}
 		}
 	}
 

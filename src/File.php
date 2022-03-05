@@ -10,9 +10,9 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use PhpShardUpload\ShardUpload;
+use PhpShardUpload\{ShardUpload,ShardUploadStatus,FileManage};
 // use PhpShardUpload\Components\FileDownload;
-use Vipkwd\Utils\{Tools,Dev};
+use Vipkwd\Utils\{Tools,Dev, Http, Thumb as VipkwdThumb};
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class File{
@@ -32,7 +32,10 @@ class File{
     static function pathToUnix(string $path):string{
         if($path){
             $path = str_replace('\\','/', $path);
-            $path = realpath($path);
+            $path = self::normalizePath($path);
+            if( false != ($_p = realpath($path))){
+                $path = $_p;
+            }
         }
         return $path ?? "";
     }
@@ -108,21 +111,28 @@ class File{
      * @return string
      */
     static function realpath(string $path, bool $pathToUnix = true):string{
-        return $pathToUnix ? self::pathToUnix($path) : realpath($path);
+        $path = self::normalizePath($path);
+        if($pathToUnix){
+            return self::pathToUnix($path);
+        }
+        if( false != ($p = realpath($path))){
+            $path = $p;
+        }
+        return $path;
     }
 
     /**
      * 单文件上传
      *
-     * @param string $uploadKey <file> $_FILES[?]
      * @param array $options
      *                  --max_size integer <10 * 1024 * 1024>  限制可上传文件大小(单位)
      *                  --upload_dir string <"upfiles/"> 保存目录
      *                  --type array <["jpg","gif","bmp","jpeg","png"]> 允许扩展
      *                  --file_name_prefix string <''> 文件名前缀
+     * @param string $uploadKey <file> $_FILES[?]
      * @return array|null
      */
-    static function upload($uploadKey = "file", $options = []):?array{
+    static function upload($options = [], $uploadKey = "file"):?array{
         return (new VipkwdUpload)->upload($uploadKey, $options);
     }
 
@@ -277,7 +287,7 @@ class File{
     /**
      * [分片/秒传组件]: 上传
      * 
-     * 需配合 /support/hashFileUpload 组件使用
+     * 需配合 /example/hashFileUpload 组件使用
      *
      * @param string $savePath 文件保存目录
      * @return string
@@ -291,17 +301,17 @@ class File{
             $_POST['size'], //总大小
             $_POST['md5Hash'], 
             $_POST['sha1Hash'], 
-            rtrim($savePath, "/")."/"
+            rtrim(self::normalizePath($savePath), "/")."/"
         );
         $response = $shard->upload();
-        header('Content-Type:application/json;charset=utf-8');
-        echo json_encode($response,JSON_UNESCAPED_UNICODE);
+        // header('Content-Type:application/json;charset=utf-8');
+        return json_encode($response,JSON_UNESCAPED_UNICODE);
     }
     
     /**
      * [分片/秒传组件]: 查看上传状态
      *
-     * 需配合 /support/hashFileUpload 组件使用
+     * 需配合 /example/hashFileUpload 组件使用
      * @param string $savePath 文件保存目录
      * @return string
      */
@@ -312,32 +322,43 @@ class File{
             $_POST['size'], //文件总大小
             $_POST['md5Hash'], 
             $_POST['sha1Hash'], 
-            rtrim($savePath,"/")."/"
+            $savePath = rtrim(self::normalizePath($savePath),"/")."/"
         );
         $response = $shard->getUploadStatus();
         if($response['status'] == 1){
-        //$manage = new \PhpShardUpload\FileManage($md5Hash, $sha1Hash, $fileBaseDir);
-        //   var_dump($manage->getUploadSuccessFilePath()); //已成功上传的文件路径
-        }
-        header('Content-Type:application/json;charset=utf-8');
-        echo json_encode($response,JSON_UNESCAPED_UNICODE);
-    }
+            $manage = new \PhpShardUpload\FileManage($_POST['md5Hash'], $_POST['sha1Hash'], $savePath);
+            // $response['data']['path'] = ; //已成功上传的文件路径
+            $file = $manage->getUploadSuccessFilePath();
 
+            // $info = VipkwdThumb::instance()->getImageInfo($file);
+            $info['file'] = $file = substr($file, strripos($file, Http::request()->base));
+            $file = explode('/', $file);
+            array_pop($file);
+            $info['path'] = implode('/', $file);
+            
+            $response['data']['info'] = $info;
+            // $response['sever'] = Http::request();
+        }
+        // header('Content-Type:application/json;charset=utf-8');
+        return json_encode($response,JSON_UNESCAPED_UNICODE);
+    }
+    
     /**
      * [分片/秒传组件]: 下载
      *
-     * 需配合 /support/hashFileUpload 组件使用
+     * 需配合 /example/hashFileUpload 组件使用
      * @return void
      */
-    static function downloadHashFile(string $savePath = "./", string $saveName = ""){
-        $md5Hash = trim($_GET['md5Hash']);
-        $sha1Hash = trim($_GET['sha1Hash']);
+    static function downloadHashFile(string $savePath = "./", ?string $hash=null, ?string $saveName = null){
+        $hash = $hash ? $hash : (empty($_GET['hash']) ? '' : $_GET['hash']);
+        $hash = trim(urldecode($hash));
+        if(strlen($hash) !== ((300 >> 2) -3)){
+            return Http::sendCode(404);
+        }
         //下载文件名称
-        $name= $saveName ? $saveName : (isset($_GET['name']) ? $_GET['name']:'');
-        
-        $savePath = rtrim($savePath, "/") . "/";
-
-        $manage = new \PhpShardUpload\FileManage($md5Hash, $sha1Hash, $savePath);
+        $name= $saveName ? $saveName : (empty($_GET['name']) ? '' : urldecode($_GET['name']));
+        $savePath = rtrim(self::normalizePath($savePath), "/") . "/";
+        $manage = new FileManage(substr($hash, 0, 2 << 4), substr($hash, 2 << 4), $savePath);
         $manage->download($name);
     }
 
@@ -519,12 +540,16 @@ class File{
      * 
      * -e.g: phpunit("File::isAbsolutePath", ["./www"]);
      * -e.g: phpunit("File::isAbsolutePath", ["/backup"]);
+     * -e.g: phpunit("File::isAbsolutePath", ["/backup/22/../"]);
+     * -e.g: phpunit("File::isAbsolutePath", ["/backup/22/../../../"]);
+     * -e.g: phpunit("File::isAbsolutePath", ["backup/./../../../"]);
      * 
      * @param string $path
      * @return boolean
      */
-    static function isAbsolutePath(string $path): bool{
-		return (bool) preg_match('#([a-z]:)?[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
+    static function isAbsolutePath(string &$path):bool{
+        $path = self::normalizePath($path);
+		return (bool)preg_match('#([a-z]:)?[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
 	}
 
     /**
@@ -549,7 +574,7 @@ class File{
 			}
 		}
 
-		return $res === ['']
+		return empty($res)
 			? DIRECTORY_SEPARATOR
 			: implode(DIRECTORY_SEPARATOR, $res);
 	}
@@ -580,6 +605,8 @@ class File{
      */
     static function createDir(string $dir, int $mode = 0755): bool{
 		try{
+            $dir = self::normalizePath($dir);
+            is_file($dir) && $dir = dirname($dir);
             !is_dir($dir) && @mkdir($dir, $mode, true);
             return is_dir($dir);
         }catch(\Exception $e){
@@ -771,6 +798,72 @@ class File{
         }
 		return null;
 	}
+
+    static function showImage(string $imagePath){
+        //获取mime信息
+        $size = getimagesize($imagePath);
+        //二进制方式打开文件
+        $fp=fopen($filename, "rb");
+        if ($size && $fp) {
+            header("Content-type: {$size['mime']}");
+            fpassthru($fp); // 输出至浏览器
+            exit;
+        }
+    }
+
+    /**
+     * 向上查找指定文件
+     *
+     * @param string $file
+     * @param boolean $except <false> 是否返回查找轨迹(PATH)
+     * @param integer $level <5> 向后查找层级数
+     * @return void
+     */
+    static function closestPath(string $file, bool $except=false, int $level = 5){
+        // $err = sprintf('%s::%s() expects parameter 1 to be absolute path string, relative path given', __CLASS__,__FUNCTION__);
+        if(self::isAbsolutePath($file)){
+            $basePath = self::dirname($file);
+            $file = self::basename($file);
+        }else{
+            $trace = debug_backtrace();
+            $trace = array_pop($trace);
+            $basePath = self::dirname($trace['file']);
+            unset($trace);
+        }
+        $history=[]; $deep ="";
+        for($i=0; $i< $level; $i++){
+            $i>0 && $deep .= "/..";
+            $_h = array_merge([],$history);
+            $history[] = $_file = self::realpath($basePath . $deep) . '/'.$file;
+            if(array_pop($_h) === $_file){
+                unset($_h);
+                break;
+            }
+            unset($_h);
+            if(file_exists($_file)){   
+                $i=true;
+                break;
+            }  
+        }
+        if($i === true){
+            unset($history, $level, $basePath, $file);
+            return $_file;
+        }
+        if(Tools::isCli()){
+            $err ="\r\n";
+            $err .= sprintf("\033[31mNot found the %s resource in below path list\033[0m", $file);
+            $err .= "\r\n";
+            foreach($history as $k=>$file){
+                $err .= sprintf("\033[31m%-6sTrace%s in:\033[0m %s"," ",$k+1, $file);
+                $err .= "\r\n";
+            }
+        }else{
+            $err = sprintf("Not found the %s resource in below path list: [ %s ]", $file, implode(", ", $history));
+        }
+        unset($history, $level, $basePath, $file);
+        if(!$except){ return null; }
+        throw new \Exception($err);
+    }
 }
 
 

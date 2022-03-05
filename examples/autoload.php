@@ -1,4 +1,7 @@
 <?php
+
+define("ASSETS", __DIR__.'/assets');
+
 $autoload = '/vendor/autoload.php';
 $autoloadPath=[];
 $deep ="";

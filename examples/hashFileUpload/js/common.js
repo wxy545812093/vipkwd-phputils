@@ -120,7 +120,7 @@ var fileUploadPage = function(){
             var reader = new FileReader();
 
             reader.onload = function () {
-                console.log("read chunk sha1 ", currentChunk + 1, "of", chunks);
+                // console.log("read chunk sha1 ", currentChunk + 1, "of", chunks);
                 file.sha1_progress = (end * 100 / file.size);
                 var event = event || window.event;
                 var result = event.result || event.target.result
@@ -250,11 +250,13 @@ var fileUploadPage = function(){
         this.uploadSuccess = false;
         this.shardList = []; //已上传分块列表
         this.uploadIndex = 0;
-        this.debug = false;
+        this.debug = 0;
         this.jq = typeof jQuery != "undefined" ? jQuery : null;
         this.options = options;
     }
-
+    function elem(){
+        return document.querySelector(arguments[0]);
+    }
     fileUploadClass.prototype = {
         constructor: fileUploadClass,
         options:{},
@@ -270,7 +272,7 @@ var fileUploadPage = function(){
         },
         setProgress:function(block_index){
             if(this.options.elem.processBar){
-                let processElemObj = document.querySelector(this.options.elem.processBar),
+                let processElemObj = elem(this.options.elem.processBar),
                 process = Math.min(100,  Math.ceil( (block_index / this.shardCount) *100) );
                 processElemObj.style.width = process +"%"; 
                 processElemObj.innerHTML ="<span>"+process+"%</span>";
@@ -278,7 +280,7 @@ var fileUploadPage = function(){
             return this;
         },
         outputText:function(text){
-            document.querySelector(this.options.elem.output).innerText = text;
+            elem(this.options.elem.output).innerText = text;
         },
         upload: function (file, md5Hash, sha1Hash, batchUploadCount) {
             var bitchCountRecord = batchUploadCount;
@@ -373,22 +375,29 @@ var fileUploadPage = function(){
                 contentType: false,  //很重要，指定为false才能形成正确的Content-Type
                 success: function (data) {
                     fileUploadObj.debug && console.log(data);
+                    if(data ===null) data = {status:0,data: {list: []}};
                     fileUploadObj.shardList = data.data.list;
                     if (parseInt(data.status) === 1) {  //上传成功
                         fileUploadObj.uploadSuccess = true;
                         fileUploadObj.setProgress(fileUploadObj.shardCount);
                         downUrl = formatUrl(fileUploadObj.options.api.download,{
-                            md5Hash: fileUploadObj.md5Hash,
-                            sha1Hash: fileUploadObj.sha1Hash,
+                            hash: fileUploadObj.md5Hash + '' +fileUploadObj.sha1Hash,
                             name: encodeURIComponent(fileUploadObj.name),
                         });
-                        document.querySelector(fileUploadObj.options.elem.output).innerHTML = (fileUploadObj.shardCount + " / " + fileUploadObj.shardCount + '（上传成功）<a href="' + downUrl + '" target="_blank">下载</a>');
+                        elem(fileUploadObj.options.elem.output).innerHTML = (fileUploadObj.shardCount + " / " + fileUploadObj.shardCount + '（上传成功）<a href="' + downUrl + '" target="_blank">下载</a>');
                         fileUploadObj.debug && console.log('上传成功monitor');
-                        document.querySelector(fileUploadObj.options.elem.uploadBtn).removeAttribute("disabled");
+                        elem(fileUploadObj.options.elem.uploadBtn).removeAttribute("disabled");
+                        typeof fileUploadObj.options.complete == "function" && fileUploadObj.options.complete({
+                            md5Hash : fileUploadObj.md5Hash,
+                            name : encodeURIComponent(fileUploadObj.name),
+                            sha1Hash : fileUploadObj.sha1Hash,
+                            size : fileUploadObj.file.size,
+                            type : fileUploadObj.file.type,
+                        })
                         return;
                     }
                     if (callback !== undefined) {
-                        callback();
+                        callback(fileUploadObj);
                     }
                     window.setTimeout(function () {
                         fileUploadObj.monitor();
@@ -408,7 +417,7 @@ var fileUploadPage = function(){
         ajax:function(options){
             var fileUploadObj = this;
             if(fileUploadObj.jq !== null){
-                fileUploadObj.jq.ajax(options);
+                return fileUploadObj.jq.ajax(options);
             }else{
                 const xhr = new XMLHttpRequest();
                 xhr.responseType = "json";
@@ -425,22 +434,33 @@ var fileUploadPage = function(){
             }
         }
     };
-
     var page = {
-        
         init: function (options) {
             var that = this;
-            document.querySelector(options.elem.uploadBtn).addEventListener("click", function(){
+            elem(options.elem.uploadBtn).addEventListener("click", function(){
                 that.upload.call(that, options);
+            });
+            elem(options.elem.fileInput).addEventListener("change", function(){
+                if(elem(options.elem.fileInput).files[0] !== undefined){
+                    elem(options.elem.output).innerHTML = '';
+                    elem(options.elem.uploadBtn).removeAttribute('class');
+                    elem(options.elem.uploadBtn).removeAttribute("disabled");
+                    options.autoUpload && that.upload.call(that, options);
+                    elem(options.elem.processBar).removeAttribute("class");
+                }
             });
         },
         upload: function (options) {
-            document.querySelector(options.elem.uploadBtn).setAttribute("disabled", "disabled");
             var fileUploadObj = new fileUploadClass(options);
-            var file = document.querySelector(options.elem.fileInput).files[0]; //文件对象
+            var file = elem(options.elem.fileInput).files[0]; //文件对象
+            elem(options.elem.uploadBtn).setAttribute("disabled", "disabled");
+            if(file === undefined){
+                // elem(options.elem.uploadBtn).setAttribute('class','upload-btn-hide');
+                return elem(options.elem.output).innerHTML = `<span class="error-msg">请选择文件</span>`;
+            }
             fileUploadObj.file = file;
             fileUploadObj.shardInit(file);
-            document.querySelector(options.elem.output).innerText = '文件识别中...';
+            elem(options.elem.output).innerText = '文件识别中...';
             md5File(file, function (md5Hash) {
                 fileUploadObj.md5Hash = md5Hash;
                 sha1File(file, function (sha1Hash) {
@@ -456,11 +476,12 @@ var fileUploadPage = function(){
     return {
         html: (options)=>{
             if(!options.elem || !options.elem.uploadBtn || !options.elem.output || !options.elem.fileInput 
-                || document.querySelector(options.elem.uploadBtn) === null 
-                || document.querySelector(options.elem.output) === null 
-                || document.querySelector(options.elem.fileInput) === null 
+                || elem(options.elem.uploadBtn) === null 
+                || elem(options.elem.output) === null 
+                || elem(options.elem.fileInput) === null 
             ){
                 let div, hax = Math.floor(Math.random() * 1e6);
+                options['autoUpload'] = options.autoUpload || false,
                 options['elem'] = {
                     output: "#output"+hax,
                     uploadBtn: "#upload"+hax,
@@ -469,14 +490,23 @@ var fileUploadPage = function(){
                 };
                 div = document.createElement('div');
                 div.setAttribute('id', "upload-container"+hax);
-                div.innerHTML = `<style> #vipkwd-upload-progress${hax}{ width:500px; height:30px; line-height:30px; border:1px solid green; position: relative; } #vipkwd-upload-bar${hax}{ width:0%; height:10px; background-color: green; } #vipkwd-upload-bar${hax} >span{ position: absolute; right: 6px; font-size: 10px; line-height: 10px; } </style>
+                div.setAttribute('id', "upload-container"+hax);
+                div.innerHTML = `<style> #upload-container${hax}{width:500px}#vipkwd-upload-progress${hax} *{margin:0;}#vipkwd-upload-progress${hax}{height:34px; line-height:34px;text-indent: 1rem;border:1px solid green; position: relative; } button#upload${hax}{padding: 1px 5px;}#vipkwd-upload-bar${hax}{ width:0%;background-color: #008000; color:#fff;position: relative;height:15px;font-size: 12px; line-height: 15px; text-align: right;}.error-msg{color:#f00}.upload-btn-hide{width:0;height:0;display:none !important}</style>
                     <div id="vipkwd-upload-progress${hax}">
-                        <input type="file" id="file${hax}"/>
-                        <button id="upload${hax}">上传</button>
-                        <span id="output${hax}" style="font-size:12px">等待</span>
-                        <div id="vipkwd-upload-bar${hax}"><span></span></div>
-                    </div>`
-                document.body.appendChild(div);
+                        <div>
+                            <input type="file" id="file${hax}"/>
+                            <button id="upload${hax}">上传</button>
+                            <span id="output${hax}" style="font-size:12px"></span>
+                        </div>
+                    </div>
+                    <div id="vipkwd-upload-bar${hax}" class="upload-btn-hide"><span></span></div>
+                `;
+                options.containerId
+                ? document.getElementById(options.containerId).appendChild(div)
+                : document.body.appendChild(div);
+
+                // elem(options.elem.uploadBtn).setAttribute("disabled",true)
+                elem(options.elem.uploadBtn).setAttribute("class", "disabled");
             }
             page.init(options);
         },
@@ -485,3 +515,27 @@ var fileUploadPage = function(){
         }
     };
 }
+
+/*
+//DEMO: 
+(new fileUploadPage).html({
+    containerId: 'container',
+    autoUpload: 1,
+
+    elem:{ // 自定义视图节点(页面需要自己写)
+        output: "#output",
+        uploadBtn: "#upload",
+        fileInput: "#file",
+        processBar: "#vipkwd-upload-bar"
+    },
+    api: {
+        upload: "./upload.php",
+        status: "./status.php",
+        download: "./download.php"
+    },
+    //上传完成回调
+    complete: (obj) => {
+        //obj = {type,name,md5Hash,sha1Hash}
+    }
+});
+*/

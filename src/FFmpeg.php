@@ -10,9 +10,9 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Tools, File, Ip};
+use Vipkwd\Utils\{Tools, File, Ip, Str as VipkwdStr};
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
-
+use \Exception;
 class FFmpeg{
 
     private $opts;
@@ -22,7 +22,12 @@ class FFmpeg{
             'command' => '/usr/local/bin/ffmpeg',
             'output_dir' => ''
         ], $options);
-
+        if(!is_file($this->opts['command'])){
+            throw new Exception(sprintf("Ffmpeg command \"%s\" not found",$this->opts['command']));
+        }
+        if(!is_executable($this->opts['command'])){
+            throw new Exception(sprintf("%s: Permission denied",$this->opts['command']));
+        }
         $this->parsePathSeparator();
 
         //TODO others
@@ -761,8 +766,8 @@ class FFmpeg{
      * @param string $file <> 视频地址
      * @param integer $rate <1> 抽取帧数
      * @param string $output_dir <> 保存地址，默认空，保存到视频所在目录
-     * @param string $ss <0> 截取位置 默认0秒（即视频开头位置）
-     * @param int $t <0> 默认0 表截取到视频结尾
+     * @param string $ss <"0"> 截取位置 默认0秒（即视频开头位置）
+     * @param int $t <0> 默认0 表截取到视频结尾 单位秒
      * @return array
      */
     public function exportImages(string $file, int $rate = 1, string $output_dir = "", string $ss = "0", int $t = 0){
@@ -775,11 +780,21 @@ class FFmpeg{
         // pic-010.jpeg
         $rate = $rate > 1 ? intval($rate) : 1;
         $file = File::realpath($file);
+
         $output = $this->output([
             "file" => $file,
             "output_dir" => $output_dir,
         ]);
-        $output = File::dirname($output)."/pic_".date('md')."_%05d.jpg";
+        
+        //生成临时目录
+        $temp_hash = '.'.VipkwdStr::md5_16( VipkwdStr::uuid() . time());
+        $_output = File::dirname($output).'/'.$temp_hash;
+        File::createDir($_output);
+        $output = str_replace(File::dirname($output), $_output, $output);
+
+        $name_rule = "pic_".date('md')."_%05d.jpg";
+        $output = File::dirname($output).'/'.$name_rule;
+
         $t = ($t > 0) ? "-t ".intval($t) : "";
 
         $shell = vsprintf('%s -y -i %s -ss %s %s -r %s -q:v 2 -f image2 %s 2>&1', [
@@ -794,13 +809,31 @@ class FFmpeg{
         $raws = $this->exec($shell);
 
         $ret['source'] = $file;
-        $output = str_replace('%05d',"00001", $output);
-        if(!is_file($output)){
+        $ret['output'] = File::dirname(File::dirname($output));
+        $ret['shell'] = '';
+        $ret['images'] = [];
+        $debug=false;
+        if(!is_file(str_replace('%05d',"00001", $output))){
             $ret['msg'] = '处理错误';
+            $debug = true;
         }else{
-            $ret['output'] = File::dirname($output);
+            foreach(glob( str_replace('_%05d.','*.', $output) ) as $index => $file){
+                $new = str_replace($temp_hash.'/', '', $file);
+                File::rename($file, $new);
+                $ret['images'][] = basename($new);
+                unset($new, $index, $file);
+            }
+            File::delete($_output);
         }
-        return $this->_reasponse($ret, $raws, $shell);
+        unset(
+            $rate,
+            $temp_hash,
+            $_output,
+            $output,
+            $t,
+            $name_rule
+        );
+        return $this->_reasponse($ret, $raws, $shell, $debug);
     }
 
     /**
@@ -850,6 +883,12 @@ class FFmpeg{
         }else{
             $ret['output'] = $output;
         }
+        unset(
+            $options,
+            $info,
+            $output,
+            $t,
+        );
         return $this->_reasponse($ret, $raws, $shell, $debug);
     }
 

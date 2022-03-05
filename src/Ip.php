@@ -122,44 +122,53 @@ class Ip{
     /**
      * 根据掩码计算IP区间（起始IP~结束IP）
      *
-     * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1"]);
-     * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1",25]);
-     * -e.g: phpunit("Ip::getIpRangeWithMask", ["192.168.1.1/25"]);
-     * -e.g: phpunit("Ip::getIpRangeWithMask", ["66.42.48.0", 20]);
+     * -e.g: phpunit("Ip::ipv4Calculator", ["192.168.1.1"]);
+     * -e.g: phpunit("Ip::ipv4Calculator", ["192.168.1.1",25]);
+     * -e.g: phpunit("Ip::ipv4Calculator", ["192.168.1.1/25"]);
+     * -e.g: phpunit("Ip::ipv4Calculator", ["66.42.48.0", 20]);
      * 
      * @param string $ipv4 格式：192.168.1.1 或 192.168.1.0/24
-     * @param integer $mask
+     * @param integer $cidr
      * @return array
      */
-    static function getIpRangeWithMask(string $ipv4="127.0.0.1", int $mask = 24):array{
-        $_ipv4 = $ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
-
-        if(!isset($ipv4[1]) || !$ipv4[1]){
-            $_ipv4[1] = $ipv4[1] = $mask;
-        }
-
-        if( $ipv4[1] > 32 || $ipv4[1] < 0 || false === Validate::ipv4($ipv4[0]) ){
+    static function ipv4Calculator(string $ipv4="127.0.0.1", int $cidr = 0):array{
+        strpos($ipv4, '/') === false && $ipv4 .= '/'.$cidr;
+        list($ipv4, $cidr) = $_ipv4 = explode('/', preg_replace("/[^0-9\.\/]/","", $ipv4));
+        if(false === Validate::ipv4($ipv4) ){
             return [];
         }
+        $ipv4 = self::ip2long($ipv4);
+        if(empty($cidr)){
+            $_ipv4[1] = $cidr = self::CIDRFromIp($ipv4);
+        }
+        $cidr *= 1;
+        if( $cidr > 32 || $cidr < 0){
+            return [];
+        }
+
         $base = self::ip2long('255.255.255.255');
-        $ipv4[0] = self::ip2long($ipv4[0]);
-        $mask = pow(2, 32-intval($ipv4[1]))-1; //mask=0.0.0.255(int)
-        $smask = $mask ^ $base; //smask=255.255.255.0(int)
-        $min = $ipv4[0] & $smask;
-        $max = $ipv4[0] | $mask;
+        // $wildcard = -1 << (32 - $cidr);
+        $wildcard = pow(2, 32-intval($cidr))-1; //wildcard=0.0.0.255(int)
+        $smask = $wildcard ^ $base; //smask=255.255.255.0(int)
+        $min = $ipv4 & $smask;
+        $max = $ipv4 | $wildcard;
         return [
+            "class"     => ['-', 'A', 'B', 'C', 'D', 'E'][self::getClass($min)],
             "input"     => implode('/', $_ipv4),
             "nat"       => self::long2ip($min),
+            "cidr"      => $cidr,
 
             // 一个IP地址一共有32(4段 8位)位，其中一部分为网络位，一部分为主机位。
             // 网络位+主机位=32 子网掩码表示网络位的位数。如子网掩码为30位，那么主机位就为2位。
             // 因为2的2次方等于4，又因为每个子网中有2个IP地址(一个nat，一个broadcast)不能分配给主机，所以可以分配的IP地址为2个
-            "total"     => $mask +1,
-            "useful"    => $mask -1,
-            "first"     => self::long2ip($min+1),
-            "end"       => self::long2ip($max-1),
-            "broadcast" => self::long2ip($max),
-            "mask"      => self::long2ip($smask),
+            "totals"     => $wildcard +1,
+            "public"     => $wildcard -1,
+            "first_host" => self::long2ip($min+1),
+            "last_host"  => self::long2ip($max-1),
+            "broadcast"  => self::long2ip($max),
+            "class_range"   => self::getClassRange($min),
+            "subnet_mask"   => self::long2ip($smask),
+            "wildcard_mask" => self::long2ip($wildcard), //通配符
         ];
     }
 
@@ -167,21 +176,21 @@ class Ip{
     * 检测IP是否在某个掩码子网里
     * 
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1"]);
-    * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1",24]);
+    * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1", 24]);
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1/24"]);
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["192.168.1.138","192.168.1.1/25"]);
     * -e.g: phpunit("Ip::ipv4InMaskArea", ["66.42.52.88","66.42.48.0/20"]);
     *
     * @param string $ipv4  "192.168.1.115"
     * @param string $maskArea 支持携带掩码("192.168.1.1/24")
-    * @param integer $mask 0-32
+    * @param integer $cidr 0-32
     * @return boolean
     */
-    static function ipv4InMaskArea(string $ipv4="192.168.1.138", string $maskArea="192.168.1.1", int $mask = 24):bool{
+    static function ipv4InMaskArea(string $ipv4="192.168.1.138", string $maskArea="192.168.1.1", int $cidr = 24):bool{
       $maskArea = explode('/', preg_replace("/[^0-9\.\/]/","", $maskArea));
       if(!isset($maskArea[1]) || !$maskArea[1]){
           //默认授权254台主机
-          $maskArea[1] = $mask;
+          $maskArea[1] = $cidr;
       }
       if( $maskArea[1] > 32 || $maskArea[1] < 0  || false === Validate::ipv4($ipv4)  || false === Validate::ipv4($maskArea[0]) ){
           return [];
@@ -243,6 +252,19 @@ class Ip{
      * @return string
      */
     static function randomIp(): string {
+        $_b = function($ip){
+            $arr = [
+               ( $ip >> 24 ) & 255,
+               ( $ip >> 16 ) & 255,
+               ( $ip >> 8 ) & 255,
+               ( $ip >> 0 ) & 255,
+            ];
+            return implode('.', $arr);
+        };
+        
+        $ip = $_b(pow(2,32) * Tools::mathRandom(0,1,13) | 0);
+        $cidr = 1 + Tools::mathRandom(0,1,13) * 29 | 0;
+        return ("{$ip}/{$cidr}");
         return Random::ip();
     }
 
@@ -253,11 +275,13 @@ class Ip{
      * -e.g: phpunit("Ip::getInfo", ["127.0.0.1"]);
      * -e.g: phpunit("Ip::getInfo", ["66.42.52.88"]);
      * -e.g: phpunit("Ip::getInfo", ["120.235.131.155"]);
+     * -e.g: phpunit("Ip::getInfo", [\Vipkwd\Utils\Ip::randomIp()]);
      * 
      * @param string $ip
      * @return array
      */
     static function getInfo(string $ip): array{
+        list($ip, $cidr) = explode('/', $ip);
         $qqwryPath = VIPKWD_UTILS_LIB_ROOT.'/support/qqwry.dat';
         $iplocation = new Helper_IpLocation($qqwryPath);
         $location = $iplocation->getlocation( $ip );
@@ -278,6 +302,12 @@ class Ip{
         return $region;
     }
 
+    /**
+     * 重组IP信息
+     *
+     * @param [type] $ip
+     * @return void
+     */
     private static function ip2region($ip){
         $info = (new Ip2Region)->btreeSearch($ip);
         if($info == null || (is_array($info) && !isset($info['region']))){
@@ -299,6 +329,49 @@ class Ip{
             'isp' => $info[4] ? $info[4] : '-',
             'ip' => $ip
         ];
+    }
+
+    /**
+     * 获取IP类别
+     *
+     * @param integer $bigIntIp
+     * @return integer
+     */
+    private static function getClass(int $bigIntIp):int{
+        if (($bigIntIp >> 28) === 15) // 0b1111xx
+            return 5;
+        if (($bigIntIp >> 28) === 14) // 0b1110xx
+            return 4;
+        if (($bigIntIp >> 29) === 6) // 0b110xxxx
+            return 3;
+        if (($bigIntIp >> 30) === 2) // 0b10xxxxx
+            return 2;
+        if (($bigIntIp >> 31) === 0) // 0b0xxxxxx
+            return 1;
+        return 0;
+    }
+
+    /**
+     * 获取各类(A/B.E类)Ip的表示范围
+     *
+     * @param integer $bigIntIp
+     * @return string
+     */
+    private static function getClassRange(int $bigIntIp):string{
+        $cc = self::getClass($bigIntIp);
+        return [
+            '',
+            '1.0.0.0 - 126.255.255.255',
+            '128.0.0.0 - 191.255.255.255',
+            '192.0.0.0 - 223.255.255.255',
+            '224.0.0.0 - 239.255.255.255',
+            '240.0.0.0 - 254.255.255.255'
+        ][$cc];
+    }
+
+    private static function CIDRFromIp(int $bigIntIp){
+        $cl = self::getClass($bigIntIp);
+        return [null, 8, 16, 24, null, null][$cl];
     }
 }
 

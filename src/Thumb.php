@@ -18,10 +18,6 @@ class Thumb{
 
 	use ThumbCoreVar, ThumbCore, Thumbmaker;
 
-	private static $__position = "";
-
-	private static $maxNumber = 99999999;
-
 	/**
 	 * 添加描边框
 	 *
@@ -103,8 +99,8 @@ class Thumb{
 	 *
 	 * @return self
 	 */
-	public function filterShadow():self{
-		$this ->Shadow = true;
+	public function filterShadow(bool $state = true):self{
+		$this ->Shadow = $state;
 		return $this;
 	}
 
@@ -155,7 +151,7 @@ class Thumb{
 	 * @return self
 	 */
 	public function filterNegative(bool $state = true):self{
-		$this->Negative = !!$state;
+		$this->Negative = $state;
 		return $this;
 	}
 
@@ -177,13 +173,35 @@ class Thumb{
 	}
 	
 	/**
-	 * 灰化图像（黑白照）
+	 * 彩图灰化（去彩色）
 	 *
 	 * @param boolean $state <true> 状态开关 默认开
 	 * @return self
 	 */
 	public function filterGreyscale(bool $state = true):self{
-		$this->Greyscale = !!$state;
+		$this->Greyscale = $state;
+		return $this;
+	}
+
+	/**
+	 * 二值化（黑白照）
+	 *
+	 * @param boolean $state <true> 状态开关 默认开
+	 * @return self
+	 */
+	public function filterBinaryzation(bool $state = true):self{
+		$this->Binaryzation = $state;
+		return $this;
+	}
+
+	/**
+	 * 色彩反转
+	 *
+	 * @param boolean $state <true> 状态开关 默认开
+	 * @return self
+	 */
+	public function filterColorFlip(bool $state = true):self{
+		$this->ColorFlip = $state;
 		return $this;
 	}
 
@@ -234,8 +252,8 @@ class Thumb{
 	 *
 	 * @return self
 	 */
-	public function filterRemoveNoise():self{
-		$this -> Medianfilter = true;
+	public function filterRemoveNoise(bool $state = true):self{
+		$this -> Medianfilter = $state;
 		return $this;
 	}
 	
@@ -441,12 +459,10 @@ class Thumb{
 	 * @return self
 	 */
 	public function eventRotate(int $degSize, bool $keepSize = false):self{
-		$this->numberRangeLimit($degSize, -360, 360);
+		$this->numberRangeLimit($degSize, -180, 180, 0);
 		$this -> Rotate = $degSize;
-
 		//保持原图尺寸(默认角度倾斜会撑宽原图))
 		$keepSize && $this -> Croprotate = true;
-
 		return $this;
 	}
 
@@ -455,25 +471,26 @@ class Thumb{
 	 *
 	 * @return self
 	 */
-	public function eventSquareSpacing():self{
-		$this -> Square = true;
+	public function eventSquareSpacing(bool $state = true):self{
+		$this -> Square = $state;
 		return $this;
 	}
 
 	/**
-	 * 剪裁(无留白)
-	 *
-	 * @param integer $type 1=center crop 2=square crop
-	 * @param integer $unit 0=percentage 1=pixels
-	 * @param integer $leftGap 剪除边距
-	 * @param integer $rightGap 剪除边距
-	 * @param integer $topGap 剪除边距
-	 * @param integer $bottomGap 剪除边距
+	 * 图像相对剪裁(无留白)
+	 * 
+	 * @param integer $type <1> 0=square-crop 1=center-crop 
+	 * @param integer $unit <1> 0=percentage 1=pixels
+	 * @param integer $leftGap <0> 剪除边距
+	 * @param integer $rightGap <0> 剪除边距
+	 * @param integer $topGap <0> 剪除边距
+	 * @param integer $bottomGap <0> 剪除边距
+	 * 
 	 * @return self
 	 */
 	public function eventCrop(int $type = 1, int $unit = 1, int $leftGap = 0, int $rightGap = 0, int $topGap = 0, int $bottomGap = 0):self{
-		$this->numberRangeLimit($type, 1, 2);
-		$this->numberRangeLimit($unit, 0, 1);
+		$this->numberRangeLimit($type, 0, 1, 1);
+		$this->numberRangeLimit($unit, 0, 1, 1);
 		$this->numberRangeLimit($leftGap, 0, self::$maxNumber);
 		$this->numberRangeLimit($rightGap, 0, self::$maxNumber);
 		$this->numberRangeLimit($topGap, 0, self::$maxNumber);
@@ -482,17 +499,37 @@ class Thumb{
 		$this -> Cropimage = array($type, $unit, $leftGap, $rightGap, $topGap, $bottomGap);
 		return $this;
 	}
-	
+
+    /**
+     * 图像定点剪裁
+     *
+     * @param  integer $w      裁剪区域宽度
+     * @param  integer $h      裁剪区域高度
+     * @param  integer $x      裁剪区域x坐标
+     * @param  integer $y      裁剪区域y坐标
+     * @param  integer|null $width  图像保存宽度
+     * @param  integer|null $height 图像保存高度
+     *
+     * @return self
+     */
+	public function eventAbsoluteCrop(int $w, int $h, int $x = 0, int $y = 0, ?int $width = null, ?int $height = null):self{
+		$this->numberRangeLimit($w, 0, self::$maxNumber);
+		$this->numberRangeLimit($h, 0, self::$maxNumber);
+		$this->numberRangeLimit($x, 0, self::$maxNumber);
+		$this->numberRangeLimit($y, 0, self::$maxNumber);
+		$this->Cropimage = array($w, $h, $x, $y, $width, $height, 'absolute');
+		return $this;
+	}
 	/**
 	 * PNG图片水印
 	 *
-	 * @param string $filename 水印图地址
+	 * @param string $markFilePng 水印图地址
 	 * @param integer $transparency <10> 透明度 0-100 100不透明
 	 * @return self
 	 */
-	public function watermarkPng(string $filename, int $transparency = 10):self{
+	public function watermarkPng(string $markFilePng, int $transparency = 10):self{
 		$this->numberRangeLimit($transparency);
-		$this -> Watermarkpng = $filename;
+		$this -> Watermarkpng = File::realpath($markFilePng);
 		if(!empty(static::$__position)){
 			$this -> Watermarkposition = static::$__position;
 		}
@@ -504,23 +541,22 @@ class Thumb{
 	/**
 	 * 文字水印
 	 *
-	 * @param string $text
+	 * @param string $markText
 	 * @param integer $fontSize <16>
 	 * @param string $textColor <"#000000">
 	 * @param string $ttfPath <"">
 	 * @return self
 	 */
-	public function watermarkText(string $text, int $fontSize=16, string $textColor="#000", string $ttfPath=""):self{
+	public function watermarkText(string $markText, int $fontSize=16, string $textColor="#000", string $ttfPath=""):self{
 		$this->numberRangeLimit($fontSize, 8, 100);
-		if(File::exists($ttfPath)){
+		if($ttfPath && File::exists($ttfPath)){
 			$this -> Copyrightfonttype = $ttfPath;
 		}else{
-			$ttfPath = VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/msyh.ttf';
-			if(File::exists($ttfPath)){
-				$this -> Copyrightfonttype = $ttfPath;
+			if(File::exists(self::$_defaultTTF)){
+				$this -> Copyrightfonttype = self::$_defaultTTF;
 			}
 		}
-		$this -> Copyrighttext = $text;
+		$this -> Copyrighttext = $markText;
 		if(!empty(static::$__position)){
 			$this -> Copyrightposition = static::$__position;
 		}
@@ -569,7 +605,6 @@ class Thumb{
 
 	/**
 	 * 透视原图并填补背景
-	 *
 	 * @param string $direction <"right">  透视方向 left/right/top/bottom
 	 * @param integer $perspective  <10> 透视强度（0~100）
 	 * @return self
@@ -595,91 +630,6 @@ class Thumb{
 		!array_key_exists($direction, $directions) && $direction = "right";
 		$this -> Perspectivethumb = array(1,$directions[$direction], $perspective);
 		return $this;
-	}
-
-	/**
-	 * 生成占位图
-	 *
-	 * @param string $WxHsize 400x300 || 4:3x400 || 16:9x300
-	 * @param string $textColor <#ffffff> #ffffff || #fff || #f
-	 * @param string $bgColor <#666666> #ffffff || #fff || #f
-	 * @param string $text	<宽 x 高> 最大12个字
-	 * @param integer $imageType 1gif 2jpg 3png
-	 * @return header
-	 */
-	public function placeholderFigure(string $WxHsize, string $textColor="#fff", string $bgColor="#666", string $text = "W x H", int $imageType = 2){
-			$this->numberRangeLimit($imageType, 1,3);
-			$WxHsize = strtolower(str_replace(" ","", trim($WxHsize)));
-			list($width, $height) = explode("x", $WxHsize);
-			if(strpos($width, ":")){
-				list($w1,$h1) = explode(":", $width);
-				$width = bcmul(bcdiv($height, $h1, 4), $w1, 0);
-			}else if(strpos($height, ":")){
-				list($w1,$h1) = explode(":", $height);
-				$height = bcmul(bcdiv($width, $w1, 4), $height, 0);
-			}
-			$width *= 1;
-			$height *= 1;
-			$this->numberRangeLimit($width, 50, 2048);
-			$this->numberRangeLimit($height, 50, 2048);
-
-			// 文本大小
-			$size = intval(($width > $height ? $height : $width) * 0.1);
-			// 设置文本内容
-			$text = trim($text);
-			$content = ($text && $text != "W x H") ? mb_substr($text,0,12) : $width . ' x ' . $height;
-
-			$bgColor = $this->hex2rgb($this->colorHexFix($bgColor));
-			$textColor = $this->hex2rgb($this->colorHexFix($textColor));
-			$etag = md5(json_encode(compact( "height", "width", "content","size", "textColor", "bgColor", "imageType" )));
-			if(array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag){
-				Tools::sendHttpCode(304);
-        exit();
-    	}
-			// 创建画布
-			$this->thumb = imagecreatetruecolor($width, $height);
-			// 设置文本颜色
-			$textColor = imagecolorallocate($this->thumb, $textColor['r'],$textColor['g'],$textColor['b']);
-			// 设置画布颜色
-			$backgroundColor = imagecolorallocate($this->thumb, $bgColor['r'],$bgColor['g'],$bgColor['b']);
-			// 创建画布并且填充颜色
-			imagefilledrectangle($this->thumb, 0, 0, $width, $height, $backgroundColor);
-			// 设置字体文字路径
-			$fontPath = realpath(VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/1.ttf');
-			//计算文本范围
-			$position = imagettfbbox($size, 0, $fontPath, $content);
-			$x        = intval(($width - $position[2] - $position[0]) / 2);
-			$y        = intval(($height - $position[3] - $position[5]) / 2);
-			// 写入文本
-			imagefttext($this->thumb, $size, 0, $x, $y, $textColor, $fontPath, $content);
-
-			// 开启缓存
-			ob_start();
-			// 输出图像
-			switch($imageType) {
-				case 1:
-					imagegif($this->thumb);
-					$t = "image/gif";
-					break;
-				case 2:
-					imagejpeg($this->thumb,NULL,$this->Quality ? intval($this->Quality): 90);
-					$t = "image/jpeg";
-					break;
-				case 3:
-					imagepng($this->thumb);
-					$t = "image/png";
-					break;
-			}
-			$this->im && imagedestroy($this->im);
-			$this->thumb && imagedestroy($this->thumb);
-			$content = ob_get_clean();
-			header('Cache-Control: public');
-			header('max-age: 31536000');
-			header('Last-Modified: ' . gmdate("D, d M Y H:i:s", strtotime(date('Y-m-01 00:00:00'))) . ' GMT');
-			header("Etag:" . $etag);
-			header('Content-type: '.$t);
-			header('Content-Length:'.strlen($content));
-			echo $content;
 	}
 	 
 	/**
@@ -730,24 +680,33 @@ class Thumb{
 	/**
 	 * 设置文件保存目录
 	 *
-	 * @param string $savePath 
-	 * @param boolean $mkdir <false>
+	 * @param string $savePath
 	 * @return self
 	 */
-	public function savePath($savePath = null, bool $mkdir = false):self{
-		if( null !== $savePath){
-			$savePath = realpath($savePath);
-			if(is_file($savePath)){
-				$savePath = dirname($savePath);
-			}
-			if(!is_dir($savePath) && $mkdir){
-				@mkdir($savePath, 0755, true);
-			}
-			$this->Thumblocation = realpath($savePath).'/';
-		}else{
-			$this->Thumblocation = realpath(dirname($this->image)).'/';
+	public function saveName(string $saveFileName = null):self{
+		$saveFileName = rtrim(File::normalizePath($saveFileName),'/');
+
+		$savePath = dirname($saveFileName);
+		$saveName = basename($saveFileName);
+		// $this->Thumbsaveas = 'jpg';
+		if(empty($saveName)){
+			$saveName = VipkwdStr::md5_16(VipkwdStr::uuid());
 		}
-		$this->Thumbprefix = VipkwdStr::md5_16(VipkwdStr::uuid()).'.';
+		$saves = explode('.', $saveName);
+		$ext = array_pop($saves);
+		if( !in_array($ext, ['jpg','jpeg','png','gif'])){
+			$saves[]= 'jpg';
+			$ext = 'jpg';
+		}
+		$saves = implode('.', $saves);
+		
+		if(!is_dir($savePath)){
+			@mkdir($savePath, 0755, true);
+		}
+		$this->Thumblocation = $savePath.'/';
+		$this->Thumbprefix = '';
+		// $this->Thumbfilename = empty($saveName) ? '' : $saveName;
+		$this->Thumbsaveas = $ext;
 		return $this;
 	}
 
@@ -759,15 +718,15 @@ class Thumb{
 	 * @return void
 	 */
 	public function getBrightnessOfPixel(int $x, int $y){
-			$rgb = imagecolorat($this->image, $x, $y);
-			$r = ($rgb >> 16) & 0xFF;
-			$g = ($rgb >> 8) & 0xFF;
-			$b = $rgb & 0xFF;
+		$rgb = imagecolorat($this->image, $x, $y);
+		$r = ($rgb >> 16) & 0xFF;
+		$g = ($rgb >> 8) & 0xFF;
+		$b = $rgb & 0xFF;
 
-			//红绿蓝能量不同，亮度不同，对应系数也不同（参考https://www.w3.org/TR/AERT/#color-contrast）
-			$brightness = intval($r * 0.299 + $g * 0.587 + $b * 0.114);
+		//红绿蓝能量不同，亮度不同，对应系数也不同（参考https://www.w3.org/TR/AERT/#color-contrast）
+		$brightness = intval($r * 0.299 + $g * 0.587 + $b * 0.114);
 
-			return $brightness;
+		return $brightness;
 	}
 
 	/**
@@ -777,27 +736,28 @@ class Thumb{
 	 * @return array
 	 */
 	public function getImageInfo(string $fileName):array{
-			//获取图像信息
-			$info = @getimagesize($fileName);
+		//获取图像信息
+		$info = @getimagesize($fileName);
 
-			//检测图像合法性
-			if (false === $info || (\IMAGETYPE_GIF === $info[2] && empty($info['bits']))) {
-					return [];
-			}
-			//设置图像信息
-			return [
-					'width'  => $info[0],
-					'height' => $info[1],
-					'type'   => \image_type_to_extension($info[2], false),
-					'mime'   => $info['mime'],
-					'bits'	 => $info['bits'],
-					"atime"	 => fileatime($fileName),
-					"mtime"	 => filemtime($fileName),
-					"ctime"	 => filectime($fileName),
-					"md5"	 	 => hash_file("md5",$fileName),
-					"path"	 => dirname($fileName),
-					"name"	 => basename($fileName),
-			];
+		//检测图像合法性
+		if (false === $info || (\IMAGETYPE_GIF === $info[2] && empty($info['bits']))) {
+				return [];
+		}
+		//设置图像信息
+		return [
+			'width'  => $info[0],
+			'height' => $info[1],
+			'type'   => \image_type_to_extension($info[2], false),
+			'mime'   => $info['mime'],
+			'bits'	 => $info['bits'],
+			"atime"	 => fileatime($fileName),
+			"mtime"	 => filemtime($fileName),
+			"ctime"	 => filectime($fileName),
+			"md5"	 => hash_file("md5",$fileName),
+			"file"	 => $fileName,
+			"path"	 => dirname($fileName),
+			"name"	 => basename($fileName),
+		];
 	}
 
 	/**
@@ -839,77 +799,6 @@ class Thumb{
 	}
 
 	/**
-	 * 数值区间验证
-	 *
-	 * @param integer|float $num
-	 * @param integer|float $min
-	 * @param integer|float $max
-	 * @return void
-	 */
-	private function numberRangeLimit(&$num, $min = 0, $max = 100){
-		$num <= $min && $num = $min;
-		$num >= $max && $num = $max;
-		$num *= 1;
-		return $num;
-	}
-	
-	/**
-	 * 16进制色值检测/修补
-	 *
-	 * @param string $color
-	 * @return void
-	 */
-	private function colorHexFix(string $color){
-		$color = str_replace("#","", trim($color));
-		$len = strlen($color);
-		switch($len){
-			case "3":
-				$color = str_split($color);
-				$color = implode("", [ $color[0], $color[0], $color[1], $color[1], $color[2], $color[2], ]);
-				break;
-			case "2":
-				$color = implode("", [ $color, $color, $color]);
-				break;
-			case "1":
-				$color = str_pad("", 6, $color);
-				break;
-		}
-		$color = strtoupper(substr(str_pad($color, 6, "0"), 0, 6));
-		
-		// Dev::vdump([$color, preg_match("/^[0-9A-F]{6}$/i", $color),1],1);
-		if(!preg_match("/^([0-9A-F]+){6}$/i", $color)){
-			$color = "000000";
-		}
-		return "#".$color;
-	}
-
-	/**
-	 * 资源坐标定位管理
-	 *
-	 * @param string $position
-	 * @param callback $callback
-	 * @return array
-	 */
-	private function formatPosition(string $position, $callback):array{
-		$_pos = str_replace("%","", $position);
-		$cpos = explode(" ", $_pos);
-		if($_pos == $position){
-			//直接设置X,Y
-			return $callback($cpos[0]*1, $cpos[1] ? $cpos[1]*1 : 0, false);
-		}
-		$this->numberRangeLimit($cpos[0], 0, 100);
-		$this->numberRangeLimit($cpos[1], 0, 100);
-		//百分比配置X,Y
-		return $callback($cpos[0]*1, $cpos[1]*1, true);
-	}
-}
-
-
-trait Thumbmaker {
-	
-    private static $_instance = [];
-
-	/**
 	 * 实例化入口
 	 *
 	 * @param array $option <[]> 预留参数
@@ -917,7 +806,7 @@ trait Thumbmaker {
 	 * @return self
 	 */
 	static function instance(array $option = [], string $instanceID = "1"):self{
-			$_k = md5($instanceID);
+			$_k = md5(strval($instanceID));
 			if(!isset(static::$_instance[$_k])){
 					static::$_instance[$_k] = new self($option);
 			}
@@ -925,218 +814,144 @@ trait Thumbmaker {
 	}
 
 	/**
-	 * 创建和输出缩略图
-	 *
-	 * @param string/array $filename 数组时: 一维图片PATH
-	 * @param bool $storage <false> true 保存到本地
-	 */	
-	public function createThumb($filename="unknown",bool $storage=false):array{
-
-		$list = [];
-		if (is_array($filename) && $storage) {
-			foreach ($filename as $name) {
-				if(file_exists($name)){
-						$this->image=$name;
-						$this->thumbmaker();
-						$list[] = [
-							"origin" => $this->image,
-							"thumb" => $this->savethumb()
-						];
-				}
-			}
-			return $list;
-		} else {
-			if(file_exists($filename)){
-					$this->image=$filename;
-					$this->thumbmaker();
-					if ($storage) {
-						$list[] = [
-							"origin" => $this->image,
-							"thumb" => $this->savethumb()
-						];
-						return $list;
-					} else {
-							$this->displaythumb();
-					}
-			}
-		}
-		return [];
-	}
-    
-  /**
 	 * 从画布创建图像
 	 *
 	 * @param int $width
 	 * @param int $height
-	 * @param string $bgcolor background color
+	 * @param string $bgcolor <#666>background color
 	 * @param int $filetype <IMAGETYPE_PNG> PHP常量 IMAGETYPE_XXX
-	 * @param boolean $transparent <false> 
+	 * @param boolean $transparent <false>
+	 * 
 	 * @return self
 	 */	
-	public function createCanvas(int $width, int $height, string $bgcolor, int $filetype=IMAGETYPE_PNG, bool $transparent=false):self{
+	private function createCanvas(int $width, int $height, string $bgcolor='#666', int $filetype=IMAGETYPE_PNG, bool $transparent=false):self{
 		$this->im=imagecreatetruecolor($width,$height);
 		$this->size=array($width,$height,$filetype);
-		$color=imagecolorallocate($this->im,hexdec(substr($bgcolor,1,2)),hexdec(substr($bgcolor,3,2)),hexdec(substr($bgcolor,5,2)));
+		$bgcolor = $this->colorHexFix($bgcolor);
+		$color=imagecolorallocate(
+			$this->im,
+			hexdec(substr($bgcolor,1,2)),
+			hexdec(substr($bgcolor,3,2)),
+			hexdec(substr($bgcolor,5,2))
+		);
 		imagefilledrectangle($this->im,0,0,$width,$height,$color);
 		if ($transparent) {
 			$this->Keeptransparency=true;
 			imagecolortransparent($this->im,$color);
 		}
 		return $this;
-	}	
-	
+	}
+
+	/**
+	 * 创建和输出缩略图
+	 *
+	 * @param bool $storage <false> true 保存到本地
+	 * @param bool $showInfo <false> true返回图片信息
+	 * 
+	 * @return array|null
+	 */	
+	public function createThumb(bool $storage=false, bool $showInfo=false):array{
+
+		$list = [];
+		if (is_array($this->_originFilePath) && $storage) {
+			foreach ($this->_originFilePath as $name) {
+				if(file_exists($name)){
+					$this->image=$name;
+					$this->thumbmaker();
+					$thumb = $this->savethumb();
+					$info = [];
+					$showInfo && $info = self::getImageInfo($thumb);
+					$info["origin"] = $name;
+					$info["thumb"] = $thumb;
+					$list[] = $info;
+				}
+			}
+			return $list;
+		} else {
+			if(file_exists($this->_originFilePath)){
+				$this->image=$this->_originFilePath;
+				$this->thumbmaker();
+				if ($storage) {
+					$thumb = $this->savethumb();
+					$info = [];
+					$showInfo && $info = self::getImageInfo($thumb);
+					$info["origin"] = $this->_originFilePath;
+					$info["thumb"] = $thumb;
+					$list[] = $info;
+					return $list;
+				} else {
+					$this->displaythumb();
+				}
+			}
+		}
+		return [];
+	}
+    	
 	/**
 	 * 输出图片的base64数据
 	 *
-	 * @param string filename
+	 * @return string|array
 	 */	
-	public function createBase64(string $filename="unknown"):string{
+	public function createBase64(){
 
-		$this->image=$filename;
-		$this->thumbmaker();
-		ob_start();
-		switch($this->size[2]) {
-			case 1:
-				$encoding='data:image/gif;base64,';
-				imagegif($this->thumb);
-				break;
-			case 2:
-				$encoding='data:image/jpeg;base64,';
-				imagejpeg($this->thumb,NULL,$this->Quality);
-				break;
-			case 3:
-				$encoding='data:image/png;base64,';
-				imagepng($this->thumb);
-				break;
+		$list = [];
+		$n = 1;
+		if(!is_array($this->_originFilePath)){
+			$n = 0;
+			$this->_originFilePath = [$this->_originFilePath];
 		}
-		$imagecode=ob_get_contents();
-		ob_end_clean();
-		$encoded=$encoding . chunk_split(base64_encode($imagecode)) . '"'; 
-		return $encoded;
+		foreach ($this->_originFilePath as $file) {
+			if(file_exists($file)){
+				$this->image=$file;
+				$this->thumbmaker();
+				ob_start();
+				switch($this->size[2]) {
+					case 1:
+						$encoding='data:image/gif;base64,';
+						imagegif($this->thumb);
+						break;
+					case 2:
+						$encoding='data:image/jpeg;base64,';
+						imagejpeg($this->thumb,NULL,$this->Quality);
+						break;
+					case 3:
+						$encoding='data:image/png;base64,';
+						imagepng($this->thumb);
+						break;
+				}
+				$imagecode=ob_get_contents();
+				ob_end_clean();
+				$list[] = $encoding . chunk_split(base64_encode($imagecode)) . '"';
+			}
+		}
+		return $n === 0 ? $list[0] : $list;
 	}
 	
-  /**
-	 * 擦出EXIF信息并转存图像
-	 *
-	 * @param string $srcImage
-	 * @param string $outputFilename
-	 */	      
-	protected function wipeExif(string $srcImage, string $outputFilename):void{
-			if (file_exists($srcImage)) {
-					$src_file = fopen($srcImage, 'rb');
-					$wipe = false;
-					if ($src_file) {
-							$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-							if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
-									$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-									while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
-					$length = unpack("n1length", fread($src_file, 2));	
-					fseek($src_file, $length['length'] - 2, SEEK_CUR);
-					$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-					$wipe = true;
-									}
-									if ($wipe) {
-					fseek($src_file, -2, SEEK_CUR);
-					$image_data = "\xff\xd8" . fread($src_file, filesize($srcImage));
-					fclose($src_file);
-					$des_file = fopen($outputFilename, 'w');
-					if ($des_file) {
-						fwrite($des_file, $image_data);
-						fclose($des_file);
-						chmod($outputFilename, octdec($this->Chmodlevel));
-					}
-									} else {
-					fclose($src_file);
-									}
-							} else {
-									fclose($src_file);
-							}
-					}
-			}
-	}
-
-	/**
-	 * 读取图像EXIF信息
-	 *
-	 * @param string source image
-	 */	      
-	protected function readExif(string $srcImage){
-			$exif = "";
-			if (file_exists($srcImage)) {
-					if(function_exists('exif_read_data')){
-						//return exif_read_data($srcImage, "EXIF", true);
-					}
-					$src_file = fopen($srcImage, 'rb');
-					if ($src_file) {
-							$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-							if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
-									$exifdata = fread($src_file, 2);
-									$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
-									while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
-											$exif .= $exifdata;
-											$exifdata = fread($src_file, 2);
-											$exif .= $exifdata;
-											$length = unpack("n1length", $exifdata);
-											$exif .= fread($src_file, $length['length'] - 2);
-											$exifdata = fread($src_file, 2);
-											$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
-									}
-								fclose($src_file);
-							} else {
-								fclose($src_file);
-							}
-					}
-			}
-			return $exif;
-	}
-    
-	/**
-	 * 写入 EXIF 信息到图像
-	 *
-	 * @param string 待
-	 * @param string 二进制格式的Exif数据
-	 */	      
-	protected function insertExif($srcImage, $exifData):void{
-        if (file_exists($srcImage)) {
-            $src_file = fopen($srcImage, 'rb');
-            if ($src_file) {
-                $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
-                    $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                    while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
-						$length = unpack("n1length", fread($src_file, 2));	
-						fseek($src_file, $length['length'] - 2, SEEK_CUR);
-						$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
-                    }
-				    fseek($src_file, -2, SEEK_CUR);
-				    $image_data = "\xff\xd8" . $exifData . fread($src_file, filesize($srcImage));
-	                fclose($src_file);
-				    $des_file = fopen($srcImage, 'w');
-				    if ($des_file) {
-						fwrite($des_file, $image_data);
-						fclose($des_file);
-						chmod($srcImage, octdec($this->Chmodlevel));
-				    }
-                } else {
-                    fclose($src_file);
-                }
-            }
-        }
-  }
-
-  /**
+  	/**
 	 * 创建一个动画的PNG图像
 	 *
-	 * @param array $frames
 	 * @param string $outputFilename
 	 * @param string $delay
+	 * 
+	 * @throws \Exception
+	 * @return array
 	 */	
 	
-	public function createApng($frames, $outputFilename, $delay):void{
+	public function createApng(string $outputFilename, string $delay="10"):array{
 		$imageData = array();
 		$IHDR = array();
 		$sequenceNumber = 0;
-		foreach ($frames as $frame) {
+		if(!is_array($this->_originFilePath)){
+			$n = 0;
+			$this->_originFilePath = [$this->_originFilePath];
+		}
+		$outputFilename = File::normalizePath($outputFilename);
+		if(is_dir($outputFilename)){
+			throw new \Exception( $outputFilename. "[output file] cannot be a directory!");
+		}
+		File::createDir(dirname($outputFilename));
+
+		foreach ($this->_originFilePath as $frame) {
 			if (file_exists($frame)) {
 				$fh = fopen($frame,'rb');
 				$chunkData = fread($fh, 8);                                                 
@@ -1174,7 +989,8 @@ trait Thumbmaker {
 				}
 			}
 		}
-    $pngHeader = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
+
+		$pngHeader = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
 		$IHDR_chunk = $this->create_chunk('IHDR', pack('NNCCCCC', $IHDR['width'], $IHDR['height'], $IHDR['bits'], $IHDR['color'], $IHDR['compression'], $IHDR['prefilter'], $IHDR['interlacing']));
 		$acTL_chunk = $this->create_chunk('acTL', pack("NN", count($imageData), 0));
 		$data = $this->create_fcTL($sequenceNumber, $IHDR['width'], $IHDR['height'], $delay);  
@@ -1199,8 +1015,324 @@ trait Thumbmaker {
 		}
 		fwrite($fh, $this->create_chunk('IEND'));
 		fclose($fh);
+		return self::getImageInfo($outputFilename);
 	}
 
+
+	/**
+	 * 生成占位图
+	 *
+	 * @param string $WxHsize 400x300 || 4:3x400 || 16:9x300
+	 * @param integer $fontSize 文字大小 <宽或高的1%> 默认：min($width * 0.1, $height * 0.1)
+	 * @param string $textColor <#ffffff> #ffffff || #fff || #f
+	 * @param string $bgColor <#666666> #ffffff || #fff || #f
+	 * @param string $text	<宽 x 高> 最大12个字
+	 * @param integer $angle 角度(度数合法值)
+	 * @param integer $imageType <2> 1gif 2jpg 3png
+	 * @param boolean $showBinary <false>
+	 * @return header
+	 */
+	public function createPlaceholder(string $WxHsize, int $fontSize=0, string $textColor="#fff", string $bgColor="#666", string $text = "W x H", int $angle =0, int $imageType = 2, bool $showBinary=false){
+		$WxHsize = strtolower(str_replace(" ","", trim($WxHsize)));
+		list($width, $height) = explode("x", $WxHsize);
+		if(strpos($width, ":")){
+			list($w1,$h1) = explode(":", $width);
+			$width = bcmul(bcdiv($height, $h1, 4), $w1, 0);
+		}else if(strpos($height, ":")){
+			list($w1,$h1) = explode(":", $height);
+			$height = bcmul(bcdiv($width, $w1, 4), $height, 0);
+		}
+		$width *= 1;
+		$height *= 1;
+		$this->numberRangeLimit($width, 50, 2048);
+		$this->numberRangeLimit($height, 50, 2048);
+		$this->numberRangeLimit($angle, -180, 180, 0);
+		$this->numberRangeLimit($imageType, 1,3);
+		!$textColor && $textColor = "#fff";
+		!$bgColor && $bgColor = "#666";
+
+		// 文本大小
+		$size = $fontSize >= 1 ? $fontSize : intval(($width > $height ? $height : $width) * 0.1);
+		// 设置文本内容
+		$text = trim(preg_replace('/\ +/',' ',$text));
+		$_text = strtoupper(str_replace(' ','',$text));
+		$content = ($_text && $_text != "WXH") ? mb_substr($text,0,12) : $width . ' x ' . $height;
+
+		$bgColor = $this->hex2rgb($this->colorHexFix($bgColor));
+		$textColor = $this->hex2rgb($this->colorHexFix($textColor));
+		$etag = md5(json_encode(compact("angle", "height", "width", "content","size", "textColor", "bgColor", "imageType" )));
+		if(array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag){
+			Http::sendCode(304);
+			exit();
+		}
+		// 创建画布
+		$this->thumb = imagecreatetruecolor($width, $height);
+		// 设置文本颜色
+		$textColor = imagecolorallocate($this->thumb, $textColor['r'],$textColor['g'],$textColor['b']);
+		// 设置画布颜色
+		$backgroundColor = imagecolorallocate($this->thumb, $bgColor['r'],$bgColor['g'],$bgColor['b']);
+		// 创建画布并且填充颜色
+		imagefilledrectangle($this->thumb, 0, 0, $width, $height, $backgroundColor);
+		// 设置字体文字路径
+		$fontPath = File::realpath(VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/msyh.ttf');
+		//计算文本范围
+		$position = imagettfbbox($size, $angle, $fontPath, $content);
+		$x        = intval(($width - $position[2] - $position[0]) / 2);
+		$y        = intval(($height - $position[3] - $position[5]) / 2);
+		// 写入文本
+		imagefttext($this->thumb, $size, $angle, $x, $y, $textColor, $fontPath, $content);
+
+		// 开启缓存
+		ob_start();
+		// 输出图像
+		switch($imageType) {
+			case 1:
+				imagegif($this->thumb);
+				$mime = "image/gif";
+				break;
+			case 2:
+				imagejpeg($this->thumb,NULL,$this->Quality ? intval($this->Quality): 90);
+				$mime = "image/jpeg";
+				break;
+			case 3:
+				imagepng($this->thumb);
+				$mime = "image/png";
+				break;
+		}
+		$this->im && imagedestroy($this->im);
+		$this->thumb && imagedestroy($this->thumb);
+		$content = ob_get_clean();
+		if($showBinary){
+			return $content;
+		}
+		header('Cache-Control: public');
+		header('max-age: 31536000');
+		header('Last-Modified: ' . gmdate("D, d M Y H:i:s", strtotime(date('Y-m-01 00:00:00'))) . ' GMT');
+		header("Etag:" . $etag);
+		header('Content-type: '.$mime);
+		header('Content-Length:'.strlen($content));
+		exit($content);
+	}
+
+	/**
+	 * 设置操作源图片(组)
+	 *
+	 * @param string|array $filePaths 一维数组图片PATH 或 单图PATH
+	 * 
+	 * @return self
+	 */
+	public function setImage($filePaths):self{
+		$n = 1;
+		if(!is_array($filePaths)){
+			$n = 0;
+			$filePaths = [$filePaths];
+		}
+		foreach($filePaths as $k=> &$file){
+			$file = realpath(File::normalizePath($file));
+			if(!file_exists($file)){
+				unset($filePaths[$k]);
+			}
+			unset($file);
+		}
+		if(empty($filePaths)){
+			throw new \Exception('图片资源无效');
+		}
+		$this->_originFilePath = $n === 0 ? $filePaths[0] : $filePaths;
+		return $this;
+	}
+}
+
+
+trait Thumbmaker {
+
+    private static $_instance = [];
+	private static $__position = "";
+	private static $maxNumber = 99999999;
+	private static $_defaultTTF = VIPKWD_UTILS_LIB_ROOT.'/support/ttfs/msyh.ttf';
+	//操作源图片
+	private $_originFilePath = [];
+	private static $ThumbSaveName = null;
+	/**
+	 * 数值区间验证
+	 *
+	 * @param integer|float $num
+	 * @param integer|float $min
+	 * @param integer|float $max
+	 * @param integer|float|null $default
+	 * @return void
+	 */
+	private function numberRangeLimit(&$num, $min = 0, $max = 100, $default = null){
+		if($num < $min){
+			if($default) return $default;
+			$num = $min;
+		}
+		if($num > $max){
+			if($default) return $default;
+			$num = $max;
+		}
+		$num *= 1;
+		return $num;
+	}
+	
+	/**
+	 * 16进制色值检测/修补
+	 *
+	 * @param string $color  "#f" "#ff" "#fff" "#ffffff"
+	 * @return string 标准色值hex "#ffffff"
+	 */
+	private function colorHexFix(string $color):string{
+		$color = str_replace("#","", trim($color));
+		$len = strlen($color);
+		switch($len){
+			case "3":
+				$color = str_split($color);
+				$color = implode("", [ $color[0], $color[0], $color[1], $color[1], $color[2], $color[2], ]);
+				break;
+			case "2":
+				$color = implode("", [ $color, $color, $color]);
+				break;
+			case "1":
+				$color = str_pad("", 6, $color);
+				break;
+			default:break;
+		}
+		$color = strtoupper(substr(str_pad($color, 6, "0"), 0, 6));
+		
+		// Dev::vdump([$color, preg_match("/^[0-9A-F]{6}$/i", $color),1],1);
+		if(!preg_match("/^([0-9A-F]+){6}$/i", $color)){
+			$color = "000000";
+		}
+		return "#".$color;
+	}
+
+	/**
+	 * 资源坐标定位管理
+	 *
+	 * @param string $position "80% 70%" 或 "80 70"
+	 * @param callback $callback
+	 * @return array
+	 */
+	private function formatPosition(string $position, callable $callback):array{
+		$_pos = str_replace("%","", $position);
+		$cpos = explode(" ", $_pos);
+		if($_pos == $position){
+			//直接设置X,Y
+			return $callback($cpos[0]*1, $cpos[1] ? $cpos[1]*1 : 0, false);
+		}
+		$this->numberRangeLimit($cpos[0], 0, 100);
+		$this->numberRangeLimit($cpos[1], 0, 100);
+		//百分比配置X,Y
+		return $callback($cpos[0]*1, $cpos[1]*1, true);
+	}
+
+	/**
+	 * 擦出EXIF信息并转存图像
+	 *
+	 * @param string $srcImage
+	 * @param string $outputFilename
+	 */	      
+	protected function wipeExif(string $srcImage, string $outputFilename):void{
+		if (file_exists($srcImage)) {
+			$src_file = fopen($srcImage, 'rb');
+			$wipe = false;
+			if ($src_file) {
+				$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+				if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
+					$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+					while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
+						$length = unpack("n1length", fread($src_file, 2));	
+						fseek($src_file, $length['length'] - 2, SEEK_CUR);
+						$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+						$wipe = true;
+					}
+					if ($wipe) {
+						fseek($src_file, -2, SEEK_CUR);
+						$image_data = "\xff\xd8" . fread($src_file, filesize($srcImage));
+						fclose($src_file);
+						$des_file = fopen($outputFilename, 'w');
+						if ($des_file) {
+							fwrite($des_file, $image_data);
+							fclose($des_file);
+							chmod($outputFilename, octdec($this->Chmodlevel));
+						}
+					} else {
+						fclose($src_file);
+					}
+				} else {
+					fclose($src_file);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 读取图像EXIF信息
+	 *
+	 * @param string source image
+	 */	      
+	protected function readExif(string $srcImage){
+		$exif = "";
+		if (file_exists($srcImage)) {
+			if(function_exists('exif_read_data')){
+				//return exif_read_data($srcImage, "EXIF", true);
+			}
+			$src_file = fopen($srcImage, 'rb');
+			if ($src_file) {
+				$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+				if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
+					$exifdata = fread($src_file, 2);
+					$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
+					while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
+						$exif .= $exifdata;
+						$exifdata = fread($src_file, 2);
+						$exif .= $exifdata;
+						$length = unpack("n1length", $exifdata);
+						$exif .= fread($src_file, $length['length'] - 2);
+						$exifdata = fread($src_file, 2);
+						$header = unpack("C1byte1/" . "C1byte2/", $exifdata);
+					}
+					fclose($src_file);
+				} else {
+					fclose($src_file);
+				}
+			}
+		}
+		return $exif;
+	}
+
+	/**
+	 * 写入 EXIF 信息到图像
+	 *
+	 * @param string 待
+	 * @param string 二进制格式的Exif数据
+	 */	      
+	protected function insertExif($srcImage, $exifData):void{
+        if (file_exists($srcImage)) {
+            $src_file = fopen($srcImage, 'rb');
+            if ($src_file) {
+                $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+                if ($header['byte1'] == 0xff & $header['byte2'] == 0xd8) {
+                    $header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+                    while ($header['byte1'] == 0xff && ($header['byte2'] >= 0xe0 && $header['byte2'] <= 0xef || $header['byte2'] == 0xfe)) {
+						$length = unpack("n1length", fread($src_file, 2));	
+						fseek($src_file, $length['length'] - 2, SEEK_CUR);
+						$header = unpack("C1byte1/" . "C1byte2/", fread($src_file, 2));
+                    }
+				    fseek($src_file, -2, SEEK_CUR);
+				    $image_data = "\xff\xd8" . $exifData . fread($src_file, filesize($srcImage));
+	                fclose($src_file);
+				    $des_file = fopen($srcImage, 'w');
+				    if ($des_file) {
+						fwrite($des_file, $image_data);
+						fclose($des_file);
+						chmod($srcImage, octdec($this->Chmodlevel));
+				    }
+                } else {
+                    fclose($src_file);
+                }
+            }
+        }
+  	}
 }
 
 trait ThumbCoreVar{
@@ -1835,6 +1967,8 @@ trait ThumbCoreVar{
 	 * @var int	 
 	 */				
 	private $thumby;
+
+
 	
 }
 
@@ -1918,7 +2052,9 @@ trait ThumbCore{
 		$this->Negative               = false;
 		$this->Colorreplace           = array(0,'#000000','#FFFFFF',30);
 		$this->Pixelscramble          = array(0,3,1);
-		$this->Greyscale              = false;		
+		$this->Greyscale              = false;
+		$this->Binaryzation			  = false;
+		$this->ColorFlip			  = false;	
 		$this->Brightness             = array(0,30);
 		$this->Contrast               = array(0,30);
 		$this->Gamma                  = array(0,1.5);
@@ -1956,6 +2092,8 @@ trait ThumbCore{
 			if ($this->Medianfilter) {$this->medianfilter();}
 			if ($this->Greyscale) {$this->greyscale();}
 			if ($this->Brightness[0]==1) {$this->brightness();}
+			if ($this->Binaryzation) {$this->binaryzation();}
+			if ($this->ColorFlip) {$this->colorFlip();}
 			if ($this->Contrast[0]==1) {$this->contrast();}
 			if ($this->Gamma[0]==1) {$this->gamma();}
 			if ($this->Palette[0]==1) {$this->palette();}
@@ -2146,6 +2284,7 @@ trait ThumbCore{
 					$this->image=substr($this->image,0,strrpos($this->image,'.')).".".$this->Thumbsaveas;
 					$this->size[2]=1;
 					break;
+				default:
 				case "jpg":
 					$this->image=substr($this->image,0,strrpos($this->image,'.')).".".$this->Thumbsaveas;
 					$this->size[2]=2;
@@ -2163,18 +2302,19 @@ trait ThumbCore{
 		if ($this->Thumbfilename!='') {
 			$this->image=$this->Thumbfilename;
 		}
-		(!$this->Thumblocation && !$this->Thumbprefix ) && $this->savePath();
+		// (!$this->Thumblocation && !$this->Thumbprefix) && $this->savePath();
 
 		$Thumbfilename = $this->Thumblocation.$this->Thumbprefix.basename($this->image);
 		switch($this->size[2]) {
 			case 1:
 				imagegif($this->thumb,$Thumbfilename);
 				break;
-			case 2:
-				imagejpeg($this->thumb,$Thumbfilename,$this->Quality);
-				break;
 			case 3:
 				imagepng($this->thumb,$Thumbfilename);
+				break;
+			default:
+			case 2:
+				imagejpeg($this->thumb,$Thumbfilename,$this->Quality);
 				break;
 		}		
 		if ($this->Chmodlevel !='') {
@@ -2612,6 +2752,38 @@ trait ThumbCore{
 
 	}
 	
+    private function absoluteCrop($w, $h, $x = 0, $y = 0, $width = null, $height = null):self{
+        //设置保存尺寸
+        empty($this->Cropimage[4]) && $this->Cropimage[4] = $this->size[0];
+        empty($this->Cropimage[5]) && $this->Cropimage[5] = $this->size[1];
+
+		//创建新图像
+		$img = imagecreatetruecolor($this->Cropimage[4], $this->Cropimage[5]);
+		// 调整默认颜色
+		// $color = imagecolorallocate($img, 255, 255, 255);
+		//vipkwd debug 保持PNG的透明效果
+		$color = imagecolorallocatealpha($img, 0, 0, 0,127);
+		imagefill($img, 0, 0, $color);
+		//裁剪
+		imagecopyresampled(
+			$img,
+			$this->im,
+			0, 0,
+			$this->Cropimage[2],
+			$this->Cropimage[3],
+			$this->Cropimage[4],
+			$this->Cropimage[5],
+			$this->Cropimage[0],
+			$this->Cropimage[1]
+		);
+		imagedestroy($this->im); //销毁原图
+		//设置新图像
+		$this->im = $img;
+		$this->size[0]=(int) $this->Cropimage[4];
+		$this->size[1]=(int) $this->Cropimage[5];
+        return $this;
+    }
+
 	/**
 	 * Crop image in percentage, pixels or in a square
 	 * Crop from sides or from center
@@ -2619,6 +2791,9 @@ trait ThumbCore{
 	 *
 	 */		
 	private function cropimage() {	
+		if(isset($this->Cropimage[6]) && $this->Cropimage[6] === 'absolute'){
+			return $this->absoluteCrop();
+		}
 		$this->Cropimage[1] = $this->Cropimage[1] ? 1 : 0;
 		if ($this->Cropimage[1]==0) {
 			$crop2=intval($this->size[0]*($this->Cropimage[2]/100));
@@ -2657,7 +2832,6 @@ trait ThumbCore{
 		imagedestroy($this->newimage);
 		$this->size[0]=imagesx($this->im);
 		$this->size[1]=imagesy($this->im);
-	
 	}
 
 	/**
@@ -3076,23 +3250,73 @@ trait ThumbCore{
 	}
 
 	/**
-	 * Convert to greyscale
+	 * 二值化
+	 *
+	 * @return void
+	 */
+	private function binaryzation() {
+		for ($y=0;$y<$this->size[1];$y++) {
+			for ($x=0;$x<$this->size[0];$x++) {
+				$pixel=ImageColorAt($this->im,$x,$y);
+				$pixelRGBA = imagecolorsforindex($this->im, $pixel);
+				imagesetpixel(
+					$this->im,$x,$y,
+					imagecolorallocatealpha(
+						$this->im,
+						$pixelRGBA['red'] <= 127 ? 0 : 255,
+						$pixelRGBA['green'] <= 127 ? 0 : 255,
+						$pixelRGBA['blue'] <= 127 ? 0 : 255,
+						$pixel >> 24 & 0xFF
+					)
+				);
+				// $this->grayRGB[$y][] = $grey;
+			}
+		}
+	}
+
+	/**
+	 * Color flip.
+	 *
+	 * @return void
+	 */
+	private function colorFlip(){
+		for ($y=0;$y<$this->size[1];$y++) {
+			for ($x=0;$x<$this->size[0];$x++) {
+				$pixel=ImageColorAt($this->im,$x,$y);
+				$pixelRGBA = imagecolorsforindex($this->im, $pixel);
+				imagesetpixel(
+					$this->im,$x,$y,
+					imagecolorallocatealpha(
+						$this->im,
+						255 - $pixelRGBA['red'],
+						255 - $pixelRGBA['green'],
+						255 - $pixelRGBA['blue'],
+						$pixel >> 24 & 0xFF
+					)
+				);
+				// $this->grayRGB[$y][] = $grey;
+			}
+		}
+	}
+
+	/**
+	 * 图片灰化(去彩)
 	 *
 	 */	
 	private function greyscale() {
-		
 		if (function_exists('imagefilter')) {
 			imagefilter($this->im,IMG_FILTER_GRAYSCALE);
 		} else {
 			for ($y=0;$y<$this->size[1];$y++) {
 				for ($x=0;$x<$this->size[0];$x++) {
 					$pixel=ImageColorAt($this->im,$x,$y);
+					//公式: 灰度值为 r * 0.299 + g * 0.587 + b * 0.114
 					$grey=intval(($pixel >> 16 & 0xFF)*0.299 + ($pixel >> 8 & 0xFF)*0.587 + ($pixel & 0xFF)*0.114);
 					imagesetpixel($this->im,$x,$y,imagecolorallocatealpha($this->im,$grey,$grey,$grey,$pixel >> 24 & 0xFF));
+					// $this->grayRGB[$y][] = $grey;
 				}
 			}
-		}		
-
+		}
 	}
 
 	/**

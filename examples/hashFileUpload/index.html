@@ -7,13 +7,14 @@
     <script src="./js/sha1.js"></script>
     <script src="./js/common.js"></script>
     <script>
-        document.ready(function(){
+
+        let init = () => {
             //使用默认上传视图
             (new fileUploadPage).html({
                 api:{
                     upload: "./upload.php",
-                    status: "./fileStatus.php",
-                    download: "./fileDown.php?"
+                    status: "./status.php",
+                    download: "./download.php?"
                 }
             });
             /*
@@ -27,12 +28,22 @@
                 },
                 api:{
                     upload: "./upload.php",
-                    status: "./fileStatus.php",
-                    download: "./fileDown.php?"
+                    status: "./status.php",
+                    download: "./download.php?"
                 }
             });
             */
-        });
+        };
+
+        if(typeof document.ready === 'function'){
+            document.ready(function(){
+                init();
+            });
+        }else{
+            setTimeout(() => {
+                init();
+            }, 2000);
+        }
     </script>
 </head>
 <body>

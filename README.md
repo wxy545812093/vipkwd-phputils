@@ -14,7 +14,7 @@ A PHP common toolkit.
 
 ## 安装使用
 ```shell
-composer require vipkwd/utils[:dev-dev]
+composer require vipkwd/utils
 ```
 
 ## Artisan Command: vipkwd

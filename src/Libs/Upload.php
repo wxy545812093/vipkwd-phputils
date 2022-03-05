@@ -35,7 +35,7 @@ class Upload{
      * @param array $options
      *                  --max_size integer <10 * 1024 * 1024>  限制可上传文件大小(单位)
      *                  --upload_dir string <"upfiles/"> 保存目录
-     *                  --type array <["jpg","gif","bmp","jpeg","png"]> 允许扩展
+     *                  --type array|string <["jpg","gif","bmp","jpeg","png"]> 允许扩展 'jpg,jpeg,png'
      *                  --file_name_prefix string <''> 文件名前缀
      * @return string
      */
@@ -44,6 +44,7 @@ class Upload{
             if(!isset($_FILES[$uploadKey])){
                 return null;
             }
+
             $this->init($uploadKey, $options);
             
             // err01 
@@ -123,9 +124,13 @@ class Upload{
 
     private function _checkExtension(){
 
-        $this->file['ext'] = strtolower( self::fileext($this->file['name']));
+        $this->file['ext'] = $this->fileext($this->file['name']);
 
-        if(!in_array( $this->file['ext'], $this->options['type']) ) {
+        $types = array_filter($this->options['type'], function($type){
+            return strtolower($type) == $this->file['ext'];
+        });
+
+        if(empty($types)) {
             $text=implode(",", $this->options['type'] );
             //文件类型错误
             $page_result=$text;
@@ -145,7 +150,16 @@ class Upload{
     }
 
 	//获取文件后缀名函数 
-	private static function fileext($filename) {
+	private function fileext($filename) {
+        if($this->file['name'] == "blob" && !empty($this->file['type'])){
+            list(, $ext) = explode("/", $this->file['type'] .'/' );
+            $this->file['name'] = 'blob.'.$ext;
+            return strtolower($ext);
+        }
+        if(strrpos($filename, '.') === false){
+           $filename .='.';
+           $this->file['name'] .= '.'; 
+        }
 		return strtolower(substr(strrchr($filename, '.'), 1));
 	}
 
@@ -166,7 +180,8 @@ class Upload{
 
         $this->options = array_merge($this->options, $options);
 
-        $this->options['max_size'] = File::toBytes("".$this->options['max_size']);
+        $this->options['max_size'] && $this->options['max_size'] = File::toBytes("".$this->options['max_size']);
+        $this->options['size'] && $this->options['max_size'] = File::toBytes("".$this->options['size']);
 
         $maxSize = File::fileUploadMaxSize();
         if($this->options['max_size'] > $maxSize){

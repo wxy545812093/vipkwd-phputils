@@ -281,8 +281,7 @@ class Image{
      *
      * @return $this
      */
-    public function crop($w, $h, $x = 0, $y = 0, $width = null, $height = null)
-    {
+    public function crop($w, $h, $x = 0, $y = 0, $width = null, $height = null){
         //设置保存尺寸
         empty($width) && $width   = $w;
         empty($height) && $height = $h;

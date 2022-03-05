@@ -6,14 +6,6 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-/*
-$image = Vipkwd\Utils\Image::open('./image.jpg');
-$image->crop(...)
-    ->thumb(...)
-    ->water(...)
-    ->text(....)
-    ->save(..);
- */
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
@@ -75,10 +67,9 @@ class ImageHash{
         $imgPath1 = File::realpath($imgPath1);
         $imgPath2 = File::realpath($imgPath2);
         if(File::exists($imgPath1) && File::exists($imgPath2)){
-            echo $imgPath2;
             return bcsub("100", ''.$this->hash($imgPath1)->distance($this->hash($imgPath2)),2);
         }
-        return 1000;
+        return 0;
     }
     
     public function hashToHex(Object $hash):string{
