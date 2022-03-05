@@ -73,8 +73,12 @@
 		}
 		
 		body {
-		    display: flex;
+			display: flex;
+			justify-content: flex-start;
+			align-items: flex-start;
+			flex-wrap: wrap;
 		}
+		.nav{width: 100%; height: 40px; line-height: 40px; display: flex; justify-content: center; background: #70bce0; color: #fff; font-size: 1.3rem;}
 		
 		#container {
 		    display: flex;
@@ -94,26 +98,29 @@
 </head>
 
 <body onload="init();">
-	<div id="container">
-		<div id="vipkwd-opencv-img">
-			<img style="width:500px" src="./opencv_process.php">
+	<div class="nav"> <a href="./video_view.php" >H5视频识别</a></div>
+	<div style=" display: flex;">
+		<div id="container">
+			<div id="vipkwd-opencv-img">
+				<img style="width:500px" src="./opencv_process.php">
+			</div>
 		</div>
-	</div>
-	<div class="haarcascades-selector" id="haarcascades-selector">
-		<div>
-			扭曲角度：<input type="number" id="opencv_deg" min="0" name="opencv_deg" value="0" /><BR/>
-        	线框宽度：<input type="number" id="opencv_border" min="2" name="opencv_border" value="4" /><BR/>
-        	线框颜色：<input type="color" id="opencv_color" name="opencv_color" value="#fc02fc" /><BR/>
-        	识别模型：<ul>
-          	<?php
-              foreach(glob(__DIR__.'/../opencv-3.4.3/data/haarcascades_cuda/*.xml') as $file){
+		<div class="haarcascades-selector" id="haarcascades-selector">
+			<div>
+				扭曲角度：<input type="number" id="opencv_deg" min="0" name="opencv_deg" value="0" /><BR/>
+				线框宽度：<input type="number" id="opencv_border" min="2" name="opencv_border" value="4" /><BR/>
+				线框颜色：<input type="color" id="opencv_color" name="opencv_color" value="#fc02fc" /><BR/>
+				识别模型：<ul>
+				<?php
+				foreach(glob(__DIR__.'/../opencv-3.4.3/data/haarcascades_cuda/*.xml') as $file){
 
-                echo '<li><label for="'.basename($file).'"><input type="radio" onclick="return change(this)" id="'.basename($file).'" name="haarcascades" value="'.basename($file).'" /> '.basename($file).'</label></li>';
-                // echo '<option value="'.basename($file).'">'.basename($file).'</option>';
-              };
-            ?> 
-            </ul> 
-        </div>
+					echo '<li><label for="'.basename($file).'"><input type="radio" onclick="return change(this)" id="'.basename($file).'" name="haarcascades" value="'.basename($file).'" /> '.basename($file).'</label></li>';
+					// echo '<option value="'.basename($file).'">'.basename($file).'</option>';
+				};
+				?> 
+				</ul> 
+			</div>
+		</div>
     </div>
 </body>
 </html>
