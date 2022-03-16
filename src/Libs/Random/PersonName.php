@@ -8,10 +8,12 @@
  */
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils\Libs;
+namespace Vipkwd\Utils\Libs\Random;
+
 use \Exception;
 use Vipkwd\Utils\Tools;
-class RandomName{    
+
+class PersonName{    
     
     /**
      * 生成随机昵称

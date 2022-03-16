@@ -130,8 +130,36 @@ class Date{
         return $date;
     }
 
-    private static function dateTimeInstance($date){
-        return new \DateTime($date, new \DateTimeZone(self::$timeZone));
+    static function dateTimeBetween(string $startDate = '-30 years', $endDate = 'now'):\DateTime{
+        $startTimestamp = strtotime($startDate);
+        $endTimestamp = self::getMaxTimestamp($endDate);
+
+        if ($startTimestamp > $endTimestamp) {
+            throw new \InvalidArgumentException('Start date must be anterior to end date.');
+        }
+        $timestamp = mt_rand($startTimestamp, $endTimestamp);
+
+        return self::dateTimeInstance($timestamp);
     }
-    
+
+    static function dateTimeInstance($max = 'now', $timezone = null):\DateTime{
+        return new \DateTime(
+            date('Y-m-d',static::unixTime($max)),
+            new \DateTimeZone( $timezone ?? self::$timeZone)
+        );
+    }
+
+    private static function unixTime($max = 'now'):int{
+        return mt_rand(0, static::getMaxTimestamp($max));
+    }
+
+    private static function getMaxTimestamp($max = 'now'){
+        if (is_numeric($max)) {
+            return (int) $max;
+        }
+        if ($max instanceof \DateTime) {
+            return $max->getTimestamp();
+        }
+        return strtotime(empty($max) ? 'now' : $max);
+    }
 }

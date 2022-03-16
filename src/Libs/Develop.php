@@ -102,6 +102,7 @@ trait Develop{
         }
         return rtrim($txt, ', ');
     }
+    
     static function phpunit($classMethod, array $args = [], array $initArgs = []){
 
         $args_txt = self::buildArgsType($args);
@@ -136,13 +137,31 @@ trait Develop{
             // $instance = $refClass->getMethod('instance'); // 获取Person 类中的setName方法
             // $construct = $refClass->hasMethod('instance')
             // $method->invokeArgs($instance, array('snsgou.com'));
-            echo " {$callPath}; //Result: ";
+            echo " {$callPath}; //";
         }else{
-            echo " \\Vipkwd\\Utils\\{$classMethod}($args_txt); //Result: ";
+            echo " \\Vipkwd\\Utils\\{$classMethod}($args_txt); //";
             $res = call_user_func_array("\\Vipkwd\\Utils\\{$classMethod}", $args);
         }
 
+        switch($type = gettype($res)){
+            case "boolean":
+                $res = ($res ? 'true' : 'false');
+                break;
+            case "null":
+                $res = 'Null';
+                break;
+            case "array":
+            case "object":
+                self::dumper($res, false, false);
+                echo "\r\n";
+                return ;
+                break;
+            default:
+                break;
+        }
+        echo "<{$type}:>“";
         self::dump($res, false, false);
+        echo '”';
         echo "\r\n";
     }
 

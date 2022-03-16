@@ -15,7 +15,7 @@ if(!file_exists($composerFile)){
 
 $composer = json_decode(file_get_contents($composerFile));
 define('VIPKWD_START', microtime(true));
-define('VIPKWD_PACKAGE_NAME', ucfirst($composer->name ?? "Vipkwd/utils"));
+define('VIPKWD_PACKAGE_NAME', ($composer->name ?? "vipkwd/utils"));
 define('VIPKWD_PACKAGE_VERSION', $composer->version ?? "dev");
 /*
 |--------------------------------------------------------------------------
