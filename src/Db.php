@@ -129,7 +129,7 @@ class Db{
      * @param string $tbName
      * @return Object
      */
-    public function table(string $tbName):Object{
+    public function table(string $tbName):self{
         $this->_table = $tbName;
         return $this;
     }
@@ -140,7 +140,7 @@ class Db{
      * @param string|array $fields
      * @return Object
      */
-    public function field($fields ="*"):Object{
+    public function field($fields ="*"):self{
         if($fields !="*" && is_string($fields)){
             $fields = preg_replace("/\ +/", " ",$fields);
             $fields = explode(',', $fields);
@@ -158,7 +158,7 @@ class Db{
      * @param array $where
      * @return Object
      */
-    public function where(array $where = []):Object{
+    public function where(array $where = []):self{
         $this->_where = $where;
         return $this;
     }
@@ -169,7 +169,7 @@ class Db{
      * @param array $join
      * @return Object
      */
-    public function join(array $join = []):Object{
+    public function join(array $join = []):self{
         $this->_join = $join;
         return $this;
     }
@@ -180,7 +180,7 @@ class Db{
      * @param array $data
      * @return Object
      */
-    public function data(array $data):Object{
+    public function data(array $data):self{
         $this->_data = $data;
         return $this;
     }
@@ -192,7 +192,7 @@ class Db{
      * @param integer $offset <0>
      * @return Object
      */
-    public function limit(int $limit = 10,int $offset = 0):Object{
+    public function limit(int $limit = 10,int $offset = 0):self{
         $this->_limit = [$offset, $limit];
         return $this;
     }
@@ -205,7 +205,7 @@ class Db{
      * @param integer $pageLimit 每页数据条数
      * @return Object
      */
-    public function page(int $pageNum=1, $pageLimit=10):Object{
+    public function page(int $pageNum=1, $pageLimit=10):self{
         $pageNum = $pageNum <=1 ? 1 : $pageNum;
         $this->_limit = [ ($pageNum-1) * $pageLimit , $pageLimit];
         return $this;
@@ -217,7 +217,7 @@ class Db{
      * @param string|array $order
      * @return Object
      */
-    public function order($order):Object{
+    public function order($order):self{
         $this->_order = $order;
         return $this;
     }
@@ -227,7 +227,7 @@ class Db{
      * @param string|array $group
      * @return Object
      */
-    public function group($group):Object{
+    public function group($group):self{
         $this->_group = $group;
         return $this;
     }
@@ -238,7 +238,7 @@ class Db{
      * @param array $havingArr
      * @return Object
      */
-    public function having(array $havingArr):Object{
+    public function having(array $havingArr):self{
         $this->_having = $havingArr;
         return $this;
     }
@@ -372,9 +372,9 @@ class Db{
      * 将新的数据替换旧的数据
      *
      * @param array $columns
-     * @return void
+     * @return int
      */
-    public function replace(array $columns){
+    public function replace(array $columns):int{
         if(!empty($column)){
 
             if(empty($this->_where)){
@@ -494,7 +494,7 @@ class Db{
      * @param array $map 如： [ ':today' => $today ]
      * @return string
      */
-    public static function raw(string $expression, $map=[]):string{
+    public function raw(string $expression, $map=[]):string{
         return $this->_medoo::raw($expression, $map);
     }
 

@@ -123,11 +123,11 @@ class Position{
 	/**
 	 * 百度系(BD-09)-to-WGS-84坐标系
 	 *
-	 * @param double $bd_lat
-	 * @param double $bd_lon
+	 * @param float $bd_lat
+	 * @param float $bd_lon
 	 * @return array
 	 */
-	static function bd09ToGps84(double $bd_lat, double $bd_lon):array{
+	static function bd09ToGps84(float $bd_lat, float $bd_lon):array{
 		$gcj02 = self::bd09ToGcj02($bd_lat, $bd_lon);
 		return self::gcjToGps84($gcj02[0], $gcj02[1]);
 	}
@@ -169,11 +169,11 @@ class Position{
 	 *
 	 * -e.g: phpunit("Position::transform",[23.45833,116.397128]);
 	 * 
-	 * @param double $lat
-	 * @param double $lon
+	 * @param float $lat
+	 * @param float $lon
 	 * @return array
 	 */
-	static function transform(double $lat, double $lon):array{
+	static function transform(float $lat, float $lon):array{
 		if(self::outOfChina($lat, $lon)){
 			return array($lat, $lon);
 		}
