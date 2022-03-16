@@ -1,6 +1,6 @@
 <?php
 /**
- * @name 中文分词组件
+ * @name 视觉/机器学习库(开发版)
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
