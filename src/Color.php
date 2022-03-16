@@ -10,10 +10,20 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
+
 class Color{
 
 	/**
 	 * 16进制色值检测/修补
+	 * 
+	 * -e.g: phpunit("Color::colorHexFix",["f"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["ff"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["#f"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["#ff"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["fe"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["fe0"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["#ffee00"]); 
+	 * -e.g: phpunit("Color::colorHexFix",["#1234"]); 
 	 *
 	 * @param string $color  "#f" "#ff" "#fff" "#ffffff"
 	 * @return string 标准色值hex "#ffffff"
@@ -46,6 +56,15 @@ class Color{
     /**
 	 * 16进制色值转RGB数值
 	 * 
+	 * -e.g: phpunit("Color::hex2rgb",["123400"]);
+	 * -e.g: phpunit("Color::hex2rgb",["1234"]);
+	 * -e.g: phpunit("Color::hex2rgb",["ffee0"]);
+	 * -e.g: phpunit("Color::hex2rgb",["#ffee00"]);
+	 * -e.g: phpunit("Color::hex2rgb",["#f"]);
+	 * -e.g: phpunit("Color::hex2rgb",["#ff"]);
+	 * -e.g: phpunit("Color::hex2rgb",["#fff"]);
+	 * -e.g: phpunit("Color::hex2rgb",["010a64"]);
+	 * 
 	 * -- #dfdfdf转换成(239,239,239)
 	 *
 	 * @param string $color
@@ -69,6 +88,10 @@ class Color{
 
     /**
      * RGB数值转16进制色值
+	 * 
+	 * -e.g: phpunit("Color::rgb2hex",[255,255,255]);
+	 * -e.g: phpunit("Color::rgb2hex",[1,10,100]);
+	 * -e.g: phpunit("Color::rgb2hex",[9,0,1]);
      *
      * @param integer $r
      * @param integer $g
