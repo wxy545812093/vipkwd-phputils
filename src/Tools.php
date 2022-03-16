@@ -438,32 +438,6 @@ class Tools{
         return $_COOKIE;
     }
 
-    
-
-    /**
-     * 生成随机MAC地址
-     * 
-     * -e.g: phpunit("Tools::macAddr");
-     * -e.g: phpunit("Tools::macAddr",["+"]);
-     * -e.g: phpunit("Tools::macAddr",["-"]);
-     *
-     * @param string $sep 分隔符
-     * @return string
-     */
-    static function macAddr(string $sep=":"):string{
-        $list = [];
-        for($i=0;$i<6;$i++){
-            $list[] = strtoupper(
-                dechex(
-                    floor(
-                        self::mathRandom(0,1,9) * 256
-                    )
-                )
-            );
-        }
-        return implode($sep, $list);
-    }
-
     /**
      * 保存Cookie
      * 
