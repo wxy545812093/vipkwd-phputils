@@ -1,6 +1,6 @@
 <?php
 
-namespace Vipkwd\Utils\Libs\VQrcode;
+namespace Vipkwd\Utils\Libs\Qrcode;
 
 /*
  * PHP QR Code encoder
