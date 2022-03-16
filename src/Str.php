@@ -322,8 +322,8 @@ class Str{
      * 自动转换字符集 支持数组转换
      *
      * -e.g: phpunit("Str::autoCharset", ["张三"]);
-     * -e.g: phpunit("Str::autoCharset", ["张三","bgk","utf-8"]);
-     * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","bgk"]);
+     * -e.g: phpunit("Str::autoCharset", ["张三","gbk","utf-8"]);
+     * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","gbk"]);
      * 
      * @param string|array $str
      * @param string $fromCharset
@@ -579,11 +579,14 @@ class Str{
      * 生成UUID
      * 
      * -e.g: phpunit("Tools::uuid");
-     * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字"]);
+     * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字,此设置无效"]);
      * -e.g: phpunit("Tools::uuid",[false, "99"]);
      * -e.g: phpunit("Tools::uuid",[true]);
      * -e.g: phpunit("Tools::uuid",[true, "0000"]);
      * -e.g: phpunit("Tools::uuid",[true, "00000000000000"]);
+     * -e.g: phpunit("Tools::uuid",[true, "123456", '']);
+     * -e.g: phpunit("Tools::uuid",[true, "12", '+']);
+     * -e.g: phpunit("Tools::uuid",[true, "1234567890", '$']);
      *
      * @param bool $toUppercase <false>
      * @param string $prefix 前缀：仅支持英文字符与数字 <"">
