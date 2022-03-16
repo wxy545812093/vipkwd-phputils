@@ -63,14 +63,14 @@ class Random {
     }
 
     /**
-     * 构建随机IP地址
+     * 随机构建IPv4地址
      * 
-     * -e.g: phpunit("Random::ip");
-     * -e.g: phpunit("Random::ip");
+     * -e.g: phpunit("Random::ipv4");
+     * -e.g: phpunit("Random::ipv4");
      * 
      * @return string
      */
-    static function ip(): string {
+    static function ipv4(): string {
         $ipLong = [
             [607649792, 608174079], // 36.56.0.0-36.63.255.255
             [1038614528, 1039007743], // 61.232.0.0-61.237.255.255
@@ -85,8 +85,51 @@ class Random {
         ];
         $randKey = mt_rand(0, 9);
         return $ip = long2ip(mt_rand($ipLong[$randKey][0], $ipLong[$randKey][1]));
+
+        // return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
     }
 
+    /**
+     * 随机构建内网ipv4
+     *
+     * -e.g: phpunit("Random::localIpv4");
+     * -e.g: phpunit("Random::localIpv4");
+     * -e.g: phpunit("Random::localIpv4",[null]);
+     * -e.g: phpunit("Random::localIpv4",[10]);
+     * -e.g: phpunit("Random::localIpv4",[192]);
+     * -e.g: phpunit("Random::localIpv4",[192]);
+     * 
+     * @param integer|null $point <null> [10|192|null]
+     * 
+     * @return string
+     */
+    static function localIpv4(?int $point = null):string{
+        ($point != 10 && $point != 192) && $point = mt_rand(10,11);
+
+        if ( ($point % 10) === 0) {
+            // 10.x.x.x range
+            return long2ip(mt_rand(ip2long("10.0.0.0"), ip2long("10.255.255.255")));
+        }
+
+        // 192.168.x.x range
+        return long2ip(mt_rand(ip2long("192.168.0.0"), ip2long("192.168.255.255")));
+    }
+
+    /**
+     * 随机构建IPv6地址
+     *
+     * -e.g: phpunit("Random::ipv6");
+     * -e.g: phpunit("Random::ipv6");
+     * 
+     * @return string
+     */
+    static function ipv6():string{
+        $res = array();
+        for ($i=0; $i < 8; $i++) {
+            $res []= dechex(mt_rand(0, 65535));
+        }
+        return join(':', $res);
+    }
     /**
      * 随机生成一个 URL 协议
      * 
@@ -142,6 +185,8 @@ class Random {
      * 
      * -e.g: phpunit("Random::url");
      * -e.g: phpunit("Random::url");
+     * -e.g: phpunit("Random::url",["http"]);
+     * -e.g: phpunit("Random::url",["https"]);
      * 
      * @param string $protocol <""> 协议名称
      * @return string
@@ -244,7 +289,7 @@ class Random {
     }
 
     /**
-     * 生成随机字符(验证码)
+     * 随机验证码
      *
      * -e.g: phpunit("Random::code");
      * -e.g: phpunit("Random::code");
@@ -273,7 +318,7 @@ class Random {
 
 
     /**
-     * 随机生成马甲昵称
+     * 随机马甲昵称
      *
      * -e.g: phpunit("Random::nickName");
      * -e.g: phpunit("Random::nickName");
@@ -286,7 +331,7 @@ class Random {
     }
 
     /**
-     * 随机生成女名
+     * 随机女性 姓名
      *
      * -e.g: phpunit("Random::femaleName");
      * -e.g: phpunit("Random::femaleName",[false]);
@@ -299,7 +344,7 @@ class Random {
     }   
 
     /**
-     * 随机生成男名
+     * 随机男性 姓名
      * 
      * -e.g: phpunit("Random::maleName");
      * -e.g: phpunit("Random::maleName",[false]);
@@ -311,4 +356,210 @@ class Random {
         return RandomName::getMaleName($surName);
     }
 
+    /**
+     * 随机MAC地址
+     * 
+     * -e.g: phpunit("Random::macAddress");
+     * -e.g: phpunit("Random::macAddress",["+"]);
+     * -e.g: phpunit("Random::macAddress",["-"]);
+     *
+     * @param string $sep 分隔符
+     * @return string
+     */
+    static function macAddress(string $sep=":"):string{
+        $list = [];
+        for($i=0;$i<6;$i++){
+            $list[] = strtoupper(
+                dechex(
+                    floor(
+                        self::mathRandom(0,1,9) * 256
+                    )
+                )
+            );
+        }
+        return implode($sep, $list);
+    }
+
+    /**
+     * 随机布尔值
+     *
+     * -e.g: phpunit("Random::boolean");
+     * -e.g: phpunit("Random::boolean");
+     * -e.g: phpunit("Random::boolean");
+     * -e.g: phpunit("Random::boolean");
+     * 
+     * @return boolean
+     */
+    static function boolean():bool{
+        return mt_rand(1, 100) <= 50;
+    }
+
+    /**
+     * 随机Md5
+     *
+     * -e.g: phpunit("Random::md5");
+     * -e.g: phpunit("Random::md5");
+     * 
+     * @return string
+     */
+    static function md5():string{
+        return md5(mt_rand());
+    }
+
+    /**
+     * 随机sha1
+     *
+     * -e.g: phpunit("Random::sha1");
+     * -e.g: phpunit("Random::sha1");
+     * 
+     * @return string
+     */
+    static function sha1():string{
+        return sha1(mt_rand());
+    }
+
+    /**
+     * 随机sha256
+     *
+     * -e.g: phpunit("Random::sha256");
+     * -e.g: phpunit("Random::sha256");
+     * 
+     * @return string
+     */
+    static function sha256():string{
+        return hash('sha256', mt_rand());
+    }
+
+    /**
+     * 随机币种
+     *
+     * -e.g: phpunit("Random::currencyCode");
+     * -e.g: phpunit("Random::currencyCode");
+     * 
+     * @link https://en.wikipedia.org/wiki/ISO_4217
+     *
+     * With the following exceptions:
+     * SVC has been replaced by the USD in 2001: https://en.wikipedia.org/wiki/Salvadoran_col%C3%B3n
+     * ZWL has been suspended since 2009: https://en.wikipedia.org/wiki/Zimbabwean_dollar
+     * 
+     * @return string
+     */
+    static function currencyCode():string{
+        $currencyCode = array(
+            'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
+            'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL',
+            'BSD', 'BTN', 'BWP', 'BYN', 'BZD', 'CAD', 'CDF', 'CHF', 'CLP', 'CNY',
+            'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD',
+            'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP',
+            'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR',
+            'ILS', 'INR', 'IQD', 'IRR', 'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS',
+            'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR',
+            'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP',
+            'MRU', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO',
+            'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN',
+            'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG',
+            'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STN', 'SYP', 'SZL',
+            'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH',
+            'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XCD',
+            'XOF', 'XPF', 'YER', 'ZAR', 'ZMW',
+        );
+        return $currencyCode[ mt_rand(0, 154) ];
+
+    }
+
+    /**
+     * 随机Emoji表情
+     *
+     * -e.g: phpunit("Random::emoji");
+     * -e.g: phpunit("Random::emoji");
+     * 
+     * @link https://en.wikipedia.org/wiki/Emoji#Unicode_blocks
+     * 
+     * @return void
+     */
+    static function emoji(){
+        static $emoji = array(
+            '\uD83D\uDE00', '\uD83D\uDE01', '\uD83D\uDE02', '\uD83D\uDE03',
+            '\uD83D\uDE04', '\uD83D\uDE05', '\uD83D\uDE06', '\uD83D\uDE07',
+            '\uD83D\uDE08', '\uD83D\uDE09', '\uD83D\uDE0A', '\uD83D\uDE0B',
+            '\uD83D\uDE0C', '\uD83D\uDE0D', '\uD83D\uDE0E', '\uD83D\uDE0F',
+            '\uD83D\uDE10', '\uD83D\uDE11', '\uD83D\uDE12', '\uD83D\uDE13',
+            '\uD83D\uDE14', '\uD83D\uDE15', '\uD83D\uDE16', '\uD83D\uDE17',
+            '\uD83D\uDE18', '\uD83D\uDE19', '\uD83D\uDE1A', '\uD83D\uDE1B',
+            '\uD83D\uDE1C', '\uD83D\uDE1D', '\uD83D\uDE1E', '\uD83D\uDE1F',
+            '\uD83D\uDE20', '\uD83D\uDE21', '\uD83D\uDE22', '\uD83D\uDE23',
+            '\uD83D\uDE24', '\uD83D\uDE25', '\uD83D\uDE26', '\uD83D\uDE27',
+            '\uD83D\uDE28', '\uD83D\uDE29', '\uD83D\uDE2A', '\uD83D\uDE2B',
+            '\uD83D\uDE2C', '\uD83D\uDE2D', '\uD83D\uDE2E', '\uD83D\uDE2F',
+            '\uD83D\uDE30', '\uD83D\uDE31', '\uD83D\uDE32', '\uD83D\uDE33',
+            '\uD83D\uDE34', '\uD83D\uDE35', '\uD83D\uDE36', '\uD83D\uDE37',
+        );
+        return json_decode('"' . $emoji[mt_rand(0, count($emoji)-1) ] . '"');
+    }
+
+    /**
+     * 随机维度
+     *
+     * -e.g: phpunit("Random::latitude");
+     * -e.g: phpunit("Random::latitude");
+     * 
+     * @param integer $min
+     * @param integer $max
+     * @return float
+     */
+    static function latitude(int $min = -90, int $max = 90):float{
+        return static::float($min, $max, 6);
+    }
+
+    /**
+     * 随机经度
+     *
+     * -e.g: phpunit("Random::longitude");
+     * -e.g: phpunit("Random::longitude");
+     * 
+     * @param integer $min
+     * @param integer $max
+     * @return float
+     */
+    static function longitude(int $min = -180, int $max = 180):float{
+        return static::float($min, $max, 6);
+    }
+
+    /**
+     * 随机英文字符
+     *
+     * -e.g: phpunit("Random::letter");
+     * -e.g: phpunit("Random::letter",[4]);
+     * -e.g: phpunit("Random::letter",[40]);
+     * 
+     * @return string
+     */
+    static function letter(int $len = 1):string{
+        return static::_asciiLetter($len, 97, 122);
+    }
+
+    /**
+     * 随机Ascii
+     *
+     * -e.g: phpunit("Random::ascii");
+     * -e.g: phpunit("Random::ascii",[3]);
+     * -e.g: phpunit("Random::ascii",[6]);
+     * 
+     * @param integer $len
+     * @return string
+     */
+    static function ascii(int $len = 1):string{
+        return static::_asciiLetter($len, 33, 126);
+    }
+
+
+    private static function _asciiLetter(int $len, int $sc, int $ec){
+        $len < 1 && $len = 1;
+        $str = '';
+        do{
+            $str .= chr(mt_rand($sc, $ec));
+            $len --;
+        }while($len > 0);
+        return $str; 
+    }
 }
