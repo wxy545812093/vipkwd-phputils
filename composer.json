@@ -48,6 +48,8 @@
         "optimize-autoloader": true
     },
     "require-dev": {
+        "bluerhinos/phpmqtt": "@dev",
+        "jaeger/querylist": "dev-master",
         "thiagoalessio/tesseract_ocr": "dev-main"
     }
 }

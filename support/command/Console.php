@@ -190,10 +190,10 @@ class Console extends Command {
 				"Idx" => str_pad(strval($index+1), 2, " ", STR_PAD_LEFT),
 				"Namespace" => $class->getNamespaceName(),
 				"Class" => $class->getShortName(),
-				"Method" => "Et: ".count($methods),
-				"Type" => ".",
-				"Arguments" => ".",
-				"Eg" => ".",
+				"Method" => strval(count($methods)),
+				"Type" => ":)",
+				"Arguments" => ":)",
+				"Eg" => ":)",
 				"Comment" => trim($classDescript),
 			]];
 			// if($class->getShortName() == "Qrcodes"){
@@ -328,10 +328,10 @@ class Console extends Command {
 				}
 
 				if($method->isStatic()){
-					$text = "<info>{$className}</info>::<info>".$method->getName()."</info>";
+					$text = "Struct: <info>{$className}</info>::<info>".$method->getName()."</info>";
 				}else{
 					if($method->getName() == "__construct"){
-						$text = "<info>new {$className}</info></info>";
+						$text = "<info>new {$className}(...array)</info></info>";
 					}else{
 						$text = "(<info>{$className}</info> Object)-><info>".$method->getName()."</info>";
 					}
