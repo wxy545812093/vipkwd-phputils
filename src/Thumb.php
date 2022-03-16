@@ -1021,19 +1021,24 @@ class Thumb{
 
 	/**
 	 * 生成占位图
+	 * 
+	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 3]);
+	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 2]);
+	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 1]);
+	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3]);
 	 *
 	 * @param string $WxHsize 400x300 || 4:3x400 || 16:9x300
+	 * @param integer $getType <1> 1:header 2:binData 3: savePath;
+	 * @param integer $format <1> 1:jpg 2:gif 3:png
 	 * @param integer $fontSize 文字大小 <宽或高的1%> 默认：min($width * 0.1, $height * 0.1)
-	 * @param string $textColor <#ffffff> #ffffff || #fff || #f
-	 * @param string $bgColor <#666666> #ffffff || #fff || #f
 	 * @param string $text	<宽 x 高> 最大12个字
-	 * @param integer $angle 角度(度数合法值)
-	 * @param integer $imageType <2> 1gif 2jpg 3png
-	 * @param boolean $showBinary <false>
+	 * @param string $bgColor <#666666> #ffffff || #fff || #f
+	 * @param string $textColor <#ffffff> #ffffff || #fff || #f
+	 * @param integer $angle <0> 角度(度数合法值)
 	 * @return header
 	 */
-	public function createPlaceholder(string $WxHsize, int $fontSize=0, string $textColor="#fff", string $bgColor="#666", string $text = "W x H", int $angle =0, int $imageType = 2, bool $showBinary=false){
-		$WxHsize = strtolower(str_replace(" ","", trim($WxHsize)));
+	public function createPlaceholder(string $WxHsize, int $getType=1, int $format = 1, int $fontSize=0, string $text = "W x H", string $bgColor="#666", string $textColor="#fff", int $angle =0){
+		$WxHsize = strtolower(str_replace([" ",'X'],["",'x'], trim($WxHsize)));
 		list($width, $height) = explode("x", $WxHsize);
 		if(strpos($width, ":")){
 			list($w1,$h1) = explode(":", $width);
@@ -1047,7 +1052,8 @@ class Thumb{
 		$this->numberRangeLimit($width, 50, 2048);
 		$this->numberRangeLimit($height, 50, 2048);
 		$this->numberRangeLimit($angle, -180, 180, 0);
-		$this->numberRangeLimit($imageType, 1,3);
+		$this->numberRangeLimit($format, 1,3);
+		$this->numberRangeLimit($getType, 1,3);
 		!$textColor && $textColor = "#fff";
 		!$bgColor && $bgColor = "#666";
 
@@ -1060,8 +1066,8 @@ class Thumb{
 
 		$bgColor = $this->hex2rgb($this->colorHexFix($bgColor));
 		$textColor = $this->hex2rgb($this->colorHexFix($textColor));
-		$etag = md5(json_encode(compact("angle", "height", "width", "content","size", "textColor", "bgColor", "imageType" )));
-		if(array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag){
+		$etag = md5(json_encode(compact("angle", "height", "width", "content","size", "textColor", "bgColor", "format" )));
+		if($getType === 1 && array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag){
 			Http::sendCode(304);
 			exit();
 		}
@@ -1080,36 +1086,41 @@ class Thumb{
 		$x        = intval(($width - $position[2] - $position[0]) / 2);
 		$y        = intval(($height - $position[3] - $position[5]) / 2);
 		// 写入文本
-		imagefttext($this->thumb, $size, $angle, $x, $y, $textColor, $fontPath, $content);
+		@imagefttext($this->thumb, $size, $angle, $x, $y, $textColor, $fontPath, $content);
 
 		// 开启缓存
 		ob_start();
 		// 输出图像
-		switch($imageType) {
+		switch($format) {
 			case 1:
-				imagegif($this->thumb);
-				$mime = "image/gif";
+			default:
+				imagejpeg($this->thumb,NULL,$this->Quality ? intval($this->Quality): 90);
+				$ext = "jpeg";
 				break;
 			case 2:
-				imagejpeg($this->thumb,NULL,$this->Quality ? intval($this->Quality): 90);
-				$mime = "image/jpeg";
+				imagegif($this->thumb);
+				$ext = "gif";
 				break;
 			case 3:
 				imagepng($this->thumb);
-				$mime = "image/png";
+				$ext = "png";
 				break;
 		}
+		$content = ob_get_clean();
 		$this->im && imagedestroy($this->im);
 		$this->thumb && imagedestroy($this->thumb);
-		$content = ob_get_clean();
-		if($showBinary){
+		if($getType === 2){
 			return $content;
+		}else if($getType === 3){
+			$temp = File::pathToUnix(sys_get_temp_dir()) .'/'.md5($etag).'.'. $ext;
+			File::write($temp, $content);
+			return $temp;
 		}
 		header('Cache-Control: public');
 		header('max-age: 31536000');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s", strtotime(date('Y-m-01 00:00:00'))) . ' GMT');
 		header("Etag:" . $etag);
-		header('Content-type: '.$mime);
+		header('Content-type: image/'.$mime);
 		header('Content-Length:'.strlen($content));
 		exit($content);
 	}
