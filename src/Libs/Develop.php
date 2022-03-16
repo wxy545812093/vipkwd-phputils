@@ -80,30 +80,70 @@ trait Develop{
         $exit && exit;
     }
 
-    static function phpunit($classMethod, $args = [], $txt = ""){
-        if($txt == ""){
-            foreach($args as $v){
-                if(is_callable($v)){
-                    $txt .= "\Closure";
-                }elseif(gettype($v) == 'object'){
-                    $txt .= "\Object";
-                }elseif(gettype($v) == 'string'){
-                    $txt .="\"{$v}\"";
-                }else if($v === null){
-                    $txt .="null";
-                }else if($v === true){
-                    $txt .="true";
-                }else if($v === false){
-                    $txt .= "false";
-                }else if( substr(strval($v),0,1) == "-" || substr(strval($v),0,1) >= 0){
-                    $txt .= $v;
-                }
-                $txt .=',';
+    private static function buildArgsType(array $args){
+        $txt = '';
+        foreach($args as $v){
+            if(is_callable($v)){
+                $txt .= "\Closure";
+            }elseif(gettype($v) == 'object'){
+                $txt .= "\Object";
+            }elseif(gettype($v) == 'string'){
+                $txt .="\"{$v}\"";
+            }else if($v === null){
+                $txt .="null";
+            }else if($v === true){
+                $txt .="true";
+            }else if($v === false){
+                $txt .= "false";
+            }else if( substr(strval($v),0,1) == "-" || substr(strval($v),0,1) >= 0){
+                $txt .= $v;
             }
-            $txt = rtrim($txt, ',');
+            $txt .=', ';
         }
-        echo " \\Vipkwd\\Utils\\{$classMethod}($txt); // ";
-        self::dump(call_user_func_array("\\Vipkwd\\Utils\\{$classMethod}", $args), false, false);
+        return rtrim($txt, ', ');
+    }
+    static function phpunit($classMethod, array $args = [], array $initArgs = []){
+
+        $args_txt = self::buildArgsType($args);
+        $initArgs_txt = self::buildArgsType($initArgs);
+        list($className, $method) = explode('::', $classMethod);
+
+        $classPath = "\\Vipkwd\\Utils\\{$className}";
+        $refClass = new \ReflectionClass($classPath);
+        //方法调用路径
+        $callPath = '';
+        $refMethod = $refClass->getMethod($method);
+        if($refMethod->isPublic() && !$refMethod->isStatic()){
+
+            if($refClass->hasMethod('instance')){
+                $insMethod = $refClass->getMethod('instance');
+                if($insMethod -> isStatic()){
+                    $callPath = $classPath.'::instance('.$initArgs_txt.')';
+                    $instance = $insMethod->invokeArgs(null, $initArgs);
+                }
+            }
+
+            if(!isset($instance)){
+                $callPath = '(new '.$classPath.'('.$initArgs_txt.'))';
+                // $insMethod = $refClass->getMethod('__construct');
+                // $instance = $insMethod->invokeArgs(null, $txt);
+                // $instance = new $classPath($txt);
+                $instance = $refClass->newInstanceArgs($initArgs);
+            }
+            $callPath .= "->{$method}({$args_txt})";
+            $res = $instance->{$method}(...array_values($args));
+
+            // $instance = $refClass->getMethod('instance'); // 获取Person 类中的setName方法
+            // $construct = $refClass->hasMethod('instance')
+            // $method->invokeArgs($instance, array('snsgou.com'));
+            echo " {$callPath}; //Result: ";
+        }else{
+            echo " \\Vipkwd\\Utils\\{$classMethod}($args_txt); //Result: ";
+            $res = call_user_func_array("\\Vipkwd\\Utils\\{$classMethod}", $args);
+        }
+
+        self::dump($res, false, false);
+        echo "\r\n";
     }
 
     static function br(){

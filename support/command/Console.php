@@ -253,7 +253,8 @@ class Console extends Command {
 					break;
 				}
 			}
-			$doc = str_replace(["/**","*"," "],"", trim( $doc[1] ?? "" ));
+			$doc = str_replace(["/**","*"],"", trim( $doc[1] ?? "" ));
+			$doc = preg_replace("/\ (\ )+/", ' ',$doc);
 
 			//获取方法的类型
 			//$method_flag = $method->isProtected();//还可能是public,protected类型的
@@ -378,7 +379,7 @@ class Console extends Command {
 			$alternative = Str::getSuggestion($methods, self::$showMethod);
 			
 			$style = new SymfonyStyle(self::$_input, self::$_output);
-			$style->block(sprintf("\n%s::%s() method does not exist or does not expose access rights..\n", $className, self::$showMethod), null, 'error');
+			$style->block(sprintf("\n%s::%s() method does not exist or does not expose access(public) rights..\n", $className, self::$showMethod), null, 'error');
 			if($alternative === null && !empty($_alternatives)){
 				$alternative = $_alternatives[0];
 				if(count($_alternatives) > 1){
