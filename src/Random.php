@@ -60,8 +60,7 @@ class Random extends Payment{
      * @return false|string
      */
     static function date(string $format = 'Y-m-d H:i:s'): string {
-        $timestamp = time() - mt_rand(0, 86400 * 3650);
-        return date($format, $timestamp);
+        return DateTime::randomDate($format);
     }
 
     /**
