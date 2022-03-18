@@ -9,7 +9,9 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs\SmartParsePro;
-use \Exception,\Vipkwd\Utils\Dev,\Vipkwd\Utils\Libs\RandomName;
+use \Exception;
+use \Vipkwd\Utils\Dev;
+use \Vipkwd\Utils\Libs\Random\PersonName;
 
 // http://wzhichao.gitee.io/smartparse/#/smartParse/import/es5
 // http://wzhichao.gitee.io/smartparsepro/js/address_parse.js
@@ -69,7 +71,7 @@ class Address {
         $addrString = preg_replace("/\ +/"," ", $this->stripscript($addrString));
         // Dev::dumper($addrString,1);
         $copyAddress = explode(' ', $addrString);
-        $familyNameList = RandomName::getFamilyNameList();
+        $familyNameList = PersonName::getFamilyNameList();
         $remarks = [];
         $names = [];
         $remarkIndex = 0;

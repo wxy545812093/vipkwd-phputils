@@ -13,6 +13,8 @@ namespace Vipkwd\Utils;
 
 class Validate{
 
+    use \Vipkwd\Utils\Libs\Random\Payment\ValidateTrait;
+
     static $reg_internat_mobile = "/^(((\+?0?\d{1,4})[\ \-])?(\d{5,11}))$/";
     static $reg_email = "/\w+([-+.]\w+)*@((\w+([-.]\w+)*)\.)[a-zA-Z]{2,5}$/";
     static $reg_telephone ="/^(((0[1-9]\d{1,2})[ \-]|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/";
@@ -302,9 +304,16 @@ class Validate{
     /**
      * 验证货币金额（支持定义小数位长度）
      *
+     * -e.g: phpunit("Validate::isPrice", [mt_rand()]);
+     * -e.g: phpunit("Validate::isPrice", [1.2]);
+     * -e.g: phpunit("Validate::isPrice", [1]);
+     * -e.g: phpunit("Validate::isPrice", [1.20]);
+     * -e.g: phpunit("Validate::isPrice", [1.23]);
+     * -e.g: phpunit("Validate::isPrice", [1.233,1,5]);
+     * 
      * @param string $number
-     * @param integer $minPointPlace
-     * @param integer $maxPointPlace
+     * @param integer $minPointPlace <1> 最少小数长度 0.\d
+     * @param integer $maxPointPlace <2> 最多小数长度 0.\d\d
      * @return boolean
      */
     static function isPrice(string $number, int $minPointPlace=1, int $maxPointPlace=2):bool{
@@ -398,23 +407,27 @@ class Validate{
     /**
      * 验证境外信用卡
      *
+     * -e.g: $number = \Vipkwd\Utils\Random::creditCardNumber();
+     * -e.g: phpunit("Validate::creditCard", [$number]);
+     * -e.g: phpunit("Validate::creditCardValid", [$number]);
+     * 
      * @param string $creditCard
      *
      * @return bool
      */
-    static function creditCard(string $creditCard):bool{
-        if ('' === trim($creditCard)) {
+    static function creditCard(string $number):bool{
+        if ('' === trim($number)) {
             return false;
         }
-        if (!boolval(preg_match('/.*[1-9].*/', $creditCard))) {
+        if (!boolval(preg_match('/.*[1-9].*/', $number))) {
             return false;
         }
-        //longueur de la chaine $creditCard
-        $length = strlen($creditCard);
+        //longueur de la chaine $number
+        $length = strlen($number);
         //resultat de l'addition de tous les chiffres
         $tot = 0;
         for ($i = $length - 1; $i >= 0; --$i) {
-            $digit = substr($creditCard, $i, 1);
+            $digit = substr($number, $i, 1);
             if ((($length - $i) % 2) == 0) {
                 $digit = (int) $digit * 2;
                 ($digit > 9) && $digit = $digit - 9;
@@ -422,6 +435,19 @@ class Validate{
             $tot += (int) $digit;
         }
         return ($tot % 10) == 0;
+        /*
+            $number = (string) $number;
+            $length = strlen($number);
+            $sum = 0;
+            for ($i = $length - 1; $i >= 0; $i -= 2) {
+                $sum += $number[$i];
+            }
+            for ($i = $length - 2; $i >= 0; $i -= 2) {
+                $sum += array_sum(str_split( strval( $number[$i] * 2))) ;
+            }
+            return ($sum % 10) == 0;
+        */
+
     }
 
     /**

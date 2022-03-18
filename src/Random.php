@@ -10,9 +10,11 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Libs\RandomName,Tools};
+use Vipkwd\Utils\Tools;
+use \Vipkwd\Utils\Libs\Random\PersonName;
+use \Vipkwd\Utils\Libs\Random\Payment;
 
-class Random {
+class Random extends Payment{
 
     /**
      * 构建一个随机浮点数
@@ -67,26 +69,29 @@ class Random {
      * 
      * -e.g: phpunit("Random::ipv4");
      * -e.g: phpunit("Random::ipv4");
+     * -e.g: phpunit("Random::ipv4", [3]);
      * 
-     * @return string
+     * @return string|array
      */
-    static function ipv4(): string {
-        $ipLong = [
-            [607649792, 608174079], // 36.56.0.0-36.63.255.255
-            [1038614528, 1039007743], // 61.232.0.0-61.237.255.255
-            [1783627776, 1784676351], // 106.80.0.0-106.95.255.255
-            [2035023872, 2035154943], // 121.76.0.0-121.77.255.255
-            [2078801920, 2079064063], // 123.232.0.0-123.235.255.255
-            [-1950089216, -1948778497], // 139.196.0.0-139.215.255.255
-            [-1425539072, -1425014785], // 171.8.0.0-171.15.255.255
-            [-1236271104, -1235419137], // 182.80.0.0-182.92.255.255
-            [-770113536, -768606209], // 210.25.0.0-210.47.255.255
-            [-569376768, -564133889], // 222.16.0.0-222.95.255.255
-        ];
-        $randKey = mt_rand(0, 9);
-        return $ip = long2ip(mt_rand($ipLong[$randKey][0], $ipLong[$randKey][1]));
+    static function ipv4(int $size =1){
+        return self::maker($size, function($idx){
+            return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
+        });
 
-        // return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
+        // $ipLong = [
+        //     [607649792, 608174079], // 36.56.0.0-36.63.255.255
+        //     [1038614528, 1039007743], // 61.232.0.0-61.237.255.255
+        //     [1783627776, 1784676351], // 106.80.0.0-106.95.255.255
+        //     [2035023872, 2035154943], // 121.76.0.0-121.77.255.255
+        //     [2078801920, 2079064063], // 123.232.0.0-123.235.255.255
+        //     [-1950089216, -1948778497], // 139.196.0.0-139.215.255.255
+        //     [-1425539072, -1425014785], // 171.8.0.0-171.15.255.255
+        //     [-1236271104, -1235419137], // 182.80.0.0-182.92.255.255
+        //     [-770113536, -768606209], // 210.25.0.0-210.47.255.255
+        //     [-569376768, -564133889], // 222.16.0.0-222.95.255.255
+        // ];
+        // $range = $ipLong[mt_rand(0, 9)];
+        // return $ip = long2ip(mt_rand($range[0], $range[1]));
     }
 
     /**
@@ -98,21 +103,22 @@ class Random {
      * -e.g: phpunit("Random::localIpv4",[10]);
      * -e.g: phpunit("Random::localIpv4",[192]);
      * -e.g: phpunit("Random::localIpv4",[192]);
+     * -e.g: phpunit("Random::localIpv4",[192, 10]);
      * 
      * @param integer|null $point <null> [10|192|null]
-     * 
-     * @return string
+     * @param integer $size <1>
+     * @return string|array
      */
-    static function localIpv4(?int $point = null):string{
-        ($point != 10 && $point != 192) && $point = mt_rand(10,11);
-
-        if ( ($point % 10) === 0) {
-            // 10.x.x.x range
-            return long2ip(mt_rand(ip2long("10.0.0.0"), ip2long("10.255.255.255")));
-        }
-
-        // 192.168.x.x range
-        return long2ip(mt_rand(ip2long("192.168.0.0"), ip2long("192.168.255.255")));
+    static function localIpv4(?int $point = null, int $size =1){
+        return self::maker($size, function($idx)use($point){
+            ($point != 10 && $point != 192) && $point = mt_rand(10,11);
+            if ( ($point % 10) === 0) {
+                // 10.x.x.x range
+                return long2ip(mt_rand(ip2long("10.0.0.0"), ip2long("10.255.255.255")));
+            }
+            // 192.168.x.x range
+            return long2ip(mt_rand(ip2long("192.168.0.0"), ip2long("192.168.255.255")));
+        });
     }
 
     /**
@@ -120,15 +126,19 @@ class Random {
      *
      * -e.g: phpunit("Random::ipv6");
      * -e.g: phpunit("Random::ipv6");
+     * -e.g: phpunit("Random::ipv6", [3]);
      * 
-     * @return string
+     * @param integer $size <1>
+     * @return string|array
      */
-    static function ipv6():string{
-        $res = array();
-        for ($i=0; $i < 8; $i++) {
-            $res []= dechex(mt_rand(0, 65535));
-        }
-        return join(':', $res);
+    static function ipv6(int $size =1){
+        return self::maker($size, function($idx){
+            $res = array();
+            for ($i=0; $i < 8; $i++) {
+                $res []= dechex(mt_rand(0, 65535));
+            }
+            return join(':', $res);
+        });
     }
     /**
      * 随机生成一个 URL 协议
@@ -172,12 +182,16 @@ class Random {
      * 
      * -e.g: phpunit("Random::domain");
      * -e.g: phpunit("Random::domain");
+     * -e.g: phpunit("Random::domain", [3]);
      * 
+     * @param integer $size <1>
      * @return string
      */
-    static function domain(): string {
-        $len = mt_rand(6, 16);
-        return strtolower(self::code($len,false)) . '.' . self::tld();
+    static function domain(int $size =1){
+        return self::maker($size, function($idx){
+            $len = mt_rand(6, 16);
+            return strtolower(self::code($len,false)) . '.' . self::tld();
+        });
     }
 
     /**
@@ -187,13 +201,17 @@ class Random {
      * -e.g: phpunit("Random::url");
      * -e.g: phpunit("Random::url",["http"]);
      * -e.g: phpunit("Random::url",["https"]);
+     * -e.g: phpunit("Random::url",["https", 3]);
      * 
      * @param string $protocol <""> 协议名称
-     * @return string
+     * @param integer $size <1>
+     * @return string|array
      */
-    static function url(string $protocol = ''): string {
-        $protocol = $protocol ? $protocol : self::protocol();
-        return $protocol . '://' . self::domain();
+    static function url(string $protocol = '', int $size =1){
+        return self::maker($size, function($idx) use($protocol){
+            $protocol = $protocol ? $protocol : self::protocol();
+            return $protocol . '://' . self::domain();
+        }); 
     }
 
     /**
@@ -201,95 +219,108 @@ class Random {
      * 
      * -e.g: phpunit("Random::email");
      * -e.g: phpunit("Random::email");
+     * -e.g: phpunit("Random::email",['baidu.com']);
+     * -e.g: phpunit("Random::email",['baidu.com', 3]);
+     * -e.g: phpunit("Random::email",['', 3]);
      * 
      * @param string $domain <""> 可以指定邮箱域名
-     * @return string
+     * @param integer $size <1>
+     * @return string|array
      */
-    static function email(string $domain = ''): string {
-        $len = mt_rand(6, 16);
-        $domain = $domain ? $domain : self::domain();
-        return strtolower(self::code($len,false)) . '@' . $domain;
+    static function email(string $domain = '', $size =1){
+        return self::maker($size, function($idx) use($domain){
+            $len = mt_rand(6, 16);
+            $domain = $domain ? $domain : self::domain();
+            return strtolower(self::code($len,false)) . '@' . $domain;
+        });
     }
 
     /**
-     * 随机生成一个大陆手机号
+     * 大陆手机号
      * 
      * -e.g: phpunit("Random::mobilePhone");
      * -e.g: phpunit("Random::mobilePhone");
+     * -e.g: phpunit("Random::mobilePhone",[3]);
      * 
-     * @return string
+     * @param integer $size <1>
+     * @return string|array
      */
-    static function mobilePhone(): string {
-        $prefixArr = [13,14,15,16,17,18,19];
-        shuffle($prefixArr);
-        return $prefixArr[0] . self::code(9, true);
+    static function mobilePhone(int $size=1){
+        return self::maker($size, function($idx){
+            $prefixArr = [13,14,15,16,17,18,19];
+            shuffle($prefixArr);
+            return $prefixArr[ mt_rand(0,6) ] . self::code(9, true);
+        });
     }
 
     /**
-     * 随机创建一个身份证号码
+     * 大陆身份证号码
      * 
      * -e.g: phpunit("Random::idcard");
      * -e.g: phpunit("Random::idcard");
+     * -e.g: phpunit("Random::idcard",[2, true]);
      * 
-     * @return string
+     * @param integer $size <1> 生成个数
+     * @param boolean $valid <false> 验证格式
+     * @return string|array
      */
-    static function idcard(bool $validate = false): string {
-        $id = Idcard::createIdCard18();
-        if($validate){
-            if(!Validate::idcardOfChina($id)){
-                return self::idcard(true);
+    static function idcard(int $size =1, bool $valid = false){
+        return self::maker($size, function($idx)use($valid){
+            $id = Idcard::createIdCard18();
+            if($valid){
+                if(!Validate::idcardOfChina($id)){
+                    return self::idcard(1, true);
+                }
             }
-        }
-        return $id;
+            return $id;
+        });
     }
 
     /**
-     * 生成随机密码
+     * 生成密码
      * 
      * -e.g: phpunit("Random::password");
      * -e.g: phpunit("Random::password", [15]);
      * -e.g: phpunit("Random::password", [14, false]);
      * 
-     * @param integer $maxLen <16> 生成的密码长度
+     * @param integer $len <16> 生成的密码长度
      * @param boolean $specialChar <true> 是否包含特殊字符
      * @return string
      * 
      */
-    static function password(int $maxLen = 16, bool $specialChar = true):string{
-        $default = self::code(62,false);
-        $specialChar && $default.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
-        $password = "";
-        $len = strlen($default);
-        while($maxLen--){
-            $password .= substr(str_shuffle($default), mt_rand(0, $len-1), 1);
-        }
-        return $password;
+    static function password(int $len = 16, bool $specialChar = true):string{
+        $char = self::code(62,false);
+        $specialChar && $char.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
+
+        return self::maker($len, function($idx)use(&$char){
+            $char = str_shuffle($char);
+            return $char[ mt_rand(0,9)];
+        },'join');
     }
 
     /**
-     * 随机生成简体字
+     * 简体字
      * 
-     * -e.g: phpunit("Random::zhChar");
-     * -e.g: phpunit("Random::zhChar",[4]);
-     * -e.g: phpunit("Random::zhChar",[2]);
+     * -e.g: phpunit("Random::zhCNChar");
+     * -e.g: phpunit("Random::zhCNChar",[4]);
+     * -e.g: phpunit("Random::zhCNChar",[2]);
      * 
-     * @param int $length <0>
+     * @param int $len <1>
      * @return string
      */
-    static function zhChar(int $length=0): string
-    {
-        $s = '';
-        for ($i = 0; $i < $length; $i++) {
-            // 使用chr()函数拼接双字节汉字，前一个chr()为高位字节，后一个为低位字节
-            $a = chr(mt_rand(0xB0, 0xD0)) . chr(mt_rand(0xA1, 0xF0));
-            // 转码
-            $s .= @iconv('GB2312', 'UTF-8', $a);
-        }
-        return $s;
+    static function zhCNChar(int $len=1): string {
+        return self::maker($len, function($idx){
+            return @iconv(
+                'GB2312',
+                'UTF-8', 
+                // 使用chr()函数拼接双字节汉字，前一个chr()为高位字节，后一个为低位字节
+                chr(mt_rand(0xB0, 0xD0)) . chr(mt_rand(0xA1, 0xF0))
+            );
+        },'join');
     }
 
     /**
-     * 随机验证码
+     * 验证码
      *
      * -e.g: phpunit("Random::code");
      * -e.g: phpunit("Random::code");
@@ -299,7 +330,7 @@ class Random {
      * -e.g: phpunit("Random::code",[5,true]);
      * -e.g: phpunit("Random::code",[5,true]);
      * 
-     * @param integer $len
+     * @param integer $len <6>
      * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
      * @return string
      */
@@ -308,80 +339,93 @@ class Random {
 		if ($onlyDigit === false) {
 			$char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 		}
-        $char = str_repeat($char, $len);
-        $_len = ($len % 3)+1;
-        while($_len--){
+        return self::maker($len, function($idx) use(&$char){
             $char = str_shuffle($char);
-        }
-		return substr($char, mt_rand(0, strlen($char)-$len-1), $len);
+            return $char[ mt_rand(0,9) ];
+        },'join');
 	}
 
 
     /**
-     * 随机马甲昵称
+     * 马甲昵称
      *
      * -e.g: phpunit("Random::nickName");
      * -e.g: phpunit("Random::nickName");
      * -e.g: phpunit("Random::nickName");
+     * -e.g: phpunit("Random::nickName",[2]);
      * 
-     * @return string
+     * @param integer $len <1>
+     * @return string|array
      */
-    static function nickName():string{
-        return RandomName::getNickName();
+    static function nickName(int $len =1){
+        return self::maker($len, function($idx){
+            return PersonName::getNickName();
+        });
     }
 
     /**
-     * 随机女性 姓名
+     * 女性 姓名
      *
      * -e.g: phpunit("Random::femaleName");
      * -e.g: phpunit("Random::femaleName",[false]);
+     * -e.g: phpunit("Random::femaleName",[false, 3]);
      * 
      * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
-     * @return string
+     * @param integer $len <1>
+     * @return string|array
      */
-    static function femaleName(bool $surName = true):string{
-        return RandomName::getFemaleName($surName);
+    static function femaleName(bool $surName = true, int $len =1){
+        return self::maker($len, function($idx)use($surName){
+            return PersonName::getFemaleName($surName);
+        });
     }   
 
     /**
-     * 随机男性 姓名
+     * 男性 姓名
      * 
      * -e.g: phpunit("Random::maleName");
      * -e.g: phpunit("Random::maleName",[false]);
+     * -e.g: phpunit("Random::maleName",[false,2]);
      *
      * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
-     * @return string
+     * @param integer $len <1>
+     * @return string|array
      */
-    static function maleName(bool $surName = true):string{
-        return RandomName::getMaleName($surName);
+    static function maleName(bool $surName = true, int $len =1){
+        return self::maker($len, function($idx)use($surName){
+            return PersonName::getMaleName($surName);
+        });
     }
 
     /**
-     * 随机MAC地址
+     * MAC地址
      * 
      * -e.g: phpunit("Random::macAddress");
      * -e.g: phpunit("Random::macAddress",["+"]);
-     * -e.g: phpunit("Random::macAddress",["-"]);
+     * -e.g: phpunit("Random::macAddress",["-", 2]);
      *
      * @param string $sep 分隔符
-     * @return string
+     * @param integer $len <1>
+     * @return string|array
      */
-    static function macAddress(string $sep=":"):string{
-        $list = [];
-        for($i=0;$i<6;$i++){
-            $list[] = strtoupper(
-                dechex(
-                    floor(
-                        self::mathRandom(0,1,9) * 256
+    static function macAddress(string $sep=":", int $len =1){
+        return self::maker($len, function()use($sep){
+            $list = [];
+            for($i=0;$i<6;$i++){
+                $list[] = strtoupper(
+                    dechex(
+                        floor(
+                            self::float(0,1,9) * 256
+                        )
                     )
-                )
-            );
-        }
-        return implode($sep, $list);
+                );
+            }
+            return implode($sep, $list);
+        });
     }
 
     /**
-     * 随机布尔值
+     * 布尔值
      *
      * -e.g: phpunit("Random::boolean");
      * -e.g: phpunit("Random::boolean");
@@ -395,7 +439,7 @@ class Random {
     }
 
     /**
-     * 随机Md5
+     * md5
      *
      * -e.g: phpunit("Random::md5");
      * -e.g: phpunit("Random::md5");
@@ -403,11 +447,11 @@ class Random {
      * @return string
      */
     static function md5():string{
-        return md5(mt_rand());
+        return md5(strval(mt_rand()));
     }
 
     /**
-     * 随机sha1
+     * sha1
      *
      * -e.g: phpunit("Random::sha1");
      * -e.g: phpunit("Random::sha1");
@@ -415,11 +459,11 @@ class Random {
      * @return string
      */
     static function sha1():string{
-        return sha1(mt_rand());
+        return sha1(strval(mt_rand()));
     }
 
     /**
-     * 随机sha256
+     * sha256
      *
      * -e.g: phpunit("Random::sha256");
      * -e.g: phpunit("Random::sha256");
@@ -427,11 +471,11 @@ class Random {
      * @return string
      */
     static function sha256():string{
-        return hash('sha256', mt_rand());
+        return hash('sha256', strval(mt_rand()));
     }
 
     /**
-     * 随机币种
+     * 币种
      *
      * -e.g: phpunit("Random::currencyCode");
      * -e.g: phpunit("Random::currencyCode");
@@ -468,7 +512,7 @@ class Random {
     }
 
     /**
-     * 随机Emoji表情
+     * emoji表情
      *
      * -e.g: phpunit("Random::emoji");
      * -e.g: phpunit("Random::emoji");
@@ -498,7 +542,7 @@ class Random {
     }
 
     /**
-     * 随机维度
+     * 维度
      *
      * -e.g: phpunit("Random::latitude");
      * -e.g: phpunit("Random::latitude");
@@ -512,7 +556,7 @@ class Random {
     }
 
     /**
-     * 随机经度
+     * 经度
      *
      * -e.g: phpunit("Random::longitude");
      * -e.g: phpunit("Random::longitude");
@@ -526,40 +570,72 @@ class Random {
     }
 
     /**
-     * 随机英文字符
+     * 英文字符
      *
      * -e.g: phpunit("Random::letter");
      * -e.g: phpunit("Random::letter",[4]);
      * -e.g: phpunit("Random::letter",[40]);
      * 
+     * @param integer $len <1>
      * @return string
      */
     static function letter(int $len = 1):string{
-        return static::_asciiLetter($len, 97, 122);
+        return self::maker($len, function(){
+            return chr(mt_rand(97, 122));
+        },'join');
     }
 
     /**
-     * 随机Ascii
+     * Ascii字符
      *
      * -e.g: phpunit("Random::ascii");
      * -e.g: phpunit("Random::ascii",[3]);
      * -e.g: phpunit("Random::ascii",[6]);
      * 
-     * @param integer $len
+     * @param integer $len <1>
      * @return string
      */
     static function ascii(int $len = 1):string{
-        return static::_asciiLetter($len, 33, 126);
+        return self::maker($len, function(){
+            return chr(mt_rand(33, 126));
+        },'join');
     }
 
+    /**
+     * 数字
+     *
+     * -e.g: phpunit("Random::digit");
+     * -e.g: phpunit("Random::digit",[3]);
+     * -e.g: phpunit("Random::digit",[6]);
+     * 
+     * @param integer $len <1>
+     * @return string
+     */
+    static function digit(int $len = 1):int{
+        return intval(self::maker($len, function(){
+            return mt_rand(0,9);
+        },'join'));
+    }
 
-    private static function _asciiLetter(int $len, int $sc, int $ec){
+    
+
+
+
+    private static function maker($len=1, callable $fn, string $format=null){
+        $len = intval($len);
         $len < 1 && $len = 1;
-        $str = '';
+        $map = [];
         do{
-            $str .= chr(mt_rand($sc, $ec));
+            $map[] = $fn($len);
             $len --;
         }while($len > 0);
-        return $str; 
+
+        if(count($map) == 1){
+            return $map[0];
+        }
+        if($format == 'join'){
+            return implode('', $map);
+        }
+        return $map;
     }
 }
