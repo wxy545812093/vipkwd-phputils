@@ -284,7 +284,7 @@ class Redis{
          * @param string $value 值
          * @return bool
          */
-        public function hSet(string $key,$field,$value):bool{
+        public function hSet(string $key,$field,$value){
             return $this->redis->hSet($key,$field,$value);
         }
 
@@ -826,7 +826,8 @@ class Redis{
          */
         public function select(int $dbId=0) {
             $this->dbId=$dbId;
-            return $this->redis->select($dbId);
+            $this->redis->select($dbId);
+            return $this;
         }
 
         /**

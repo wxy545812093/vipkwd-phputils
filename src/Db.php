@@ -129,7 +129,7 @@ class Db{
      * @param string $tbName
      * @return Object
      */
-    public function table(string $tbName):self{
+    public function table(string $tbName):Object{
         $this->_table = $tbName;
         return $this;
     }
@@ -140,7 +140,7 @@ class Db{
      * @param string|array $fields
      * @return Object
      */
-    public function field($fields ="*"):self{
+    public function field($fields ="*"):Object{
         if($fields !="*" && is_string($fields)){
             $fields = preg_replace("/\ +/", " ",$fields);
             $fields = explode(',', $fields);
@@ -158,7 +158,7 @@ class Db{
      * @param array $where
      * @return Object
      */
-    public function where(array $where = []):self{
+    public function where(array $where = []):Object{
         $this->_where = $where;
         return $this;
     }
@@ -169,7 +169,7 @@ class Db{
      * @param array $join
      * @return Object
      */
-    public function join(array $join = []):self{
+    public function join(array $join = []):Object{
         $this->_join = $join;
         return $this;
     }
@@ -180,7 +180,7 @@ class Db{
      * @param array $data
      * @return Object
      */
-    public function data(array $data):self{
+    public function data(array $data):Object{
         $this->_data = $data;
         return $this;
     }
@@ -192,7 +192,7 @@ class Db{
      * @param integer $offset <0>
      * @return Object
      */
-    public function limit(int $limit = 10,int $offset = 0):self{
+    public function limit(int $limit = 10,int $offset = 0):Object{
         $this->_limit = [$offset, $limit];
         return $this;
     }
@@ -205,7 +205,7 @@ class Db{
      * @param integer $pageLimit 每页数据条数
      * @return Object
      */
-    public function page(int $pageNum=1, $pageLimit=10):self{
+    public function page(int $pageNum=1, $pageLimit=10):Object{
         $pageNum = $pageNum <=1 ? 1 : $pageNum;
         $this->_limit = [ ($pageNum-1) * $pageLimit , $pageLimit];
         return $this;
@@ -217,7 +217,7 @@ class Db{
      * @param string|array $order
      * @return Object
      */
-    public function order($order):self{
+    public function order($order):Object{
         $this->_order = $order;
         return $this;
     }
@@ -227,7 +227,7 @@ class Db{
      * @param string|array $group
      * @return Object
      */
-    public function group($group):self{
+    public function group($group):Object{
         $this->_group = $group;
         return $this;
     }
@@ -238,7 +238,7 @@ class Db{
      * @param array $havingArr
      * @return Object
      */
-    public function having(array $havingArr):self{
+    public function having(array $havingArr):Object{
         $this->_having = $havingArr;
         return $this;
     }
@@ -299,11 +299,13 @@ class Db{
      * 
      * @return integer
      */
-    public function insertAll():int{
+    public function insertAll(){
         if($this->_data == null){
             return $this->outputError("Missing data");
         }
-        $_data = array_filter($this->data, function($val, $key){
+
+        // _data 需要索引数组
+        $_data = array_filter($this->_data, function($val, $key){
             if( "$key" == strval(intval($key)) && $key >= 0){
                 return true;
             }
@@ -372,9 +374,9 @@ class Db{
      * 将新的数据替换旧的数据
      *
      * @param array $columns
-     * @return int
+     * @return void
      */
-    public function replace(array $columns):int{
+    public function replace(array $columns){
         if(!empty($column)){
 
             if(empty($this->_where)){
@@ -497,6 +499,37 @@ class Db{
     public function raw(string $expression, $map=[]):string{
         return $this->_medoo::raw($expression, $map);
     }
+
+
+    /**
+     * chunk分块操作数据
+     *
+     * @param integer $limit <10>
+     * @param callable $callback
+     * @return void
+     */
+    public function chunk(int $limit = 10, callable $callback):void{
+        if(!$callback || !is_callable($callback)){
+            return;
+        }
+        $totals = $this->count();
+        if($totals == 0){
+            return;
+        }
+        $pages = ceil( $totals / $limit);
+        $page = 1;
+        while( $page <= $pages){
+            $resultSet = $this->page($page, $limit)->select();
+            if(false === call_user_func($callback, $resultSet)){
+                unset($resultSet);
+                break;
+            }
+            unset($resultSet);
+            $page++;
+        }
+        unset($totals, $pages, $page, $callback, $limit);
+    }
+
 
     /**
      * 开启调试模式
