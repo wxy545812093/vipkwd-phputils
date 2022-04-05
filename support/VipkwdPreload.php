@@ -15,8 +15,10 @@ if (function_exists("get_magic_quotes_gpc")) {
     unset($process);
 }
 if(!function_exists("phpunit")){
-    function phpunit($class, $paramsArray){
-        return \Vipkwd\Utils\Dev::phpunit($class, $paramsArray);
+    function phpunit($class, ...$params){
+        return (func_num_args() === 2)
+            ? \Vipkwd\Utils\Dev::phpunit($class, ...$params)
+            : \Vipkwd\Utils\Dev::phpunit($class, $params);
     }
 }
 if(!function_exists("devdump")){

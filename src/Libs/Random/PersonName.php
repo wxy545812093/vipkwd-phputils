@@ -33,11 +33,11 @@ class PersonName{
      * @return void
      */
     static function getFemaleName($surNameSupport = true){
-        if(Tools::mathRandom(0, 1) === 0){
+        // if(Tools::mathRandom(0, 9) >= 5){
             return self::getFamilyName($surNameSupport) .
                     self::$femaleName[ Tools::mathRandom(0, count(self::$femaleName)-1)] .
                     self::$femaleName[ Tools::mathRandom(0, count(self::$femaleName)-1)];
-        }
+        // }
         return self::getFamilyName($surNameSupport) . self::$femaleName[ Tools::mathRandom(0, count(self::$femaleName)-1)];
     }
 
@@ -48,11 +48,11 @@ class PersonName{
      * @return void
      */
     static function getMaleName($surNameSupport = true){
-        if(Tools::mathRandom(0, 1) === 0){
+        // if(Tools::mathRandom(0, 1) === 0){
             return self::getFamilyName($surNameSupport) .
                     self::$maleName[ Tools::mathRandom(0, count(self::$maleName)-1)] .
                     self::$maleName[ Tools::mathRandom(0, count(self::$maleName)-1)];
-        }
+        // }
         return self::getFamilyName($surNameSupport) . self::$maleName[ Tools::mathRandom(0, count(self::$maleName)-1)];
     }
 
