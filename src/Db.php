@@ -69,7 +69,7 @@ class Db{
             'port' => 3306,
         
             // [optional] Table prefix, all table names will be prefixed as PREFIX_table.
-            'prefix' => 'PREFIX_',
+            'prefix' => '',
         
             // [optional] Enable logging, it is disabled by default for better performance.
             'logging' => true,
@@ -102,7 +102,16 @@ class Db{
 
     /**
      * 单例入口
-     * @param array $options
+     * @param array $options = [
+     *      host=localhost,
+     *      database=name,
+     *      username=your_username,
+     *      password=your_password,
+     *      port=3306,
+     *      prefix='',
+     *      charset=utf8mb4
+     * ]
+     *              
      * @return object
      */
     public static function instance(array $options)
@@ -201,13 +210,13 @@ class Db{
     /**
      * 按页码获取limit条数记录
      *
-     * @param integer $pageNum 页码
-     * @param integer $pageLimit 每页数据条数
+     * @param integer $page 页码
+     * @param integer $limit 每页数据条数
      * @return Object
      */
-    public function page(int $pageNum=1, $pageLimit=10):Object{
-        $pageNum = $pageNum <=1 ? 1 : $pageNum;
-        $this->_limit = [ ($pageNum-1) * $pageLimit , $pageLimit];
+    public function page(int $page=1, $limit=10):Object{
+        $page = $page <= 1 ? 1 : $page;
+        $this->_limit = [ ($page-1) * $limit , $limit];
         return $this;
     }
 
@@ -371,19 +380,28 @@ class Db{
     }
 
     /**
-     * 将新的数据替换旧的数据
-     *
+     * 批量替换字段的数据
+     *  
+     * $database->replace("account",
+     *    [
+     *      "type" => [ "user" => "new_user", "business" => "new_business" ],
+     *      "groups" => [ "groupA" => "groupB" ]
+     *    ],
+     *    [ "user_id[>]" => 0 ]
+     * );
+     * 
+     * UPDATE `account` SET type = REPLACE(`type`, 'user', 'new_user'), type = REPLACE(`type`, 'business', 'new_business'), groups = REPLACE(`groups`, 'groupA', 'groupB') WHERE `user_id` > 0
      * @param array $columns
      * @return void
      */
     public function replace(array $columns){
-        if(!empty($column)){
+        if(!empty($columns)){
 
             if(empty($this->_where)){
                 return $this->outputError("Missing the where condition"); 
             }
             $this->buildWhereCondition();
-            $result = $this->_medoo->replace($this->_table, $column, $this->_where);
+            $result = $this->_medoo->replace($this->_table, $columns, $this->_where);
             return $result->rowCount;
         }
         return 0;
@@ -506,15 +524,18 @@ class Db{
      *
      * @param integer $limit <10>
      * @param callable $callback
-     * @return void
+     * @param integer $stime 计时标记  时间戳 默认time()
+     * @return integer 耗时秒
      */
-    public function chunk(int $limit = 10, callable $callback):void{
+    public function chunk(int $limit = 10, callable $callback, $stime = null):int{
+        (!$stime || $stime <= 0) && $stime = time();
+
         if(!$callback || !is_callable($callback)){
-            return;
+            return 0;
         }
         $totals = $this->count();
         if($totals == 0){
-            return;
+            return time() - $stime;
         }
         $pages = ceil( $totals / $limit);
         $page = 1;
@@ -528,6 +549,7 @@ class Db{
             $page++;
         }
         unset($totals, $pages, $page, $callback, $limit);
+        return time() - $stime;
     }
 
 
