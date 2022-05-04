@@ -18,7 +18,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\{PageSetup,Drawing};
 use Phpoffice\PhpSpreadsheet\Shared\Date;
 
 class Excel{
-    
+
     private static $sheetMaxColumnName;
     private static $sheetColumnNames;
     private static $currentSerialKey;
@@ -56,11 +56,11 @@ class Excel{
      *                  -- sheetName      string <null>   设置工作表标题
      *                  -- largeTitle     string <null>   通栏大标题
      *                  -- freezeField    string <null>   冻结某个字段左侧全部区域 "db_field_name"
-     *                  
+     *
      *                  -- dataFontSize   number <10>     数据区域字号
      *                  -- filterTitleFontSize number <12>     筛选表头字号
      *                  -- largeTitleFontSize number <14>     通栏大标题字号
-     * 
+     *
      * @return boolean
      * @return Exception
      */
@@ -80,10 +80,10 @@ class Excel{
             $dataRows = count($datas);
 
             $header = self::parseHeaderSettings($options);
-            
+
             //预定义列名
             self::$sheetColumnNames = self::buildSheetColumnName(-1);
-            
+
             //设置列宽
             $options['setWidth'] = $header['width'];
 
@@ -108,13 +108,14 @@ class Excel{
 
             // 置入大标题文字
             if(is_array($header['largeTitle']) && !empty($header['largeTitle'])){
+                //计算大标题行数
                 $totals = ( isset($header['largeTitle'][0]) ? count($header['largeTitle']) : 1 );
                 $firstDataRowIndex += $totals;
-                if( $totals > 1){
+                if( $totals >= 1){
                     krsort($header['largeTitle']);
-                }
-                foreach($header['largeTitle'] as $v){
-                    array_unshift($datas, $v);
+                    foreach($header['largeTitle'] as $v){
+                        array_unshift($datas, $v);
+                    }
                 }
             }
             $options['firstDataRowIndex'] = $firstDataRowIndex;
@@ -124,7 +125,7 @@ class Excel{
 
             // 检测底部合计开启状态
             self::checkSumArea($datas, $options, $headers, $header, $dataRows, $firstDataRowIndex, $_firstRowIndex);
-        
+
             //计算冻结单元格
             self::checkFreezePane($options, $filterTitle, $firstDataRowIndex);
 
@@ -141,7 +142,7 @@ class Excel{
 
             /** @var Spreadsheet $objSpreadsheet */
             $objSpreadsheet = new Spreadsheet();
-            
+
             // https://www.cnblogs.com/zx-admin/p/11653863.html
 
             $objSpreadsheet->getProperties()->setCreator("vipkwd.com");
@@ -412,7 +413,7 @@ class Excel{
                 }
                 unset($options['bold']);
             }
-            
+
             //设置工作表标题
             if( isset($options['sheetName']) && $options['sheetName'] ){
                 $activeSheet->setTitle($options['sheetName']);
@@ -539,6 +540,7 @@ class Excel{
         }
 
         self::export($db_list, date("Ymd-His").'.xlxs', [
+            'hideTitle' => true,
             'filterTitle' => $title,
             'largeTitle' => "大标题",
             'alignCenter' => true,
@@ -546,12 +548,17 @@ class Excel{
             'setARGB' => true,
             'bold' => true,
             'print'=> true,
+            'setWidth'=>['A'=>5.14,'B'=>7.71,'C'=>12.14,'D'=>20.14,'E'=> 11,'J'=>8.29,'M'=>4],
+		    'freezePane' => 'C3',
+		    'firstDataRowIndex' => 0,
+		    'setSize' => [],
             'sheetName' => '工作表名称',
             'mergeCells' => [],
+            'setTitle' => '佣金小票',
             'freezeField' => 'relname',
             'sumFields' => [
                 "ref" => $refs,
-            ] 
+            ]
         ]);
     }
 
@@ -650,7 +657,7 @@ class Excel{
                             $options['formula'][$cellName . $_row] = $formula;
                         }
                     }
-                    
+
                     $f1="m{1,2}(\/|\-)d{1,2}(\/|\-)y{1,4}";
                     $f2="y{1,4}(\/|\-)m{1,2}(\/|\-)d{1,2}";
                     $f3="d{1,2}(\/|\-)m{1,2}(\/|\-)y{1,4}";
@@ -757,7 +764,7 @@ class Excel{
                     //重置列标题文字
                     $titles[$key][$field] = $name[0];
                 }else if(is_string($name)){
-                    $titles[$key][$field] = $name; 
+                    $titles[$key][$field] = $name;
                 }
                 $i++;
                 unset($field, $name);
@@ -798,7 +805,7 @@ class Excel{
      */
     private static function checkSumArea(array &$datas, array &$options, array $headers, array $header, int $dataRows, int $firstDataRowIndex, int $_firstRowIndex){
         $sumActionStatus = false;
-        if(isset($options['sumFields']) && is_array($options['sumFields'])){
+        if(isset($options['sumFields']) && is_array($options['sumFields']) && !empty($options['sumFields']) ){
             $serialIndex = self::buildDataBufferSerialKey();
             $data = array_fill(0, count($headers), "一");
             $filterTitle = array_combine($headers, $data);
@@ -847,7 +854,7 @@ class Excel{
             unset($_column, $merge_start_column, $merge_end_column, $merge_area, $sumColumns,$options['sumFields']);
             //  全局内容字号
             $size_area = "A".$firstDataRowIndex.":".self::$sheetMaxColumnName.($dataRows+$firstDataRowIndex-0);
-            
+
             $sumActionStatus=true;
         }else{
             //  全局内容字号
@@ -905,9 +912,12 @@ class Excel{
      * @return void
      */
     private static function optionsDefaultSettings(array &$options){
-        $options['setSize'] = [];
+
         $options['sheetIndex'] = 0;
-    
+        if( !isset($options['setSize']) || !is_array($options['setSize']) ){
+            $options['setSize'] = [];
+        }
+
         if( !isset($options['bold']) || $options['bold'] === true ){
             $options['bold'] = [];
         }
@@ -929,7 +939,7 @@ class Excel{
         if( !isset($options['mergeCells']) || !is_array($options['mergeCells'])){
             $options['mergeCells'] = [];
         }
-        $options['setBorder'] = (!isset($options['setBorder']) || $options['setBorder']) ? true : false; 
+        $options['setBorder'] = (!isset($options['setBorder']) || $options['setBorder']) ? true : false;
         $options['print'] = (isset($options['print']) && $options['print']) ? true : false;
         $options['index'] = (!isset($options['index']) || $options['index']) ? true : false;
         $options['hideTitle'] = (isset($options['hideTitle']) && $options['hideTitle']) ? true : false;
@@ -940,7 +950,7 @@ class Excel{
      *
      * @param string $imgPath 图片路径
      * @param string $cell 单元格
-     * @param array $options 
+     * @param array $options
      *                  -- width integer <100> 图片宽
      *                  -- height integer <100> 图片高
      *                  -- offsetx integer <50> 图片偏移量

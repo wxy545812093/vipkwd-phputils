@@ -34,7 +34,7 @@ class Response {
      * @var bool HTTP response sent
      */
     protected $sent = false;
-    
+
     /**
      * header Content-Length
      *
@@ -292,6 +292,10 @@ class Response {
         $request = new Request();
         if($request->ajax || is_array($data)){
             $this->header('content-type', 'application/json;charset=utf-8');
+            if(!$code && $message == ''){
+                $message = self::$codes[$this->status];
+            }
+	    !$code && $code = $this->status;
             $data = json_encode([
                 "code" => $code,
                 "message" => $message,
@@ -314,6 +318,6 @@ class Response {
         }
         echo $this->body;
         $this->sent = true;
-    }   
+    }
 }
 

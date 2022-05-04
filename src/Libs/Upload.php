@@ -13,7 +13,7 @@ use Vipkwd\Utils\File;
 use \Exception;
 
 class Upload{
-	
+
     public function __construct(){}
 
     private $file = null;
@@ -25,9 +25,9 @@ class Upload{
         "upload_dir" => "upfiles/",
 
         //设置允许上传文件的类型
-        "type" => ["jpg","gif","bmp","jpeg","png"], 
+        "type" => ["jpg","gif","bmp","jpeg","png"],
     ];
-    
+
     /**
      * 单文件上传
      *
@@ -46,30 +46,31 @@ class Upload{
             }
 
             $this->init($uploadKey, $options);
-            
-            // err01 
+
+
+            // err01
             if( true !== ($error = $this->__checkFileError())){
-                return $error;
+                return array('code' => "ERR-FE000", "msg" => $error );
             }
 
-            //err02 判断文件类型 
+            //err02 判断文件类型
             if( true !== ($error = $this->_checkExtension())){
-                return $error;
+                return array('code' => "ERR-FE000", "msg" => $error );
             }
 
-            //err03 
+            //err03
             if( true !== ($error = $this->_checkUploadFileSize())){
-                return $error;
+                return array('code' => "ERR-FE000", "msg" => $error );
             }
-            
+
             if( !is_dir($this->options['upload_dir'])){
                 @mkdir($this->options['upload_dir'], 0777, true);
             }
-            
+
             //生成目标文件的文件名 else {
             $filename = str_split($this->file['name'], strrpos( $this->file['name'], "."));
             do {
-                //设置随机数长度 
+                //设置随机数长度
                 $filename[0] = $this->random(16);
                 $name = implode("",$filename);
                 if(isset($this->options['file_name_prefix']) && $this->options['file_name_prefix']){
@@ -83,7 +84,7 @@ class Upload{
             $ret_code="ERR-FE004";
             $msg = "上传失败";
             $data = null;
-            
+
             //$hash = hash_file("md5", $this->file['tmp_name']);
 
             if(is_uploaded_file($this->file['tmp_name'])) {
@@ -102,7 +103,7 @@ class Upload{
             }
             return array('code' => $ret_code, "msg" => $msg, "data" => $data);
         }catch(Exception $e){
-            return array('code' => "ERR-FE000", "msg" => $e->getMessage() );
+            return array('code' => "ERR-FE000", "msg" => $e->getMessage());
         }
     }
 
@@ -142,14 +143,14 @@ class Upload{
 
     private function _checkUploadFileSize(){
         if( $this->file['size'] > $this->options['max_size']) {
-            $msg= "文件大小不能超过“".File::bytesTo($maxSize)."”";
+            $msg= "文件大小不能超过“".File::bytesTo($this->options['max_size'])."”";
             $ret_code="ERR-FE003";
             return array('code' => $ret_code,'msg'=>$msg);
         }
-        return true;   
+        return true;
     }
 
-	//获取文件后缀名函数 
+	//获取文件后缀名函数
 	private function fileext($filename) {
         if($this->file['name'] == "blob" && !empty($this->file['type'])){
             list(, $ext) = explode("/", $this->file['type'] .'/' );
@@ -158,12 +159,12 @@ class Upload{
         }
         if(strrpos($filename, '.') === false){
            $filename .='.';
-           $this->file['name'] .= '.'; 
+           $this->file['name'] .= '.';
         }
 		return strtolower(substr(strrchr($filename, '.'), 1));
 	}
 
-	//生成随机文件名函数 
+	//生成随机文件名函数
 	private static function random($length) {
 		$hash = '';
 		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
@@ -181,10 +182,10 @@ class Upload{
         $this->options = array_merge($this->options, $options);
 
         $this->options['max_size'] && $this->options['max_size'] = File::toBytes("".$this->options['max_size']);
-        $this->options['size'] && $this->options['max_size'] = File::toBytes("".$this->options['size']);
+        isset($this->options['size']) && $this->options['max_size'] = File::toBytes("".$this->options['size']);
 
         $maxSize = File::fileUploadMaxSize();
-        if($this->options['max_size'] > $maxSize){
+        if($this->options['max_size'] > $maxSize && $maxSize >= 0){
             $this->options['max_size'] = $maxSize;
         }
 
@@ -208,7 +209,7 @@ class Upload{
         //$pic_height_max=90;
         //以上与下面段注释可以联合使用，可以使图片根据计算出来的比例压缩
         $file_type=$this->file['type'];
-        
+
         if($this->file['size']) {
             if($file_type == "image/pjpeg"||$file_type == "image/jpg"|$file_type == "image/jpeg") {
                 //$im = imagecreatefromjpeg($this->file['tmp_name']);
@@ -222,13 +223,13 @@ class Upload{
         } else//默认jpg {
             $im = imagecreatefromjpeg($uploadfile);
         }
-        
+
         if($im) {
             self::resizeImage($im,$pic_width_max,$pic_height_max,$uploadfile_resize);
             ImageDestroy ($im);
         }
     }
-               
+
     private function resizeImage($uploadfile,$maxwidth,$maxheight,$name) {
 		//取得当前图片大小
 		$width = imagesx($uploadfile);

@@ -39,9 +39,10 @@ trait Traits {
     /**
      * 加密
      * @param string 要加密的字符串
-     * @return mixed 加密成功返回加密后的字符串，否则返回false
+     * @param boolean $trim <true> 去除base64尾部填充
+     * @return string 加密成功返回加密后的字符串，否则返回false
      */
-    public function encrypt(string $str){
+    public function encrypt(string $str, bool $trim = true){
         //if (strlen($str) % 4) {
             //$str = str_pad($str,strlen($str) + 4 - strlen($str) % 4, "\0");
         //}
@@ -49,7 +50,8 @@ trait Traits {
         if($data === false){
             return false;
         }
-        return rtrim(rtrim(base64_encode($data),"="),"=");
+        $data = base64_encode($data);
+        return $trim ? rtrim(rtrim($data,"="),"=") : $data;
     }
 
     /**

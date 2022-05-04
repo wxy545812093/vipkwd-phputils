@@ -360,7 +360,7 @@ class Db{
         }
         $this->buildWhereCondition();
         $result=$this->_medoo->update($this->_table, $this->_dataArrayToJson($this->_data), $this->_where);
-        return $result->rowCount() *1;
+        return $result ? $result->rowCount() *1 : 0;
     }
 
     /**

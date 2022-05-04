@@ -61,7 +61,7 @@ class File{
     static function basename(string $path, string $suffix = ""):string{
         return self::filename($path, $suffix, false);
     }
-    
+
     /**
      * 获取文件名(增强版 basename函数）
      *
@@ -129,8 +129,9 @@ class File{
      *                  --upload_dir string <"upfiles/"> 保存目录
      *                  --type array <["jpg","gif","bmp","jpeg","png"]> 允许扩展
      *                  --file_name_prefix string <''> 文件名前缀
+     *                  --save_name string <''> 指定文件名(包含扩展名)
      * @param string $uploadKey <file> $_FILES[?]
-     * @return array|null
+     * @return array|strings
      */
     static function upload($options = [], $uploadKey = "file"):?array{
         return (new VipkwdUpload)->upload($uploadKey, $options);
@@ -138,13 +139,13 @@ class File{
 
     /**
      * 文件下载(支持限速)
-     * 
+     *
      * @param string $filename 要下载的文件路径
      * @param string $rename <null>文件名称,为空则与下载的文件名称一样
      * @param integer $downloadSpeed <1>下载限速 单位MB，必须大于0
      * @param boolean $breakpoint <true> 是否开启断点续传
-     * 
-     * @return void 
+     *
+     * @return void
      */
     static public function download(string $filename, $rename=null, int $downloadSpeed = 1, bool $breakpoint = true){
         // 验证文件
@@ -156,19 +157,19 @@ class File{
         $fileSize = filesize($filename);
 
         // 获取header range信息
-        if($breakpoint && isset($_SERVER['HTTP_RANGE']) && !empty($_SERVER['HTTP_RANGE'])){ 
-            $range = $_SERVER['HTTP_RANGE']; 
-            $range = preg_replace('/[\s|,].*/', '', $range); 
-            $range = explode('-', substr($range, 6)); 
-            if(count($range)<2){ 
-              $range[1] = $fileSize; 
-            } 
-            $range = array_combine(array('start','end'), $range); 
-            if(empty($range['start'])){ 
-              $range['start'] = 0; 
-            } 
-            if(empty($range['end'])){ 
-              $range['end'] = $fileSize; 
+        if($breakpoint && isset($_SERVER['HTTP_RANGE']) && !empty($_SERVER['HTTP_RANGE'])){
+            $range = $_SERVER['HTTP_RANGE'];
+            $range = preg_replace('/[\s|,].*/', '', $range);
+            $range = explode('-', substr($range, 6));
+            if(count($range)<2){
+              $range[1] = $fileSize;
+            }
+            $range = array_combine(array('start','end'), $range);
+            if(empty($range['start'])){
+              $range['start'] = 0;
+            }
+            if(empty($range['end'])){
+              $range['end'] = $fileSize;
             }
         }
 
@@ -182,7 +183,7 @@ class File{
         header('cache-control:public');
         header('Content-Type:application/octet-stream');
         header('Content-Disposition: attachment;filename='.basename($rename));
- 
+
         // 校验是否限速(文件超过0.5M自动限速为 0.5Mb/s )
         $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed,1) : 0.5) * 1024 * 1024;
 
@@ -286,7 +287,7 @@ class File{
 
     /**
      * [分片/秒传组件]: 上传
-     * 
+     *
      * 需配合 /example/hashFileUpload 组件使用
      *
      * @param string $savePath 文件保存目录
@@ -294,20 +295,20 @@ class File{
      */
     static function uploadHashFile(string $savePath = "./"):string{
         $shard = new ShardUpload(
-            $_FILES['data'], 
-            $_POST['index'], 
-            $_POST['total'], 
+            $_FILES['data'],
+            $_POST['index'],
+            $_POST['total'],
             $_POST['shardSize'], //分块大小
             $_POST['size'], //总大小
-            $_POST['md5Hash'], 
-            $_POST['sha1Hash'], 
+            $_POST['md5Hash'],
+            $_POST['sha1Hash'],
             rtrim(self::normalizePath($savePath), "/")."/"
         );
         $response = $shard->upload();
         // header('Content-Type:application/json;charset=utf-8');
         return json_encode($response,JSON_UNESCAPED_UNICODE);
     }
-    
+
     /**
      * [分片/秒传组件]: 查看上传状态
      *
@@ -317,11 +318,11 @@ class File{
      */
     static function uploadHashFileStatus(string $savePath = "./"):string{
         $shard = new ShardUploadStatus(
-            $_POST['total'], 
+            $_POST['total'],
             $_POST['shardSize'], //文件分块大小
             $_POST['size'], //文件总大小
-            $_POST['md5Hash'], 
-            $_POST['sha1Hash'], 
+            $_POST['md5Hash'],
+            $_POST['sha1Hash'],
             $savePath = rtrim(self::normalizePath($savePath),"/")."/"
         );
         $response = $shard->getUploadStatus();
@@ -335,14 +336,14 @@ class File{
             $file = explode('/', $file);
             array_pop($file);
             $info['path'] = implode('/', $file);
-            
+
             $response['data']['info'] = $info;
             // $response['sever'] = Http::request();
         }
         // header('Content-Type:application/json;charset=utf-8');
         return json_encode($response,JSON_UNESCAPED_UNICODE);
     }
-    
+
     /**
      * [分片/秒传组件]: 下载
      *
@@ -364,7 +365,7 @@ class File{
 
     /**
      * 获取服务器支持最大上传文件大小(bytes)
-     * 
+     *
      * response: -1 没有上传大小限制
      *
      * @return float
@@ -380,7 +381,7 @@ class File{
                 // Find the position of the unit in the ordered string which is the power of magnitude to multiply a kilobyte by.
                 return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
             } else {
-                return round($size);
+                return round($size * 1);
             }
         };
 
@@ -537,13 +538,13 @@ class File{
 
     /**
      * 检测$path是否为绝对路径
-     * 
+     *
      * -e.g: phpunit("File::isAbsolutePath", ["./www"]);
      * -e.g: phpunit("File::isAbsolutePath", ["/backup"]);
      * -e.g: phpunit("File::isAbsolutePath", ["/backup/22/../"]);
      * -e.g: phpunit("File::isAbsolutePath", ["/backup/22/../../../"]);
      * -e.g: phpunit("File::isAbsolutePath", ["backup/./../../../"]);
-     * 
+     *
      * @param string $path
      * @return boolean
      */
@@ -554,7 +555,7 @@ class File{
 
     /**
      * 规范化路径中的 .. 和目录分隔符 .
-     * 
+     *
      * -e.g: phpunit("File::normalizePath",["/file/."]);
      * -e.g: phpunit("File::normalizePath",["\\file\dx\.."]);
      * -e.g: phpunit("File::normalizePath",["/file/../.."]);
@@ -582,11 +583,11 @@ class File{
 
 	/**
      * 连接并规范化路径数组串
-     * 
+     *
      * -e.g: phpunit("File::joinPaths",["a", "\b", "file.txt"]);
      * -e.g: phpunit("File::joinPaths",["/a/", "/b/"]);
      * -e.g: phpunit("File::joinPaths",["/a/", "/../b"]);
-     * 
+     *
      * @param string ...$paths
      * @return string
      */
@@ -599,7 +600,7 @@ class File{
      *
      * @param string $dir
      * @param integer $mode <0755>
-     * 
+     *
 	 * @throws \Exception  on error occurred
      * @return boolean
      */
@@ -620,7 +621,7 @@ class File{
      * @param string $origin 源目标
      * @param string $target 新目标
      * @param boolean $overwrite <true> 是否覆盖
-     * 
+     *
 	 * @throws \Exception  on error occurred
      * @return void
      */
@@ -667,7 +668,7 @@ class File{
      * @param string $origin 源目标
      * @param string $target 新目标
      * @param boolean $overwrite <true> 是否覆盖
-     * 
+     *
 	 * @throws \Exception  on error occurred
      * @return void
      */
@@ -697,9 +698,9 @@ class File{
 
     /**
 	 * 从文件读取内容
-     * 
+     *
      * @param string $file
-     * 
+     *
 	 * @throws \Exception  on error occurred
      * @return string
 	 */
@@ -719,9 +720,9 @@ class File{
      * 字符串写入到文件
      *
      * @param string $file
-     * @param string $content 
+     * @param string $content
      * @param integer|null $mode <0666>
-     * 
+     *
 	 * @throws \Exception  on error occurred
      * @return void
      */
@@ -761,7 +762,7 @@ class File{
         }
         $destination_folder = rtrim(dirname($saveNameWithPath),'/') . '/';
         $saveName = basename($saveNameWithPath);
-        
+
 		// 文件下载保存目录，默认为当前文件目录
 		if (!is_dir($destination_folder)) {
 			// 判断目录是否存在
@@ -840,10 +841,10 @@ class File{
                 break;
             }
             unset($_h);
-            if(file_exists($_file)){   
+            if(file_exists($_file)){
                 $i=true;
                 break;
-            }  
+            }
         }
         if($i === true){
             unset($history, $level, $basePath, $file);

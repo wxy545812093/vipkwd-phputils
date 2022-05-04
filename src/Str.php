@@ -11,18 +11,18 @@ declare(strict_types = 1);
 namespace Vipkwd\Utils;
 
 use \Exception;
-use Vipkwd\Utils\Libs\{ZhToPy};
+use Vipkwd\Utils\Libs\ZhToPinyin\V1 as ZhToPy;
 class Str{
 
     /**
      * Hash对比（hash_equals函数)
-     * 
+     *
      * -e.g: phpunit("Str::hashEquals", ["11", "22"]);
      * -e.g: phpunit("Str::hashEquals", [false, false]);
      * -e.g: phpunit("Str::hashEquals", [false, 0]);
      * -e.g: phpunit("Str::hashEquals", ["abc", "abc"]);
      * -e.g: phpunit("Str::hashEquals", ['', 0]);
-     *  
+     *
      * @param string $str1
      * @param string $str2
      * @return boolean
@@ -35,7 +35,7 @@ class Str{
             else {
                 $res = $str1 ^ $str2;
                 $ret = 0;
-                for($i = strlen($res) - 1; $i >= 0; $i--)
+                for($i = strlen("$res") - 1; $i >= 0; $i--)
                     $ret |= ord($res[$i]);
                 return !$ret;
             }
@@ -45,7 +45,7 @@ class Str{
 
     /**
      * HTML转实体符
-     * 
+     *
      * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
      * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
      * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES]);
@@ -62,7 +62,7 @@ class Str{
 
     /**
      * 字符XSS过滤
-     * 
+     *
      * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script>javascript</script> </div>"]);
      * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script >javascript</script> </div>",true]);
      *
@@ -95,9 +95,9 @@ class Str{
 
     /**
      * 获取纯文本内容(移除一切HTML元素)
-     * 
+     *
      * -e.g: phpunit("Str::getContentText",["wa haha<div > div> <script>javascript</script> </div>"]);
-     * 
+     *
      * @param string $str
      * @return string
      */
@@ -136,19 +136,19 @@ class Str{
 
     /**
      * (中/英/混合)字符串截取(加强版)
-     * 
+     *
      * -e.g: phpunit("Str::substrPlus",['$omitted 末尾]】省略符 默认', 0, 14]);
      * -e.g: phpunit("Str::substrPlus",['$&3张三李】四王麻子', 0, 11, "..."]);
      * -e.g: phpunit("Str::substrPlus",['$&3张三】李四王麻子', 0, 10, "..."]);
      * -e.g: phpunit("Str::substrPlus",['$&3张】三李四王麻子', 0, 9, "..."]);
      * -e.g: phpunit("Str::substrPlus",['$&3】张三李四王麻子', 0, 8, ">"]);
      * -e.g: phpunit("Str::substrPlus",['$&】3张三李四王麻子', 6, 2, ""]);
-     * 
+     *
      * @param string $str 待截取字符串
      * @param int $start <0> 从第几个字符(包含)开始截取
      * @param int $len <1> 截取长度
      * @param string $omitted <"..."> 自定义返回文本的后缀，如："..."
-     * 
+     *
      * @return string
      */
     static function substrPlus(string $str, int $start = 0, int $len = 0, string $omitted="..."):string{
@@ -208,7 +208,7 @@ class Str{
                 if($n >= $start)
                     $rstr = $rstr . substr ( $str, $i, 1 );
                 $i ++;
-                $n += 1;//0.5;  
+                $n += 1;//0.5;
             }
         }
         if($omitted != ""){
@@ -220,7 +220,7 @@ class Str{
 
     /**
      * 统计字符长度(加强版)
-     * 
+     *
      * -e.g: phpunit("Str::strLenPlus",['$&】3张三李四王麻子']);
      * -e.g: phpunit("Str::strLenPlus",['&】3张三李四王麻子']);
      * -e.g: phpunit("Str::strLenPlus",['】3张三李四王麻子']);
@@ -257,12 +257,12 @@ class Str{
                 $i += 1;
             }
         }
-        return $n;  
+        return $n;
     }
 
     /**
      * 字符串填充(加强版)
-     * 
+     *
      * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 10]);
      * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 11]);
      * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 12]);
@@ -306,10 +306,10 @@ class Str{
 
     /**
      * 获取范围内随机数 位数不足补零
-     * 
+     *
      * -e.g: phpunit("Str::randNumber", [1, 10]);
      * -e.g: phpunit("Str::randNumber", [90, 105]);
-     * 
+     *
      * @param integer $min 最小值
      * @param integer $max 最大值
      * @return string
@@ -324,7 +324,7 @@ class Str{
      * -e.g: phpunit("Str::autoCharset", ["张三"]);
      * -e.g: phpunit("Str::autoCharset", ["张三","gbk","utf-8"]);
      * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","gbk"]);
-     * 
+     *
      * @param string|array $str
      * @param string $fromCharset
      * @param string $toCharset
@@ -360,20 +360,20 @@ class Str{
 
     /**
      * 文本搜索高亮标注
-     * 
+     *
      * -e.g: $str="uh~,这里不仅有alipay,youtube.com,还有10musume.com, alipay";
      * -e.g: $field="field1";
      * -e.g: $search=array();
      * -e.g: $search["values"]=[ "field1" => ["%alipay","u%","%com%","%youtu"] ];
-     * 
+     *
      * -e.g: $search["operators"]=["field1" => "like"];
      * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
-     * 
-     * 
+     *
+     *
      * -e.g: $search["operators"]=["field1" => "like%"];
      * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
-     * 
-     * 
+     *
+     *
      * -e.g: $search["operators"]=["field1" => "eq"];
      * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
      *
@@ -428,15 +428,15 @@ class Str{
 
     /**
      * 检查字符串中是否包含某些字符串
-     * 
+     *
      * -e.g: phpunit("Str::contains", ["你好阿","你阿"]);
      * -e.g: phpunit("Str::contains", ["你好阿","你你"]);
      * -e.g: phpunit("Str::contains", ["你好阿","你好"]);
      * -e.g: phpunit("Str::contains", ["你好阿",["好","你"]]);
-     * 
+     *
      * @param string $haystack
      * @param string|array $needles
-     * 
+     *
      * @return bool
      */
     static function contains(string $haystack, $needles): bool{
@@ -450,7 +450,7 @@ class Str{
 
     /**
      * 检查字符串是否以某些字符串结尾
-     * 
+     *
      * -e.g: phpunit("Str::endsWith", ["你好阿","阿"]);
      * -e.g: phpunit("Str::endsWith", ["你好阿","好阿"]);
      * -e.g: phpunit("Str::endsWith", ["你好阿","你好阿"]);
@@ -471,11 +471,11 @@ class Str{
 
     /**
      * 检查字符串是否以某些字符串开头
-     * 
+     *
      * -e.g: phpunit("Str::startsWith", ["你好阿","你好"]);
      * -e.g: phpunit("Str::startsWith", ["你好阿","你"]);
      * -e.g: phpunit("Str::startsWith", ["你好阿","你你你"]);
-     * 
+     *
      * @param  string       $haystack
      * @param  string|array $needles
      * @return bool
@@ -496,7 +496,7 @@ class Str{
      * -e.g: phpunit("Str::getPinyin", ["你好阿","head"]);
      * -e.g: phpunit("Str::getPinyin", ["你好阿","all"]);
      * -e.g: phpunit("Str::getPinyin", ["你好阿","one"]);
-     * 
+     *
      * @param string $str
      * @param string $type [head:首字母|all:全拼音]
      * @return string
@@ -511,7 +511,7 @@ class Str{
      *
      * -e.g: echo 'md5("admin"); // string(32) "'.\md5('admin').'"';
      * -e.g: phpunit("Str::md5_16",["admin"]);
-     * 
+     *
      * @param string $str
      * @return string
      */
@@ -521,10 +521,10 @@ class Str{
 
     /**
      * 检查字符串是否是UTF8编码
-     * 
+     *
      * -e.g: phpunit("Str::isUtf8", ["张三"]);
      * -e.g: phpunit("Str::isUtf8", ["123"]);
-     * 
+     *
      * @param string $str 字符串
      * @return Boolean
      */
@@ -555,29 +555,29 @@ class Str{
     static function isAscii(string $str):bool {
         return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['ASCII','ISO-646']);
     }
-    
+
     static function isLatin1(string $str):bool {
         return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['Latin1','ISO-8859-1']);
     }
-    
+
     static function isGB2312(string $str):bool {
         return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['GB2312','EUC-CN']);
     }
-    
+
     static function isGBK(string $str):bool {
         return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['GBK','CP936']);
     }
-    
+
     static function isUtf82(string $str):bool {
         return in_array(mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1')),['UTF-8']);
     }
-    
+
     static function getCharset(string $str):string{
         return mb_detect_encoding($str,array('ASCII','GB2312','GBK','UTF-8','ISO-8859-1','CP936'));
     }
     /**
      * 生成UUID
-     * 
+     *
      * -e.g: phpunit("Tools::uuid");
      * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字,此设置无效"]);
      * -e.g: phpunit("Tools::uuid",[false, "99"]);
@@ -614,7 +614,7 @@ class Str{
      * -e.g: phpunit("Str::isJson",['{}']);
      * -e.g: phpunit("Str::isJson",['{<>}']);
      * -e.g: phpunit("Str::isJson",['{{}}']);
-     * 
+     *
      * @param string $str
      * @return boolean
      */
@@ -625,17 +625,17 @@ class Str{
 
     /**
      * 获取(最大)相似度文本(不支持中文)
-     * 
+     *
      * -e.g: $items = ["foo", "bar", "baz","你好"];
      * -e.g: phpunit("Str::getSuggestion",[$items, "fo"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "barr"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "baz"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "好"]);
      * -e.g: phpunit("Str::getSuggestion",[$items, "你"]);
-     * 
+     *
      * @param string[]  $possibilities 查找列表
      * @param string $value 查找文字
-     * 
+     *
      * @return string|null
      */
 	static function getSuggestion(array $possibilities, string $value): ?string{

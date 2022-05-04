@@ -3,7 +3,7 @@
     <head lang="en">
         <meta charset="UTF-8">
         <title></title>
-        <script src="//dl.vipkwd.com/vipkwd-cdn/js/vipkwd/vipkwd-constructor.js?S" type="text/javascript"></script>
+        <script src="//dl.vipkwd.com/vipkwd-cdn/js/vipkwd/vipkwd-constructor.js" type="text/javascript"></script>
         <script>
             console.log(utils = new VipkwdUtils());
             var types = ["video/webm", "audio/webm", "video/webm\;codecs=vp8", "video/webm\;codecs=daala", "video/webm\;codecs=h264", "audio/webm\;codecs=opus", "video/mpeg"];
@@ -150,7 +150,7 @@
                         document.querySelector("#show-info").innerHTML = utils.syntaxHighlight(res);
 
                         document.querySelector("#show-pre").setAttribute('style', 'width:'+ (document.querySelector("body").clientWidth - 512) + 'px')
-                        
+
                         let span = (label, field1, field2)=>{
                             return `${label} <span style="color:${( (!field2 && field1 =='passed') || (field1 =='passed'&& field2 =='passed') ) ? 'green' : 'red'}">${field1}</span><br/>`;
                         }

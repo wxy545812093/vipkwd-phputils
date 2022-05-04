@@ -25,12 +25,12 @@ use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
 
 class Tools{
     // use \Vipkwd\Utils\Libs\Develop;
-    
+
     /**
      * 判断当前的运行环境是否是cli模式
-     * 
+     *
      * -e.g: phpunit("Tools::isCli");
-     * 
+     *
      * @return boolean
      */
     static function isCli(){
@@ -42,7 +42,7 @@ class Tools{
      * MD5|16位
      * -e.g: echo "\md5(\"admin\"); //".md5('admin');
      * -e.g: phpunit("Tools::md5_16",["admin"]);
-     * 
+     *
      * @param string $str
      * @return string
      */
@@ -51,7 +51,7 @@ class Tools{
     }
     /**
      * 生成UUID
-     * 
+     *
      * -e.g: phpunit("Tools::uuid");
      * -e.g: phpunit("Tools::uuid",[false, "前缀：仅支持英文字符与数字"]);
      * -e.g: phpunit("Tools::uuid",[false, "99"]);
@@ -69,7 +69,7 @@ class Tools{
     }
     /**
      * 获取文件夹大小
-     * 
+     *
      * -e.g: phpunit("Tools::getDirSize",["./"]);
      *
      * @param string $dir
@@ -84,7 +84,7 @@ class Tools{
         while (false !== ($FolderOrFile = readdir($handle))) {
             if ($FolderOrFile != "." && $FolderOrFile != "..") {
                 if (is_dir("$dir/$FolderOrFile")) {
-                    $sizeResult += getDirSize("$dir/$FolderOrFile");
+                    $sizeResult += self::getDirSize("$dir/$FolderOrFile");
                 } else {
                     $sizeResult += filesize("$dir/$FolderOrFile");
                 }
@@ -96,9 +96,9 @@ class Tools{
 
     /**
      * 获取系统类型
-     * 
+     *
      * -e.g: phpunit("Tools::getOS");
-     * 
+     *
      * @return string
      */
     static function getOS(): string{
@@ -111,14 +111,14 @@ class Tools{
 
     /**
      * format 保留指定长度小数位
-     * 
+     *
      * -e.g: phpunit("Tools::format", [ "10.1234" ]);
      * -e.g: phpunit("Tools::format", [ 10.12 ]);
      * -e.g: phpunit("Tools::format", [ 10.1 ]);
      * -e.g: phpunit("Tools::format", [ 10 ]);
      * -e.g: phpunit("Tools::format", [-10]);
      * -e.g: phpunit("Tools::format", ["-10", 3]);
-     * 
+     *
      * @param int $input 数值
      * @param int $decimal <2> 小数位数
      *
@@ -136,7 +136,7 @@ class Tools{
      * -e.g: phpunit("Tools::mathRandom",[0,5,1]);
      * -e.g: phpunit("Tools::mathRandom",[0,5,4]);
      * -e.g: phpunit("Tools::mathRandom",[0,5,6]);
-     * 
+     *
      * @param integer $min
      * @param integer $max
      * @param integer $decimal <0> 小数位数
@@ -146,14 +146,14 @@ class Tools{
         $decimal = $decimal === true ? 10 : $decimal;
         return Random::float($min, $max, $decimal);
     }
-    
+
     /**
      * 扫描目录（递归）
-     * 
+     *
      * -e.g: phpunit("Tools::dirScan", ["../vipkwd-utils/src/Libs/Image/", function($file){ var_dump($file);}]);
      *
      * @param string $dir
-     * @param callable|null $fileCallback  
+     * @param callable|null $fileCallback
      *                      以匿名回调方式对扫描到的文件处理；
      *                      匿名函数接收俩个参数： function($scanFile, $scanPath);
      *                      当匿名函数 return === false 时，将退出本函数所有层次的递归模式
@@ -187,7 +187,7 @@ class Tools{
      * 打印目录文件列表
      *
      * -e.g: phpunit("Tools::dirTree", ["../vipkwd-utils/src/Libs/Image"]);
-     * 
+     *
      * @param string $dir
      * @return void
      */
@@ -221,13 +221,13 @@ class Tools{
 
     /**
      * 发送邮件
-     * 
+     *
      * @param array  $form 发件人信息
      * @param array  $data 收件人信息
      *
      * @return mixed
      */
-    static public function sendMail(array $form, array $data) {    
+    static public function sendMail(array $form, array $data) {
         $mail = new PHPMailer(true);       // 实例化PHPMailer对象
         $mail->CharSet = 'UTF-8';                               // 设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
         $mail->isSMTP();                                        // 设定使用SMTP服务
@@ -280,7 +280,7 @@ class Tools{
 
         // 是否携带附件
         if (isset($data['attachment']) && is_array($data['attachment'])){
-            foreach ($data['attachment'] as $file) 
+            foreach ($data['attachment'] as $file)
             {
                 is_file($file) && $mail->AddAttachment($file);
             }
@@ -291,7 +291,7 @@ class Tools{
 
     /**
      * session管理函数
-     * 
+     *
      * $key 支持“.”号深度操作 如："user.id"
      * $key = null, 删除SESSION
      * $key = "" 返回全局SESSION
@@ -347,13 +347,13 @@ class Tools{
 
     /**
      * 获取配置文件内容
-     * 
+     *
      * $key 支持“.”号深度访问数组 如："db.mysql.host"
      *
      * @param string $key
      * @param string $confDir 配置文件所在目录
      * @param string $confSuffix 配置文件后缀 <.php>
-     * 
+     *
      * @return mixed
      */
     static function config(string $key, string $confDir, string $confSuffix=".php"){
@@ -379,19 +379,19 @@ class Tools{
         unset($key,$l);
         return $r;
     }
-    
+
     /**
      * Cookie管理
-     * 
+     *
      * @param string $name   cookie名称
      * @param mixed  $value  cookie值
      * @param int  $expires 有效期 （小于0：删除cookie, 大于0：设置cookie）
      * @return mixed
      */
     static function cookie(string $name = null, $value = null, int $expires = 0){
-        
+
         $name && $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
-        
+
         $defaults = [
             // cookie 保存时间
             'expires'   => 86400 * 7,
@@ -440,7 +440,7 @@ class Tools{
 
     /**
      * 保存Cookie
-     * 
+     *
      * @access public
      * @param  string $name cookie名称
      * @param  string $value cookie值
@@ -467,14 +467,14 @@ class Tools{
             setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
         }
     }
-    
+
     /**
      * 获取Htpp头信息为数组
-     * 
+     *
      * -e.g: phpunit("Tools::getHttpHeaders");
-     * 
+     *
      * 获取 $_SERVER 所有以“HTTP_” 开头的 头信息
-     * 
+     *
      * @return array
      */
     static function getHttpHeaders():array{
@@ -493,7 +493,7 @@ class Tools{
      * 保密手机号码
      *
      * -e.g: phpunit("Tools::encryptMobile", ["13844638829"]);
-     * 
+     *
      * @param string $mobile
      * @return string
      */
@@ -503,7 +503,7 @@ class Tools{
 
     /**
      * 快递地址智能解析(提取)
-     * 
+     *
      * -e.g: $list=[];
      * -e.g: $list[]="北京市东城区宵云路36号国航大厦一层";
      * -e.g: $list[]="甘肃省东乡族自治县布楞沟村1号";
@@ -527,9 +527,9 @@ class Tools{
      * -e.g: $list[]="江西省抚州市东乡区孝岗镇恒安东路125号1栋3单元502室 13511112222 吴刚";
      * -e.g: $list[]="清远市清城区石角镇美林湖大东路口佰仹公司 郑万顺 15345785872 0752-28112632";
      * -e.g: $list[]="深圳市龙华区龙华街道1980科技文化产业园3栋317    张三    13800138000 518000 120113196808214821";
-     * 
+     *
      * -e.g: phpunit("Tools::expressAddrParse",[$list, true]);
-     * 
+     *
      * @param string|array $data 地址字符串
      * @param boolean $parseUser <true> 是否提取收件人
      * @return array
@@ -558,14 +558,14 @@ class Tools{
      * -e.g: phpunit("Tools::convertCurrency", ['2,023.12392']);
      * -e.g: phpunit("Tools::convertCurrency", ['100,232,023.12392']);
      * -e.g: phpunit("Tools::convertCurrency", ['2s3.12']);
-     * 
+     *
      * @param integer $currencyDigits
      * @return string
      */
     static function convertCurrency($currencyDigits=0) {
-        // Constants: 
+        // Constants:
         $MAXIMUM_NUMBER = 99999999999.99;
-        // Predefine the radix characters and currency symbols for output: 
+        // Predefine the radix characters and currency symbols for output:
         $CN_ZERO = "零";
         $CN_ONE = "壹";
         $CN_TWO = "贰";
@@ -602,8 +602,8 @@ class Tools{
         if ( ($currencyDigits *1) > $MAXIMUM_NUMBER) {
             throw new Exception("仅支持转换千亿以下金额");
         }
-        // Process the coversion from currency digits to characters: 
-        // Separate integral and decimal parts before processing coversion: 
+        // Process the coversion from currency digits to characters:
+        // Separate integral and decimal parts before processing coversion:
         $parts = explode('.',strval($currencyDigits));
         if (count($parts) > 1) {
             $integral = $parts[0];
@@ -612,14 +612,14 @@ class Tools{
             $integral = $parts[0];
             $decimal = "";
         }
-        // Prepare the characters corresponding to the digits: 
+        // Prepare the characters corresponding to the digits:
         $digits = [$CN_ZERO, $CN_ONE, $CN_TWO, $CN_THREE, $CN_FOUR, $CN_FIVE, $CN_SIX, $CN_SEVEN, $CN_EIGHT, $CN_NINE];
         $radices = ["", $CN_TEN, $CN_HUNDRED, $CN_THOUSAND];
         $bigRadices = ["", $CN_TEN_THOUSAND, $CN_HUNDRED_MILLION];
         $decimals = [$CN_TEN_CENT, $CN_CENT];
-        // Start processing: 
+        // Start processing:
         $outputCharacters = "";
-        // Process integral part if it is larger than 0: 
+        // Process integral part if it is larger than 0:
         if ($integral *1 > 0) {
             $zeroCount = 0;
             $integral = strval($integral);
@@ -643,7 +643,7 @@ class Tools{
             }
             $outputCharacters .= $CN_DOLLAR;
         }
-        // Process decimal part if there is: 
+        // Process decimal part if there is:
         if ($decimal != "") {
             for ($i = 0; $i < strlen($decimal); $i++) {
                 $d = substr($decimal, $i, 1);
@@ -652,7 +652,7 @@ class Tools{
                 }
             }
         }
-        // Confirm and return the final output string: 
+        // Confirm and return the final output string:
         if ($outputCharacters == "") {
             $outputCharacters = $CN_ZERO . $CN_DOLLAR;
         }
@@ -664,18 +664,18 @@ class Tools{
 
     /**
      * 数组转多规格SKU
-     * 
+     *
      * -e.g: $input=array();
      * -e.g: $input[]=[["id" => 1, "name" => "红色"], ["id" => 2, "name" => "黑色"], ["id" => 3, "name" => "蓝色"]];
      * -e.g: $input[]=[["id" => 4, "name" => "32G"], ["id" => 5, "name" => "64G"],];
      * -e.g: phpunit("Tools::arrayToSku",[$input]);
-     * 
+     *
      * @param array $input 排列的数组
-     * 
+     *
      * @return array
      */
     static function arrayToSku(array $input){
         return Arr::arrayArrRange($input);
     }
-    
+
 }

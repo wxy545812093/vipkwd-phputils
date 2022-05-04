@@ -22,7 +22,7 @@ use \Vipkwd\Utils\{Str,Dev};
 // use \Exception;
 
 class Console extends Command {
-	
+
 	private static $_input = null;
 	private static $_output = null;
 	private static $nameSpace = '\\Vipkwd\\Utils\\';
@@ -57,7 +57,7 @@ class Console extends Command {
 		// ;
 
 	}
-	
+
 	protected function execute(InputInterface $input, OutputInterface $output){
 		self::$_input = $input;
 		self::$_output = $output;
@@ -122,7 +122,7 @@ class Console extends Command {
 		foreach(self::$writelnLines as $idx => $line){
 			if(isset($line[1]) && is_array($line[1])){
 				$checker($line[1]);
-			}else if($line[1] === true){
+			}else if(isset($line[1]) && $line[1] === true){
 				$checker(array_combine(array_keys($widths), array_keys($widths)));
 			}
 		}
@@ -282,7 +282,7 @@ class Console extends Command {
 						case "string":
 							//TODO 标识必传参数
 							if($defaults[$idx] != "...NuLl"){
-								$args .= ('="'.$defaults[$idx].'"'); 
+								$args .= ('="'.$defaults[$idx].'"');
 							}
 							break;
 						case "array": 	$args .= ('=[]'); break;
@@ -317,7 +317,7 @@ class Console extends Command {
 				"Eg" => $eg,
 				"Comment" => $doc,
 			]];
-			
+
 			if(self::$showMethod !== false){
 				self::$writelnLines[] = ["+", "-"];
 				self::$writelnLines[] = "";
@@ -344,7 +344,7 @@ class Console extends Command {
 					$args = explode(',', $args);
 				}
 				self::$writelnLines[] = $text;
-				
+
 				foreach($args as $k => $var){
 					self::$writelnLines[] = '    '.trim($var). ( count($args) == $k+1 ? '' : ',');
 				}
@@ -377,7 +377,7 @@ class Console extends Command {
 			}, $methods);
 
 			$alternative = Str::getSuggestion($methods, self::$showMethod);
-			
+
 			$style = new SymfonyStyle(self::$_input, self::$_output);
 			$style->block(sprintf("\n%s::%s() method does not exist or does not expose access(public) rights..\n", $className, self::$showMethod), null, 'error');
 			if($alternative === null && !empty($_alternatives)){

@@ -14,12 +14,12 @@ final class Arr{
     use TraitName;
     /**
      * 是否为关联数组
-     * 
+     *
      * -e.g: $arr = [];
      * -e.g: phpunit("Arr::isAssoc", [$arr]);
      * -e.g: $arr = [array()];
      * -e.g: phpunit("Arr::isAssoc", [$arr]);
-     * 
+     *
      * @param array $array 数组
      * @return bool
      */
@@ -29,9 +29,9 @@ final class Arr{
 
     /**
      * 排列组合（适用多规格SKU生成）
-     * 
+     *
      * @param array $input 排列的数组
-     * 
+     *
      * @return array
      */
     static function arrayArrRange(array $input): array{
@@ -48,14 +48,14 @@ final class Arr{
         }
         return $result;
     }
-    
+
     /**
      * 判断数组中指定键是否为数组
      *
      * -e.g: echo '$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]]';$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]];
      * -e.g: phpunit("Arr::hasKey", [$arr,"id"]);
      * -e.g: phpunit("Arr::hasKey", [$arr,"mobile"]);
-     * 
+     *
      * @param string $field
      * @param array $array
      * @return boolean
@@ -69,12 +69,12 @@ final class Arr{
 
     /**
      * 不区分大小写的in_array实现
-     * 
+     *
      * -e.g: $arr = ["A","b","as"];
      * -e.g: phpunit("Arr::hasVal", ["a", $arr]);
      * -e.g: phpunit("Arr::hasVal", ["B", $arr]);
      * -e.g: phpunit("Arr::hasVal", ["s", $arr]);
-     * 
+     *
      * @param mixed $val
      * @param array $array
      * @param boolean $strict <true> 是否严格比较(===)
@@ -88,12 +88,12 @@ final class Arr{
 
     /**
      * hasVal方法的别名
-     * 
+     *
      * -e.g: $arr = ["A","b","as"];
      * -e.g: phpunit("Arr::inArray", ["a", $arr]);
      * -e.g: phpunit("Arr::inArray", ["B", $arr]);
      * -e.g: phpunit("Arr::inArray", ["s", $arr]);
-     * 
+     *
      * @param mixed $val
      * @param array $array
      * @return void
@@ -112,7 +112,7 @@ final class Arr{
      * -e.g: phpunit("Arr::get", [$arr, "b.d.e"]);
      * -e.g: phpunit("Arr::get", [$arr, "b.c"]);
      * -e.g: phpunit("Arr::get", [$arr, "b"]);
-     * 
+     *
      * @param array $array
      * @param string $key   简单模式: "province" 深度模式: "province.city.county.town.street"
      * @param mixed $default <null>
@@ -139,7 +139,7 @@ final class Arr{
      * -e.g: $arr = [1, 30, 39, 29, 10, 13];
      * -e.g: $fnWithBoolean = function($val):bool{ return $val < 40; };
      * -e.g: phpunit("Arr::every", [$arr, $fnWithBoolean]);
-     * 
+     *
      * @param iterable $array
      * @param callable $callback
      * @return boolean
@@ -159,10 +159,10 @@ final class Arr{
      * -e.g: $fnWithBoolean = function($val):bool{ return $val < 5; };
      * -e.g: $arr = [1, 30, 39, 29, 10, 13];
      * -e.g: phpunit("Arr::some", [$arr, $fnWithBoolean]);
-     * -e.g: 
+     * -e.g:
      * -e.g: $arr = [10, 30, 39, 29, 10, 13];
      * -e.g: phpunit("Arr::some", [$arr, $fnWithBoolean]);
-     * 
+     *
      * @param iterable $array
      * @param callable $callback
      * @return boolean
@@ -178,12 +178,12 @@ final class Arr{
 
 	/**
      * 将新数组(键值对)插入到数组指定Key后面
-     * 
+     *
      * -e.g: $arr = ["a"=>10, "b"=>20];
      * -e.g: $inserted = ["c"=>2.001,"d"=>2.40];
      * -e.g: echo '\Vipkwd\Utils\Arr::insertAfter($arr, "a", $inserted); // '; \Vipkwd\Utils\Arr::insertAfter($arr, "a", $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr);
-     * 
+     *
      * -e.g: echo '\Vipkwd\Utils\Arr::insertAfter($arr, "b", $inserted); // '; \Vipkwd\Utils\Arr::insertAfter($arr, "b", $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr);
      *
@@ -208,10 +208,10 @@ final class Arr{
      * -e.g: $inserted = ["c"=>2.001,"d"=>2.40];
      * -e.g: echo '\Vipkwd\Utils\Arr::insertBefore($arr, "b", $inserted); // '; \Vipkwd\Utils\Arr::insertBefore($arr, "b", $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr);
-     * 
+     *
      * -e.g: echo '\Vipkwd\Utils\Arr::insertBefore($arr, "a", $inserted); // '; \Vipkwd\Utils\Arr::insertBefore($arr, "a", $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr);
-     * 
+     *
      * @param array $array
      * @param string $key
      * @param array $inserted 新数组(键值对)
@@ -226,7 +226,7 @@ final class Arr{
 
 	/**
      * 批量执行回调并以数组返回回调执行结果
-     * 
+     *
      * -e.g: $callbacks["+"] = function($a, $b, $c):int{return $a + $b + $c;};
      * -e.g: $callbacks["*"] = function($a, $b, $c):int{return $a * $b * $c;};
      * -e.g: $args = [2, 3, 4];
@@ -246,14 +246,14 @@ final class Arr{
 
 	/**
      * 检测数组是否为索引数组(且从0序开始)
-     * 
+     *
      * -e.g: $arr1 = ["a", "b", "c"];
      * -e.g: $arr2 = [4 => 1, 2, 3];
      * -e.g: $arr3 = ["a" => 1, "b" => 2];
      * -e.g: phpunit("Arr::isList",[$arr1]);echo "<-- \$arr1";
      * -e.g: phpunit("Arr::isList",[$arr2]);echo "<-- \$arr2";
      * -e.g: phpunit("Arr::isList",[$arr3]);echo "<-- \$arr3";
-     * 
+     *
      * @param mixed $value
      */
 	static function isList($value): bool{
@@ -264,14 +264,21 @@ final class Arr{
 	}
 
     /**
+     * isList方法的别名
+     */
+    static function isIndexList(array $arr):bool{
+        return self::isList($arr);
+    }
+
+    /**
      * 将数组规范化为关联数组
-     * 
+     *
      * -- 索引数组范化后 值默认 NULL
-     * 
+     *
      * -e.g: $arr = [1 => "first", "a" => "second"];
      * -e.g: phpunit("Arr::normalize",[$arr]);
      * -e.g: phpunit("Arr::normalize",[$arr, "vipkwd.com"]);
-     * 
+     *
      * @param array $array
      * @param mixed $filling <null>
      * @return array
@@ -293,9 +300,9 @@ final class Arr{
      * -e.g: echo '\Vipkwd\Utils\Arr::pick($arr, "not-exists", "foobar")); // '; echo \Vipkwd\Utils\Arr::pick($arr, "not-exists", "foobar");
      * -e.g: echo '\Vipkwd\Utils\Arr::pick($arr, "not-exists")); // '; echo \Vipkwd\Utils\Arr::pick($arr, "not-exists");
      * -e.g: \Vipkwd\Utils\Dev::dumper($arr, 0, 0);
-     * 
+     *
      * @param array $array
-     * @param string $key 
+     * @param string $key
      * @param mixed $default <null> key不存在时默认返回此值
      * @return mixed
      */
@@ -313,15 +320,15 @@ final class Arr{
 
 	/**
      * 重命名数组键名
-     * 
+     *
      * -e.g: $arr = ["a"=>10, "b"=>20];
      * -e.g: echo '\Vipkwd\Utils\Arr::renameKey($arr, "a", "c"); // '; echo \Vipkwd\Utils\Arr::renameKey($arr, "a", "c");
      * -e.g: \Vipkwd\Utils\Dev::dump($arr);
-     * 
+     *
      * @param array &$array
      * @param string $oldKey
      * @param string $newKey
-     * 
+     *
      * @return boolean
      */
 	static function renameKey(array &$array, $oldKey, $newKey): bool{
@@ -344,7 +351,7 @@ final class Arr{
      * -e.g: phpunit("Arr::getKeyOffset", [$arr, "a"]);
      * -e.g: phpunit("Arr::getKeyOffset", [$arr, "b"]);
      * -e.g: phpunit("Arr::getKeyOffset", [$arr, "c"]);
-     * 
+     *
      * @param array $array
      * @param string $key
      * @return integer|null
@@ -364,10 +371,10 @@ final class Arr{
      * -e.g: $arr = ["a"=>123, "b" => ["c"=>200, "d"=> ["e"=>300]]];
      * -e.g: phpunit("Arr::toObject", [$arr, false]);
      * -e.g: phpunit("Arr::toObject", [$arr]);
-     * 
+     *
      * -e.g: $obj = \Vipkwd\Utils\Arr::toObject($arr,true);
      * -e.g: echo 'echo $obj->b->d->e; // 300 <-- '; echo $obj->b->d->e;
-     * 
+     *
      * @param array $array
      * @param boolean $recursive <true> 是否深度递归
      * @return void
@@ -387,7 +394,7 @@ final class Arr{
      *
      * -e.g: $arr = ["a"=>10, "b"=>20];
      * -e.g: phpunit("Arr::last", [$arr]);
-     * 
+     *
      * @param array $array
      * @return mixed
      */
@@ -397,10 +404,10 @@ final class Arr{
 
     /**
      * 返回数组第一项键值(空数组则返回null)
-     * 
+     *
      * -e.g: $arr = ["a"=>10, "b"=>20];
      * -e.g: phpunit("Arr::first", [$arr]);
-     * 
+     *
      * @param  array $array
      * @return ?mixed
      */
@@ -410,11 +417,11 @@ final class Arr{
 
     /**
      * 返回键值与正则表达式匹配的那些数组项
-     * 
+     *
      * -e.g: $arr = ["a"=>10, "b"=>2048 ,"c"=>"3a", "d"=>"a3"];
      * -e.g: phpunit("Arr::grep", [$arr, "/^\d+$/"]); // Array([a] => 10 [b] => 2048 )
      * -e.g: phpunit("Arr::grep", [$arr, "/^\d+/"]); // Array([a] => 10 [b] => 2048 [c] => 3a )
-     * 
+     *
      * @param string[] $array
      * @param string $pattern
      * @return string[]
@@ -429,7 +436,7 @@ final class Arr{
      * -e.g: $arr=[1, 2, [3, 4, ["birthday"=> 19990909, 5, 6]]];
      * -e.g: phpunit("Arr::flatten", [$arr]);
      * -e.g: phpunit("Arr::flatten", [$arr, true]);
-     * 
+     *
      * @param array $array
      * @param boolean $preserveKeys <false> 是否保留源Key
      * @return array
@@ -449,7 +456,7 @@ final class Arr{
      * -e.g: $arr = ["a"=>1, "b"=>2 ,"c"=>"3a", "d"=>"a3"];
      * -e.g: $callback = function($v, $k, $arr):string{ return ($v > 0 && $v%2 ===0) ? "{$v} :like Even" : $v;};
      * -e.g: phpunit("Arr::map", [$arr, $callback]);
-     * 
+     *
      * @param iterable $array
      * @param callable $callback
      * @return array
@@ -464,11 +471,11 @@ final class Arr{
 
     /**
      * 二维数组去重
-     * 
+     *
      * -e.g: $arr=[["id"=>1,"sex"=>"female"],["id"=>1,"sex"=>"male"],["id"=>2,"age"=>18]];
      * -e.g: phpunit("Arr::deepUnique",[$arr, "id"]);
      * -e.g: phpunit("Arr::deepUnique",[$arr, "id", false]);
-     * 
+     *
      * @param array $array 数组
      * @param string $filterKey <"id"> 字段
      * @param boolean $cover <true> 是否覆盖（遇相同 “filterKey” 时，仅保留最后一个值）
@@ -485,10 +492,10 @@ final class Arr{
 
     /**
      * 二维数组排序
-     * 
+     *
      * -e.g: $arr=[["age"=>19,"name"=>"A"],["age"=>20,"name"=>"B"],["age"=>18,"name"=>"C"],["age"=>16,"name"=>"D"]];
      * -e.g: phpunit("Arr::deepSort", [$arr, "age", "asc"]);
-     * 
+     *
      * @param array $array 排序的数组
      * @param string $orderKey 要排序的key
      * @param string $orderBy <"desc"> 排序类型 ASC、DESC
@@ -506,7 +513,7 @@ final class Arr{
 
     /**
      * 数组转XML
-     * 
+     *
      * -e.g: $arr=[];
      * -e.g: $arr[]=["name"=>"张叁","roomId"=> "2-2-301", "carPlace"=> ["C109","C110"] ];
      * -e.g: $arr[]=["name"=>"李思","roomId"=> "9-1-806", "carPlace"=> ["H109"] ];
@@ -516,16 +523,16 @@ final class Arr{
      * -e.g: phpunit("Arr::toXml", [$arr]);
      * -e.g: echo "无语法填充:";
      * -e.g: phpunit("Arr::toXml", [$arr, false]);
-     * 
+     *
      * @param array $input 数组
-     * @param bool $syntax <true> 是否填充xml语法头
-     * 
+     * @param bool $xmlHeadSyntax <true> 是否填充xml语法头
+     *
      * @return string
      */
-    static function toXml(array $input, $syntax = true): string{
+    static function toXml(array $input, $xmlHeadSyntax = true): string{
         $toXml = function($input)use(&$toXml){
             if(is_array($input)){
-                $str = ' len="'.count($input).'">';
+                $str = ' keys="'.count($input).'">';
                 foreach ($input as $k => $v){
                     //索引数组填补 节点名称
                     if( ($k > 0 && $k == intval($k)) || $k === 0){
@@ -540,7 +547,7 @@ final class Arr{
             return '>'.$input;
         };
         $input = Obj::toArray($input);
-        $str = ($syntax ? '<?xml version="1.0" encoding="utf-8"?>' : '').'<vipkwd';
+        $str = ($xmlHeadSyntax ? '<?xml version="1.0" encoding="utf-8"?>' : '').'<vipkwd';
         $str .= $toXml($input);
         $str .= '</vipkwd>';
         return $str;
@@ -564,5 +571,5 @@ trait TraitName{
 				. ' (pattern: ' . implode(' or ', (array) $args[0]) . ')', $code);
 		}
 		return $res;
-	} 
+	}
 }
