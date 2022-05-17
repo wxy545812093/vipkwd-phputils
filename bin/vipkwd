@@ -28,11 +28,11 @@ define('VIPKWD_PACKAGE_VERSION', $composer->version ?? "dev");
 | loading of any of our classes manually. It's great to relax.
 |
 */
-$autoload = '/vendor/autoload.php';
+$autoload = DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
 $autoloadPath=[];
 $deep ="";
 for($i=0; $i<5; $i++){
-    $i>0 && $deep .= "/..";
+    $i>0 && $deep .= DIRECTORY_SEPARATOR . "..";
     $autoloadPath[] = $autoLoadFile = __DIR__ . $deep . $autoload;
     if(file_exists($autoLoadFile)){   
         $i=true;
