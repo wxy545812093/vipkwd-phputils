@@ -37,30 +37,28 @@ class Upload{
      *                  --upload_dir string <"upfiles/"> 保存目录
      *                  --type array|string <["jpg","gif","bmp","jpeg","png"]> 允许扩展 'jpg,jpeg,png'
      *                  --file_name_prefix string <''> 文件名前缀
-     * @return string
+     * @return array
      */
     public function upload($uploadKey = "file", $options = []){
         try{
             if(!isset($_FILES[$uploadKey])){
                 return null;
             }
-
             $this->init($uploadKey, $options);
-
 
             // err01
             if( true !== ($error = $this->__checkFileError())){
-                return array('code' => "ERR-FE000", "msg" => $error );
+                return $error;
             }
 
             //err02 判断文件类型
             if( true !== ($error = $this->_checkExtension())){
-                return array('code' => "ERR-FE000", "msg" => $error );
+                return $error;
             }
 
             //err03
             if( true !== ($error = $this->_checkUploadFileSize())){
-                return array('code' => "ERR-FE000", "msg" => $error );
+                return $error;
             }
 
             if( !is_dir($this->options['upload_dir'])){
@@ -92,12 +90,15 @@ class Upload{
                     $msg= "上传成功";
                     $ret_code=0;
                     $data = [
+                        "state"=> "SUCCESS",
                         "size" => $this->file['size'],
                         "ext"  => $this->file['ext'],
                         "mime" => $this->file['type'],
                         "path" => $uploadfile,
                         "hash" => hash_file("md5", $uploadfile),
-                        "name" => $name
+                        "name" => $name,
+                        "title" => $name,
+                        "original" => $this->file['name']
                     ];
                 }
             }
@@ -177,7 +178,9 @@ class Upload{
 	}
 
     private function init($uploadKey, $options){
-        $this->file = $_FILES[$uploadKey];
+        $this->file = isset($_FILES[$uploadKey]) ? $_FILES[$uploadKey] : [
+            'error' => 4
+        ];
 
         $this->options = array_merge($this->options, $options);
 
