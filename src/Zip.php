@@ -13,7 +13,7 @@ namespace Vipkwd\Utils;
 use \ZipArchive;
 use \Exception;
 use \Closure;
-use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\{Tools, File as vipkwdFile};
 
 class Zip{
 
@@ -21,12 +21,12 @@ class Zip{
      * 文件打包（zipfile不存在将自动创建)
      * 
      * @param string $zipFile 打包后的文件名
-     * @param string|array $fileOrPaths 打包文件组
+     * @param string|array $fileOrPaths 打包文件组(支持目录)
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
      * 
      * @return string|null
      */
-    static public function addZip(string $zipFile, $fileOrPaths, ?string $password=""):?string{
+    static public function addZip(string $zipFile, $fileOrPaths, ?string $password=""){
 
 		return self::watchException(function()use($zipFile, &$fileOrPaths, $password){
             $zip = new ZipArchive();
@@ -41,8 +41,7 @@ class Zip{
                     }
                 }
                 $zip->setArchiveComment('vipkwd/utils');
-                $zip->addFromString('pakg-license.txt', "
-This zip package create by PHP utils with \"vipkwd/utils\"
+                $zip->addFromString('pakg-license.txt', "This zip package create by PHP utils with \"vipkwd/utils\"
 
 -- composer use:
 --      composer require vipkwd/utils
@@ -50,24 +49,27 @@ This zip package create by PHP utils with \"vipkwd/utils\"
 --      include \"vendor/autoload.php\"
 --      Vipkwd\Utils\Zip::addZip(\"demo.zip\", \".\");
 --      //And a zip package was created;");
+                $baseDir = null;
                 if(is_string($fileOrPaths)){
+                    $fileOrPaths = realpath($fileOrPaths);
+                    is_dir($fileOrPaths) && $baseDir = $fileOrPaths;
                     $fileOrPaths =[$fileOrPaths];
                 }
                 foreach ($fileOrPaths as $file) {
                     if(is_dir($file)){
-                        Tools::dirScan($file, function($_file, $_path) use(&$zip){
-                            $zip->addFile($_path."/".$_file, basename($_file));
+                        Tools::dirScan($file, function($_file, $_path) use(&$zip, $baseDir){
+                            $filePath = $_path."/".$_file;
+                            $baseDir === null && $zip->addFile($filePath, basename($_file));
+                            $baseDir !== null && $zip->addFile($filePath,  str_replace($baseDir.'/', '', $filePath) );
                         });
                     }else{
                         //重命名
                         //$zip->renameName('currentname.txt','newname.txt');
 
                         // 添加文件并丢弃源目录结构
-                        // $zip->addFile($file, basename($file));
-
-                        //添加文件并保留目录结构
                         $zip->addFile($file, basename($file));
                     }
+                    unset($file);
                 }
 				// 关闭Zip对象
 				$zip->close();
@@ -75,7 +77,7 @@ This zip package create by PHP utils with \"vipkwd/utils\"
 				return $zipFile;
             }
 			unset($zip, $zipFile, $fileOrPaths);
-			return false;
+			return null;
 		});
     }
 
@@ -166,5 +168,6 @@ This zip package create by PHP utils with \"vipkwd/utils\"
         }catch(Exception $e){
             throw new Exception($e->getMessage());
         }
+        return null;
 	}
 }

@@ -795,11 +795,11 @@ class File
     /**
      * 下载网络文件
      *
-     * @param string $url
+     * @param string $http_url
      * @param string $saveNameWithPath  保存文件名 /folder/path/filename
      * @return string|null
      */
-    static function downloadHttpFile(string $url, string $saveNameWithPath): ?string
+    static function downloadHttpFile(string $http_url, string $saveNameWithPath): ?string
     {
         // 设置超时时间
         set_time_limit(24 * 60 * 60);
@@ -816,9 +816,9 @@ class File
             self::createDir($destination_folder);
             // 如果没有就建立目录
         }
-        $newfname = rtrim($destination_folder, '/') . '/' . ($saveName ?? basename($url));
+        $newfname = rtrim($destination_folder, '/') . '/' . ($saveName ?? basename($http_url));
         // 取得文件的名称
-        $file = fopen($url, "rb");
+        $file = fopen($http_url, "rb");
         // 远程下载文件，二进制模式
         if ($file) {
             // 如果下载成功
@@ -847,10 +847,10 @@ class File
         return null;
     }
 
-    static function showImage(string $imagePath)
+    static function showImage(string $filename)
     {
         //获取mime信息
-        $size = getimagesize($imagePath);
+        $size = getimagesize($filename);
         //二进制方式打开文件
         $fp = fopen($filename, "rb");
         if ($size && $fp) {
