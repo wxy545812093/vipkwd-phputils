@@ -847,10 +847,10 @@ class File
         return null;
     }
 
-    static function showImage(string $filename)
+    static function showImage(string $imagePath)
     {
         //获取mime信息
-        $size = getimagesize($filename);
+        $size = getimagesize($imagePath);
         //二进制方式打开文件
         $fp = fopen($filename, "rb");
         if ($size && $fp) {

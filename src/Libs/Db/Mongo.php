@@ -56,7 +56,7 @@ class Mongo
 
     /**
      * 配置响应字段
-     * 
+     *
      * @param string|array $fields
      */
     public function field($fields = [], $exclude = false)
@@ -81,18 +81,16 @@ class Mongo
 
     public function where(array $filters)
     {
-
         // _id = self::MongoID($id);
-
-        $this->filters = $filters;
+        $this->filters = array_merge($this->filters, $filters);
         unset($filters);
         return $this;
     }
 
     /**
-     * 
+     *
      * 分页数据
-     * 
+     *
      * @param int $page
      * @param int $limit 10
      * @param bool $returnData false
@@ -105,9 +103,8 @@ class Mongo
         $endpage = ceil($count / $limit);
         if ($page > $endpage) {
             $page = $endpage;
-        } elseif ($page < 1) {
-            $page = 1;
         }
+        ($page < 1) && $page = 1;
         $this->_page = $page;
         $this->options = [
             'skip'      => ($page - 1) * $limit,
@@ -128,7 +125,7 @@ class Mongo
     /**
      * 排序
      * @param string|array $sorts
-     * 
+     *
      * @return self
      */
     public function sort($sorts)
@@ -158,7 +155,7 @@ class Mongo
     /**
      * 总条数
      * @param array $where
-     * 
+     *
      * @return int
      *
      */
@@ -173,7 +170,7 @@ class Mongo
     /**
      * 查询
      * @param array options array()
-     * 
+     *
      * @return array
      */
     public function select($options = [])
@@ -199,94 +196,109 @@ class Mongo
 
     /**
      * 写入数据，返回写入记录条数
-     * 
+     *
      * @param array $data
-     * 
+     *
      * @return int|null
-     * @throw \Exception  
+     * @throw \Exception
      */
     public function insert(array $data)
     {
         $bulk = $this->__BulkWrite();
         $bulk->insert($data);
-        return $this->__executeBulkWrite($bulk)->getInsertedCount();
+        if ($ret = $this->__executeBulkWrite($bulk)) {
+            return $ret->getInsertedCount();
+        }
+        return 0;
     }
 
     /**
      * 更新内容
-     * 
+     *
      * @param array $data
      * @param bool $upsert false true:记录不存在时自动写入
-     * 
+     *
      * @return int|null
-     * @throw \Exception  
+     * @throw \Exception
      */
     public function update(array $data, bool $upsert = false)
     {
         $bulk = $this->__BulkWrite();
         $bulk->update($this->filters, ['$set' => $data], ['multi' => true, 'upsert' => $upsert]);
-        return $this->__executeBulkWrite($bulk)->getModifiedCount();
+        if ($ret = $this->__executeBulkWrite($bulk)) {
+            return $ret->getModifiedCount();
+        }
+        return 0;
     }
 
     /**
      * 替换内容
-     * 
+     *
      * @param array $update
      * @param bool $upsert false true:记录不存在时自动写入
-     * 
+     *
      * @return int|null
-     * @throw \Exception  
+     * @throw \Exception
      */
     public function replace(array $data, bool $upsert = false)
     {
         $bulk = $this->__BulkWrite();
         $bulk->update($this->filters, $data, ['multi' => false, 'upsert' => $upsert]);
-        return $this->__executeBulkWrite($bulk)->getModifiedCount();
+        if ($ret = $this->__executeBulkWrite($bulk)) {
+            return $ret->getModifiedCount();
+        }
+        return 0;
     }
 
     /**
      * 仅删除匹配记录中的第一条
-     * 
+     *
      * @return int|null
-     * @throw \Exception  
+     * @throw \Exception
      */
     public function deleteOne()
     {
         $bulk = $this->__BulkWrite();
         $bulk->delete($this->filters, ['limit' => 1]);
-        return $this->__executeBulkWrite($bulk)->getDeletedCount();
+        if ($ret = $this->__executeBulkWrite($bulk)) {
+            return $ret->getDeletedCount();
+        }
+        return 0;
     }
 
     /**
      * 删除所有匹配记录条目
-     * 
+     *
      * @return int|null
-     * @throw \Exception  
+     * @throw \Exception
      */
     public function delete()
     {
         $bulk = $this->__BulkWrite();
         $bulk->delete($this->filters);
         // $bulk->delete($this->filters, ['limit' => 0]);
-        return $this->__executeBulkWrite($bulk)->getDeletedCount();
+        if ($ret = $this->__executeBulkWrite($bulk)) {
+            return $ret->getDeletedCount();
+        }
+        return 0;
     }
 
     /**
-     * 
-     * @param BulkWrite $bulk 
+     *
+     * @param BulkWrite $bulk
      * @return WriteResult
      * @throw \Exception
      */
-    private function __executeBulkWrite(BulkWrite $bulk): WriteResult
+    private function __executeBulkWrite(BulkWrite $bulk): ?WriteResult
     {
         $errormsg = '';
         try {
-            return $result = $this->manager->executeBulkWrite($this->table, $bulk, $this->writeConcern);
+            $result = $this->manager->executeBulkWrite($this->table, $bulk, $this->writeConcern);
         } catch (BulkWriteException $e) {
 
             $result = $e->getWriteResult();
 
-            // Check if the write concern could not be fulfilled 
+            // Check if the write concern could not be fulfilled
             if ($writeConcernError = $result->getWriteConcernError()) {
                 $errormsg = sprintf(
                     "Mongo Concern: %s (%d): %s/n",
@@ -313,6 +325,7 @@ class Mongo
         if (!empty($errormsg)) {
             throw new \Exception($errormsg);
         }
+        return $result;
     }
 
     private function __BulkWrite()
@@ -326,14 +339,30 @@ class Mongo
         $this->options = [];
         $this->sorts = [];
         $this->table = 'test.test';
+
+
+
+
+
+
+
+
         $this->fps = [
-            ">" => '$gt',
-            "rex" => '$gt', //MongoRegex
+            "=" => '$eq', // ['age' => 5]
+            ">" => '$gt', // ['$gt' => 5]
+            ">=" => '$gte', //['$gte' => 2]
+            "<" => '$lt', //['$lt' => 5]
+            "<=" => '$lte', // ['$lte' => 2]
+            "!=" => '$ne', //['$ne' => 9]
+            "><" => '$ne', //['$ne' => 9]
+            "<>" => '$ne', //['$ne' => 9]
+            "rex" => '$gt', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
             "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
-            ">" => '$gt',
-            ">" => '$gt',
-            ">" => '$gt',
-            ">" => '$gt',
+            "range" => '$gt', //['$gt' => 1,'$lt' => 9]
+            "between" => '$gt', //['$gte' => 1,'$lte' => 9]
+            "in" => '$ne', //['$in' => array(1,2,9)]
+            "notin" => '$ne', //['$nin' => array(1,2,9)]
+
 
             // // 欄位字串為
             // $querys = array("name"=>"shian");
@@ -385,27 +414,27 @@ class Mongo
 /*
 
 
-$filter = array();
-$options = array(
+    $filter = array();
+    $options = array(
 
-    //Only return the following fields in the matching documents
+        //Only return the following fields in the matching documents
 
-    "projection" => array("title" => 1, "article" => 1,),
+        "projection" => array("title" => 1, "article" => 1,),
 
-    "sort" => array("views" => -1,),  "modifiers" => array(
-        '$comment'  => "This is a query comment", '$maxTimeMS' => 100,
+        "sort" => array("views" => -1,),  "modifiers" => array(
+            '$comment'  => "This is a query comment", '$maxTimeMS' => 100,
 
-    ),
-);
-$query = new MongoDB / Driver / Query($filter, $options);
-$manager = new MongoDB / Driver / Manager("mongodb://localhost:27017");
+        ),
+    );
+    $query = new MongoDB / Driver / Query($filter, $options);
+    $manager = new MongoDB / Driver / Manager("mongodb://localhost:27017");
 
-$readPreference = new MongoDB / Driver / ReadPreference(MongoDB / Driver / ReadPreference::RP_PRIMARY);
-$cursor = $manager->executeQuery("databaseName.collectionName", $query, $readPreference);
+    $readPreference = new MongoDB / Driver / ReadPreference(MongoDB / Driver / ReadPreference::RP_PRIMARY);
+    $cursor = $manager->executeQuery("databaseName.collectionName", $query, $readPreference);
 
-foreach ($cursor as $document) {
+    foreach ($cursor as $document) {
 
-    var_dump($document);
-}
+        var_dump($document);
+    }
 
 */
