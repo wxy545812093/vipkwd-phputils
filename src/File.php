@@ -917,4 +917,58 @@ class File
         }
         throw new \Exception($err);
     }
+
+    /**
+     * 读取指定INI文件
+     * 
+     * @param string $iniFile ini文件path
+     * @return array|boolean
+     */
+    static function readIniFile(string $iniFile)
+    {
+        if (file_exists($iniFile)) {
+            return parse_ini_file( $iniFile, true);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 写入数组到指定ini文件
+     * 
+     * @param array $data
+     * @param string $iniFile
+     */
+    static function writeIniFile($data, $iniFile) { 
+        $content = "";
+        $common = '';
+        $index = 0;
+        foreach ($data as $key=>$elem) {
+            if(is_array($elem)){
+                $index ++;
+                $content .= "[{$key}]\n";
+                foreach($elem as $k2 => $v2){
+                    $content .= "{$k2} = {$v2}\n";
+                }
+                $content .= "\n";
+            }else{
+                $common .= "{$key} = {$elem}\n";
+            } 
+        }
+        if($index > 0){
+            $content .= "[common]\n" .$common;
+        }else{
+            $content = $common;
+        }
+        unset($common, $index);
+
+        if (!$handle = fopen($iniFile, 'w')) { 
+            return false; 
+        } 
+        if (!fwrite($handle, $content)) { 
+            return false; 
+        } 
+        fclose($handle); 
+        return true; 
+    }
 }

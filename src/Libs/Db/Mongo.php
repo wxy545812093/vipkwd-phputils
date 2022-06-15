@@ -216,7 +216,7 @@ class Mongo
      * 更新内容
      *
      * @param array $data
-     * @param bool $upsert false true:记录不存在时自动写入
+     * @param bool $upsert <false> true:记录不存在时自动写入
      *
      * @return int|null
      * @throw \Exception
@@ -235,7 +235,7 @@ class Mongo
      * 替换内容
      *
      * @param array $update
-     * @param bool $upsert false true:记录不存在时自动写入
+     * @param bool $upsert <false> true:记录不存在时自动写入
      *
      * @return int|null
      * @throw \Exception

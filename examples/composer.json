@@ -1,0 +1,29 @@
+{
+    "name": "vipkwd/xxx",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Vipkwd\\Xxx\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "wxy545812093",
+            "email": "wxy545812093@126.com"
+        }
+    ],
+    "minium-stability":"dev",
+    "prefer-stable": false,
+    "repositories": {
+        "0": {
+          "type": "path",
+          "url": "F:/phpEnv/www/github/vipkwd-phputils",
+          "options": {
+            "symlink": true
+          }
+        }
+      },
+    "require": {
+        "vipkwd/utils": "2.0.8-alpha2"
+    }
+}

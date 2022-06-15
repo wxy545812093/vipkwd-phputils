@@ -659,4 +659,20 @@ class Str{
 	static function htmlToText(string $html): string{
 		return html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 	}
+
+    //字节转Emoji表情
+    static function bytesToEmoji($cp)
+    {
+        $cp += 0;
+        if ($cp > 0x10000) {       # 4 bytes
+            $s = chr(0xF0 | (($cp & 0x1C0000) >> 18)) . chr(0x80 | (($cp & 0x3F000) >> 12)) . chr(0x80 | (($cp & 0xFC0) >> 6)) . chr(0x80 | ($cp & 0x3F));
+        } else if ($cp > 0x800) {   # 3 bytes
+            $s = chr(0xE0 | (($cp & 0xF000) >> 12)) . chr(0x80 | (($cp & 0xFC0) >> 6)) . chr(0x80 | ($cp & 0x3F));
+        } else if ($cp > 0x80) {    # 2 bytes
+            $s = chr(0xC0 | (($cp & 0x7C0) >> 6)) . chr(0x80 | ($cp & 0x3F));
+        } else {                    # 1 byte
+            $s = chr($cp);
+        }
+        return $s;
+    }
 }
