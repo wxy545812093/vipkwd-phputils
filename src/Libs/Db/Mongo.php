@@ -4,6 +4,7 @@
  * @name 数据库Mongo
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
+ * @link https://www.cnblogs.com/wujuntian/p/8352586.html
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
@@ -15,7 +16,9 @@ namespace Vipkwd\Utils\Libs\Db;
 use MongoDB\Driver\{Manager, BulkWrite, WriteConcern, Query, Command, WriteResult};
 use MongoDB\Driver\Exception\BulkWriteException;
 use MongoDB\Driver\Exception\Exception;
+use MongoDB\Driver\Exception\InvalidArgumentException;
 use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\Regex as MongoRegex;
 
 use \Vipkwd\Utils\Dev;
 // use Vipkwd\Utils\DateTime as VipkwdDate;
@@ -29,7 +32,9 @@ class Mongo
     private $filters;
     private $options;
     private $sorts;
-    private $fps;
+    private $lastQuery;
+    private $limit;
+    private $usePage;
 
     public function __construct($dsn = "127.0.0.1:27017")
     {
@@ -40,17 +45,27 @@ class Mongo
         $this->_init();
     }
 
-    static function MongoId(string $id): Object
+    static function mongoId(string $id): Object
     {
         return new ObjectId($id);
     }
 
     /**
-     * 格式：数据库.集合 如 demo.user
+     * 刷新查询对象（初始化一切查询、过滤条件）
+     */
+    public function flush(){
+        $this->_init();
+        return $this;
+    }
+
+    /**
+     * 切换访问目标集合
+     * @param string $table 格式：数据库.集合 如 demo.user db_name.collection_name
      */
     public function table(string $table): self
     {
         $this->_init();
+
         $this->table = $table;
         return $this;
     }
@@ -58,24 +73,27 @@ class Mongo
     /**
      * 配置响应字段
      *
-     * @param string|array $fields
+     * @param string $fields 'field1,field2,field3'
+     * @param boolean $exclude <false> 是否排除指定字段 
      */
-    public function field($fields = [], $exclude = false)
+    public function field(string $fields = '*', $exclude = false)
     {
-        if (is_string($fields)) {
-            if ($fields == '*') {
-                $this->fields = $fields = [];
-                return $this;
-            }
-            $fields = explode(',',  str_replace(' ', '', $fields));
-            if (!empty($fields)) {
-                $excludes = array_pad([], count($fields), $exclude ? 0 : 1);
-                $fields = array_combine($fields, $excludes);
-                unset($exclude, $excludes);
-            }
+        $fields = str_replace(' ', '', $fields);
+        if ($fields == '*' || $fields == '') {
+            $this->fields = [];
+            return $this;
         }
+
+        $fields = explode(',', $fields);
         if (!empty($fields)) {
-            $this->fields = array_merge($this->fields, $fields);
+            $excludes = array_pad([], count($fields), $exclude ? 0 : 1);
+            $fields = array_combine($fields, $excludes);
+            unset($exclude, $excludes);
+        }
+
+        if (!empty($fields)) {
+            // $this->fields = array_merge($this->fields, $fields);
+            $this->fields = $fields;
         }
         return $this;
     }
@@ -84,10 +102,31 @@ class Mongo
      * 设置查询条件
      * 
      * ->where("city", "北京")
+     * ->where('user_id', null)
      * ->where(['eq', 'age', 18])
      * ->where(['=', 'sex', 1])
+     * ->where(['=',"user_id", "231114"]);
      * 
-     * ->where([ ['=', 'sex', 1], ['=', 'field', 'value] ])
+     * ->where([ ['=', 'sex', 1], ['=', 'field', 'value], ... ])
+     * 
+     * ->where(['rex', "page_url", ["rule", 'g']]) //rule 不需要边界符合
+     * ->where(['rex', "client_ip", ["127.*"]]) //匹配 client_id=127.xxx.xxx.xxx
+     * 
+     * ->where(['>', "times", 1654660935 ]);
+     * ->where(['<', "times", 1654660935 ]);
+     * ->where(['!=', "times", 1654660935 ]);
+     * ->where(['>=', "times", 1654660935 ]);
+     * ->where(['<=', "times", 1654660935 ]);
+     * 
+     * ->where(['or', [ ["=", 'page_url', 'pages/index/index'], ["rex", "page_url", ['pages/kefu/*', '']], ... ]])
+     * 
+     * ->where(['range','times', [1653917590, 1653917650]]);// $max > field_value > $min
+     * ->where(['between','times', [1653917590, 1653918650]]);// $max >= field_value >= $min
+     * ->where(['notin','page_action', ["wx.onShow", "wx.onHide"]]);
+     * 
+     * ->where(['in','page_action', ["wx.onShow", "wx.onHide"]]);
+     * ->where(['page_action' =>["wx.onShow", "wx.onHide"]]);
+     * 
      */
     public function where()
     {
@@ -97,11 +136,10 @@ class Mongo
             $filters = ['=', $filters[0], $filters[1]];
         } else if ($num === 0) {
             $filters = [];
-        }else{
+        } else {
             $filters = $filters[0];
         }
-        // _id = self::MongoID($id);
-        $this->filters = array_merge($this->filters, $this->__filter($filters));
+        $this->filters = array_merge($this->filters, MongoQueryParser::filter($filters));
         unset($filters);
         return $this;
     }
@@ -112,33 +150,39 @@ class Mongo
      *
      * @param int $page
      * @param int $limit 10
-     * @param bool $returnData false
+     * @param bool $next <false>
      * @return self|array
      *
      */
-    public function page($page = 1, $limit = 10, bool $returnData = false)
+    public function page($page = 1, $limit = 10, bool $next = false)
     {
-        $count = $this->count();
-        $endPage = ceil($count / $limit);
+        $totals = $this->count();
+
+        $endPage = intval(ceil($totals / $limit));
+        $page = intval($page);
+
         if ($page > $endPage) {
             $page = $endPage;
         }
         ($page < 1) && $page = 1;
-        $this->_page = $page;
-        $this->options = [
-            'skip'      => ($page - 1) * $limit,
-            'limit'     => $limit
-        ];
 
-        if ($returnData) {
-            $data['data'] = $this->select($this->options);
-            $data['count'] = $count;
-            $data['page'] = $endPage;
+        $this->options = array_merge([$this->options, [
+                'skip'      => ($page - 1) * $limit,
+                'limit'     => $limit
+            ]
+        ]);
+
+        $this->usePage = true;
+
+        if ($next === false) {
+            $data['page'] = $page;
+            $data['pages'] = $endPage;
+            $data['totals'] = $totals;
+            $data['list'] = $this->select();
             return $data;
         }
         return $this;
     }
-
 
 
     /**
@@ -181,9 +225,26 @@ class Mongo
     public function count()
     {
         $table = explode('.', $this->table);
-        $command = new Command(['count' => $table[1], 'query' => $this->filters]);
+        $command = new Command(['count' => $table[1], 'query' => empty($this->filters) ? (object)[] : $this->filters]);
         $result = $this->manager->executeCommand($table[0], $command);
+        $this->lastQuery = $result;
         return $result ? $result->toArray()[0]->n : 0;
+    }
+
+    public function query(array $filters){
+        $query = new Query($filters, []);
+        $result = $this->manager->executeQuery($this->table, $query);
+        $items = [];
+        foreach ($result as $doc) {
+            $doc = (array)$doc;
+            if (isset($doc['_id'])) {
+                $doc['_id'] = ((array)$doc['_id'])['oid'];
+            }
+            $items[] = $doc;
+        }
+
+        $this->lastQuery = $result;
+        return $items; 
     }
 
     /**
@@ -192,24 +253,28 @@ class Mongo
      *
      * @return array
      */
-    public function select($options = [])
+    public function select()
     {
-        $options = array_merge($this->options, [
-            'projection' => $this->fields,
-            'sort' => $this->sorts,
-        ]);
-
-        $query = new Query($this->filters, $options);
-        $cursor = $this->manager->executeQuery($this->table, $query);
-        $this->_page = 0;
+        $calcOptions = ['sort' => $this->sorts];
+        if($this->limit > 0){
+            $calcOptions['limit'] = $this->limit;
+        }
+        //查询指定字段
+        if (!empty($this->fields)) {
+            $calcOptions['projection'] = $this->fields;
+        }
+        $query = new Query($this->filters, array_merge($this->options, $calcOptions) );
+        $result = $this->manager->executeQuery($this->table, $query);
         $items = [];
-        foreach ($cursor as $doc) {
+        foreach ($result as $doc) {
             $doc = (array)$doc;
             if (isset($doc['_id'])) {
                 $doc['_id'] = ((array)$doc['_id'])['oid'];
             }
             $items[] = $doc;
         }
+
+        $this->lastQuery = $result;
         return $items;
     }
 
@@ -223,7 +288,7 @@ class Mongo
      */
     public function insert(array $data)
     {
-        $bulk = $this->__BulkWrite();
+        $bulk = $this->__bulkWrite();
         $bulk->insert($data);
         if ($ret = $this->__executeBulkWrite($bulk)) {
             return $ret->getInsertedCount();
@@ -242,7 +307,7 @@ class Mongo
      */
     public function update(array $data, bool $upsert = false)
     {
-        $bulk = $this->__BulkWrite();
+        $bulk = $this->__bulkWrite();
         $bulk->update($this->filters, ['$set' => $data], ['multi' => true, 'upsert' => $upsert]);
         if ($ret = $this->__executeBulkWrite($bulk)) {
             return $ret->getModifiedCount();
@@ -261,7 +326,7 @@ class Mongo
      */
     public function replace(array $data, bool $upsert = false)
     {
-        $bulk = $this->__BulkWrite();
+        $bulk = $this->__bulkWrite();
         $bulk->update($this->filters, $data, ['multi' => false, 'upsert' => $upsert]);
         if ($ret = $this->__executeBulkWrite($bulk)) {
             return $ret->getModifiedCount();
@@ -277,7 +342,7 @@ class Mongo
      */
     public function deleteOne()
     {
-        $bulk = $this->__BulkWrite();
+        $bulk = $this->__bulkWrite();
         $bulk->delete($this->filters, ['limit' => 1]);
         if ($ret = $this->__executeBulkWrite($bulk)) {
             return $ret->getDeletedCount();
@@ -293,7 +358,7 @@ class Mongo
      */
     public function delete()
     {
-        $bulk = $this->__BulkWrite();
+        $bulk = $this->__bulkWrite();
         $bulk->delete($this->filters);
         // $bulk->delete($this->filters, ['limit' => 0]);
         if ($ret = $this->__executeBulkWrite($bulk)) {
@@ -302,13 +367,24 @@ class Mongo
         return 0;
     }
 
+    public function limit(int $limit){
+        $this->limit = $limit;
+        return $this;
+    }
+
+
+    public function lastQuery()
+    {
+        return $this->lastQuery;
+    }
+
     /**
      *
      * @param BulkWrite $bulk
      * @return WriteResult
      * @throw \Exception
      */
-    private function __executeBulkWrite(BulkWrite $bulk): ?WriteResult
+    private function __executeBulkWrite(BulkWrite $bulk)
     {
         $errormsg = '';
         try {
@@ -344,179 +420,281 @@ class Mongo
         if (!empty($errormsg)) {
             throw new \Exception($errormsg);
         }
+        $this->lastQuery = $result;
         return $result;
     }
 
-    private function __BulkWrite()
+    private function __bulkWrite()
     {
         return new BulkWrite;
     }
 
-    private function __parseCondition($section)
-    {
-        $fps = [
-            "=" => '$eq', // ['age' => 5]
-            "eq" => '$eq', // ['age' => 5]
-
-            ">" => '$gt', // ['$gt' => 5]
-            "gt" => '$gt', // ['$gt' => 5]
-
-            ">=" => '$gte', //['$gte' => 2]
-            "egt" => '$gte', //['$gte' => 2]
-            "get" => '$gte', //['$gte' => 2]
-            "gte" => '$gte', //['$gte' => 2]
-
-            "<" => '$lt', //['$lt' => 5]
-            "lt" => '$lt', //['$lt' => 5]
-
-            "<=" => '$lte', // ['$lte' => 2]
-            "elt" => '$lte', //['$lte' => 2]
-            "let" => '$lte', //['$lte' => 2]
-            "lte" => '$lte', //['$lte' => 2]
-
-            "!=" => '$ne', //['$ne' => 9]
-            "><" => '$ne', //['$ne' => 9]
-            "<>" => '$ne', //['$ne' => 9]
-            "neq" => '$ne', //['$ne' => 9]
-
-            "rex" => '$gt', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
-            "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
-            "range" => '$gt', //['$gt' => 1,'$lt' => 9]
-            "between" => '$gt', //['$gte' => 1,'$lte' => 9]
-            "in" => '$ne', //['$in' => array(1,2,9)]
-            "notin" => '$ne', //['$nin' => array(1,2,9)]
-        ];
-
-        $filter = [];
-        $symbol = $section[0];
-        if (isset($fps[$symbol])) {
-
-            $symbol = $fps[$symbol];
-            $field = $section[1];
-
-            $filter[$field] = [];
-            if ($symbol != '$eq') {
-                $filter[$field][$symbol] = $section[2];
-            } else {
-                $filter[$field] = $section[2];
-            }
-        }
-        return $filter;
-    }
-    private function __filter($filters)
-    {
-
-        $filter = [];
-
-        //标准数组模式
-        if (count($filters) == 3 && array_sum(array_keys($filters)) == 3 && !is_array($filters[0])) {
-            return $this->__parseCondition($filters);
-        }
-        foreach ($filters as $k => $v) {
-
-            //数组模式
-            if ($k > 0 || $k === 0) {
-
-                //子数组
-                if (is_array($v)) {
-                    foreach($v as $vv){
-                        if(is_array($vv)){
-                            $filter = array_merge($filter, $this->__parseCondition($vv));
-                            continue;
-                        }
-                        $filter = array_merge($filter, $this->__parseCondition($v));
-                        break;
-                    }
-                } else {
-                }
-
-                continue;
-            }
-            // ["id"=> [1,2,3,4,5]]
-
-            if(is_array($v) && array_sum(array_keys($v)) > 0){
-                $filter = array_merge($filter, $this->__parseCondition(["in", $k, $v]));
-                continue;
-            }
-            $filter[$k] = $v;
-            // $filter = array_merge($filter, $this->__parseCondition(["=", $k, $v]));
-        }
-        return $filter;
-    }
-
-
     private function _init()
-    {
-        $this->fields = ["_id" => 0];
+    {   
+        $this->usePage = false; //默认当做常规查询（不使用分页查询方法)
+        $this->limit= -1;
+        // $this->fields = ["_id" => 1]; // 0 默认不查询_id字段
+        $this->fields = []; // 0 默认不查询_id字段
         $this->filters = [];
         $this->options = [];
         $this->sorts = [];
         $this->table = 'test.test';
-        $this->fps = [
-            "=" => '$eq', // ['age' => 5]
-            ">" => '$gt', // ['$gt' => 5]
-            ">=" => '$gte', //['$gte' => 2]
-            "<" => '$lt', //['$lt' => 5]
-            "<=" => '$lte', // ['$lte' => 2]
-
-            "!=" => '$ne', //['$ne' => 9]
-            "><" => '$ne', //['$ne' => 9]
-            "<>" => '$ne', //['$ne' => 9]
-
-            "rex" => '$gt', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
-            "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
-            "range" => '$gt', //['$gt' => 1,'$lt' => 9]
-            "between" => '$gt', //['$gte' => 1,'$lte' => 9]
-            "in" => '$ne', //['$in' => array(1,2,9)]
-            "notin" => '$ne', //['$nin' => array(1,2,9)]
-
-
-            // // 欄位字串為
-            // $querys = array("name"=>"shian");
-
-
-            // // 數值等於多少
-            // $querys = array("number"=>7);
-
-            // // 數值大於多少
-            // $querys = array("number"=>array('$gt' => 5));
-
-            // // 數值大於等於多少
-            // $querys = array("number"=>array('$gte' => 2));
-
-            // // 數值小於多少
-            // $querys = array("number"=>array('$lt' => 5));
-
-            // // 數值小於等於多少
-            // $querys = array("number"=>array('$lte' => 2));
-
-            // // 數值介於多少
-            // $querys = array("number"=>array('$gt' => 1,'$lt' => 9));
-
-            // // 數值不等於某值
-            // $querys = array("number"=>array('$ne' => 9));
-
-            // // 使用js下查詢條件
-            // $js = "function(){
-            //     return this.number == 2 && this.name == 'shian';
-            // }";
-            // $querys = array('$where'=>$js);
-
-            // // 欄位等於哪些值
-            // $querys = array("number"=>array('$in' => array(1,2,9)));
-
-            // // 欄位不等於哪些值
-            // $querys = array("number"=>array('$nin' => array(1,2,9)));
-
-            // // 使用正規查詢
-            // $querys = array("name" => new MongoRegex("/shi/$i"));
-
-            // // 或
-            // $querys = array('$or' => array(array('number'=>2),array('number'=>9)));
-        ];
+        // $this->lastQuery = null;不清空(保留上一次查询)
     }
 }
 
+class MongoQueryParser
+{
+
+    private static $fps = [
+        "=" => '$eq', // ['age' => 5]
+        "eq" => '$eq', // ['age' => 5]
+
+        ">" => '$gt', // ['$gt' => 5]
+        "gt" => '$gt', // ['$gt' => 5]
+
+        ">=" => '$gte', //['$gte' => 2]
+        "egt" => '$gte', //['$gte' => 2]
+        "get" => '$gte', //['$gte' => 2]
+        "gte" => '$gte', //['$gte' => 2]
+
+        "<" => '$lt', //['$lt' => 5]
+        "lt" => '$lt', //['$lt' => 5]
+
+        "<=" => '$lte', // ['$lte' => 2]
+        "elt" => '$lte', //['$lte' => 2]
+        "let" => '$lte', //['$lte' => 2]
+        "lte" => '$lte', //['$lte' => 2]
+
+        "!=" => '$ne', //['$ne' => 9]
+        "><" => '$ne', //['$ne' => 9]
+        "<>" => '$ne', //['$ne' => 9]
+        "neq" => '$ne', //['$ne' => 9]
+
+        "all" => '$all', //['$all' => array(1,2,9)]
+        "in" => '$in', //['$in' => array(1,2,9)]
+        "notin" => '$nin', //['$nin' => array(1,2,9)]
+
+        "rex" => '$rex', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
+        "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
+        "range" => '$range', //['$gt' => 1,'$lt' => 9]
+        "between" => '$between', //['$gte' => 1,'$lte' => 9]
+
+
+        // // 欄位字串為
+        // $querys = array("name"=>"shian");
+
+
+        // // 數值等於多少
+        // $querys = array("number"=>7);
+
+        // // 數值大於多少
+        // $querys = array("number"=>array('$gt' => 5));
+
+        // // 數值大於等於多少
+        // $querys = array("number"=>array('$gte' => 2));
+
+        // // 數值小於多少
+        // $querys = array("number"=>array('$lt' => 5));
+
+        // // 數值小於等於多少
+        // $querys = array("number"=>array('$lte' => 2));
+
+        // // 數值介於多少
+        // $querys = array("number"=>array('$gt' => 1,'$lt' => 9));
+
+        // // 數值不等於某值
+        // $querys = array("number"=>array('$ne' => 9));
+
+        // // 使用js下查詢條件
+        // $js = "function(){
+        //     return this.number == 2 && this.name == 'shian';
+        // }";
+        // $querys = array('$where'=>$js);
+
+        // // 欄位等於哪些值
+        // $querys = array("number"=>array('$in' => array(1,2,9)));
+
+        // // 欄位不等於哪些值
+        // $querys = array("number"=>array('$nin' => array(1,2,9)));
+
+        // // 使用正規查詢
+        // $querys = array("name" => new MongoRegex("/shi/$i"));
+
+        // // 或
+        // $querys = array('$or' => array(array('number'=>2),array('number'=>9)));
+    ];
+
+    static function filter($filters)
+    {
+        $filter = [];
+        try {
+            //标准模式 ["fps", "field", "value"]
+            if (count($filters) == 3 && array_sum(array_keys($filters)) == 3 && !is_array($filters[2])) {
+                return self::condition($filters);
+            }
+
+            //简化模式 ['or', ['city'=>'北京', 'pid'=> 2]]
+            if (count($filters) === 2 && array_sum(array_keys($filters)) == 1 && !is_array($filters[0])) {
+                // Dev::dump($filters,1);
+                return self::condition($filters);
+            }
+
+            foreach ($filters as $k => $v) {
+
+                //多维数组模式
+                // [ ["fps1", "field1", "value1"], ["fps2", "field2", "value2"]...]
+                if ($k > 0 || $k === 0) {
+
+                    //子数组 ["fps1", "field1", "value1"]
+                    if (is_array($v)) {
+                        foreach ($v as $vv) {
+                            //三维
+                            if (is_array($vv)) {
+                                $filter = array_merge($filter, self::condition($vv));
+                                continue;
+                            }
+                            //二维是末端 ["fps1", "field1", "value1"]
+                            $filter = array_merge($filter, self::condition($v));
+                            break;
+                        }
+                    } else {
+                        $filter = array_merge($filter, self::condition($filters));
+                        break;
+                    }
+
+                    continue;
+                }
+
+                // ["id"=> [1,2,3,4,5]]
+                if (is_array($v) && array_sum(array_keys($v)) > 0) {
+                    $filter = array_merge($filter, self::condition(["in", $k, $v]));
+                    continue;
+                }
+                $k === '_id' && $v = Mongo::mongoId($v);
+                $filter[$k] = $v;
+                // $filter[$k] = strval($v);
+                // $filter = array_merge($filter, self::condition(["=", $k, $v]));
+            }
+        } catch (\Exception $e) {
+            $errormsg = sprintf("Other error: %s (%d): %s(%d)/n", $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine());
+            throw new InvalidArgumentException($errormsg);
+        }
+        return $filter;
+    }
+
+    private static function condition($section)
+    {
+        $filter = [];
+        try {
+            $symbol = strtolower(str_replace(' ', '', $section[0]));
+            $getField = function () use ($section) {
+                return trim($section[1]);
+            };
+            $setFilter = function ($k, $v) use (&$filter) {
+                $k === '_id' && $v = Mongo::mongoId($v);
+                $filter[$k] = $v;
+            };
+
+            switch ($symbol) {
+                case 'eq':
+                case '=':
+                    $setFilter($getField(), $section[2]);
+                    break;
+
+                case 'between': //['$gte' => 1,'$lte' => 9]
+                    $setFilter($getField(), ['$gte' => $section[2][0], '$lte' => $section[2][1]]);
+                    break;
+
+                case 'range': //['$gt' => 1,'$lt' => 9]
+                    $setFilter($getField(), ['$gt' => $section[2][0], '$lt' => $section[2][1]]);
+                    break;
+
+                case 'rex': //["field_name" => new MongoRegex("shi", 'i')]
+                    if (is_array($section[2])) {
+                        $setFilter($getField(), new MongoRegex($section[2][0], $section[2][1] ?? ''));
+                    } else {
+                        $setFilter($getField(), new MongoRegex($section[2]));
+                    }
+                    break;
+
+                case 'or': //array('$or' => array(array('id' => 1), array('name' => 'java')))
+                    $v = [];
+                    foreach ($section[1] as $ok => $ov) {
+                        $tmp = [];
+                        if (is_array($ov)) {
+
+                            // if (is_array($ov) && array_sum(array_keys($ov)) > 0 && (intval($ok) == 0 && is_string($ok))) {
+                            //     $ov = ["in", $ok, $ov];
+                            // }
+                            // devdump($ov);
+                            $tmp = self::condition($ov);
+                            if (!empty($tmp)) {
+                                $v[] = $tmp;
+                            }
+                            // break;
+                        }
+                        // $v[] = ["$ok" => $ov];
+                        unset($tmp, $ok, $ov);
+                    }
+                    $filter['$or'] =  $v;
+                    unset($v);
+                    break;
+
+                case '>':
+                case 'gt':
+                    $setFilter($getField(), ['$gt' => $section[2]]);
+                    break;
+
+                case '<':
+                case 'lt':
+                    $setFilter($getField(), ['$lt' => $section[2]]);
+                    break;
+
+                case '>=':
+                case 'egt':
+                case 'get':
+                case 'gte':
+                    $setFilter($getField(), ['$gte' => $section[2]]);
+                    break;
+
+                case '>=':
+                case 'elt':
+                case 'let':
+                case 'lte':
+                    $setFilter($getField(), ['$lte' => $section[2]]);
+                    break;
+
+                case '!=':
+                case '<>':
+                case '><':
+                case 'neq':
+                case 'ne':
+                    $setFilter($getField(), ['$ne' => $section[2]]);
+                    break;
+
+                case 'all': //['$all' => array(1,2,9)]
+                    $setFilter($getField(), ['$all' => $section[2]]);
+                    break;
+
+                case 'in': //['$in' => array(1,2,9)]
+                    $setFilter($getField(), ['$in' => $section[2]]);
+                    break;
+
+                case 'notin': //['$nin' => array(1,2,9)]
+                    $setFilter($getField(), ['$nin' => $section[2]]);
+                    break;
+
+                default:
+                    break;
+            }
+        } catch (\Exception $e) {
+            $errormsg = sprintf("Other error: %s (%d): %s(%d)/n", $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine());
+            throw new InvalidArgumentException($errormsg);
+        }
+        return $filter;
+    }
+}
 
 /*
     $filter = array();
