@@ -852,7 +852,7 @@ class File
         //获取mime信息
         $size = getimagesize($imagePath);
         //二进制方式打开文件
-        $fp = fopen($filename, "rb");
+        $fp = fopen($imagePath, "rb");
         if ($size && $fp) {
             header("Content-type: {$size['mime']}");
             fpassthru($fp); // 输出至浏览器

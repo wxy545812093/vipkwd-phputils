@@ -36,7 +36,7 @@ Options:
 
 Available commands:
   completion  Dump the shell completion script
-  dump        Show the class list of Vipkwd/utils package
+  dump        Show the class list of vipkwd/utils package
   help        Display help for a command
   list        List commands
 ```
@@ -81,7 +81,7 @@ Idx | Namespace | Class | Method | Type | Arguments | Eg | Comment
 31  | Vipkwd\Utils | Validate  | Et: 26 | #    | #         | #  | (regexp)验证类
 32  | Vipkwd\Utils | Xml       | Et: 1  | #    | #         | #  | Xml操作     
 33  | Vipkwd\Utils | Zip       | Et: 3  | #    | #         | #  | PHP ZipArchive工具包
-
+--- |-------- | ----- | ----- | ----- | ----- | ----- | -----
 
 ### [Class] 查看类方法列表
 ```shell

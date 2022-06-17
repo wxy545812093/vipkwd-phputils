@@ -17,6 +17,7 @@ use MongoDB\Driver\Exception\BulkWriteException;
 use MongoDB\Driver\Exception\Exception;
 use MongoDB\BSON\ObjectId;
 
+use \Vipkwd\Utils\Dev;
 // use Vipkwd\Utils\DateTime as VipkwdDate;
 // use \Vipkwd\Utils\Random as VipkwdRandom;
 
@@ -79,10 +80,28 @@ class Mongo
         return $this;
     }
 
-    public function where(array $filters)
+    /**
+     * 设置查询条件
+     * 
+     * ->where("city", "北京")
+     * ->where(['eq', 'age', 18])
+     * ->where(['=', 'sex', 1])
+     * 
+     * ->where([ ['=', 'sex', 1], ['=', 'field', 'value] ])
+     */
+    public function where()
     {
+        $filters = func_get_args();
+        $num = count($filters);
+        if ($num > 1) {
+            $filters = ['=', $filters[0], $filters[1]];
+        } else if ($num === 0) {
+            $filters = [];
+        }else{
+            $filters = $filters[0];
+        }
         // _id = self::MongoID($id);
-        $this->filters = array_merge($this->filters, $filters);
+        $this->filters = array_merge($this->filters, $this->__filter($filters));
         unset($filters);
         return $this;
     }
@@ -100,9 +119,9 @@ class Mongo
     public function page($page = 1, $limit = 10, bool $returnData = false)
     {
         $count = $this->count();
-        $endpage = ceil($count / $limit);
-        if ($page > $endpage) {
-            $page = $endpage;
+        $endPage = ceil($count / $limit);
+        if ($page > $endPage) {
+            $page = $endPage;
         }
         ($page < 1) && $page = 1;
         $this->_page = $page;
@@ -114,7 +133,7 @@ class Mongo
         if ($returnData) {
             $data['data'] = $this->select($this->options);
             $data['count'] = $count;
-            $data['page'] = $endpage;
+            $data['page'] = $endPage;
             return $data;
         }
         return $this;
@@ -332,6 +351,100 @@ class Mongo
     {
         return new BulkWrite;
     }
+
+    private function __parseCondition($section)
+    {
+        $fps = [
+            "=" => '$eq', // ['age' => 5]
+            "eq" => '$eq', // ['age' => 5]
+
+            ">" => '$gt', // ['$gt' => 5]
+            "gt" => '$gt', // ['$gt' => 5]
+
+            ">=" => '$gte', //['$gte' => 2]
+            "egt" => '$gte', //['$gte' => 2]
+            "get" => '$gte', //['$gte' => 2]
+            "gte" => '$gte', //['$gte' => 2]
+
+            "<" => '$lt', //['$lt' => 5]
+            "lt" => '$lt', //['$lt' => 5]
+
+            "<=" => '$lte', // ['$lte' => 2]
+            "elt" => '$lte', //['$lte' => 2]
+            "let" => '$lte', //['$lte' => 2]
+            "lte" => '$lte', //['$lte' => 2]
+
+            "!=" => '$ne', //['$ne' => 9]
+            "><" => '$ne', //['$ne' => 9]
+            "<>" => '$ne', //['$ne' => 9]
+            "neq" => '$ne', //['$ne' => 9]
+
+            "rex" => '$gt', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
+            "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
+            "range" => '$gt', //['$gt' => 1,'$lt' => 9]
+            "between" => '$gt', //['$gte' => 1,'$lte' => 9]
+            "in" => '$ne', //['$in' => array(1,2,9)]
+            "notin" => '$ne', //['$nin' => array(1,2,9)]
+        ];
+
+        $filter = [];
+        $symbol = $section[0];
+        if (isset($fps[$symbol])) {
+
+            $symbol = $fps[$symbol];
+            $field = $section[1];
+
+            $filter[$field] = [];
+            if ($symbol != '$eq') {
+                $filter[$field][$symbol] = $section[2];
+            } else {
+                $filter[$field] = $section[2];
+            }
+        }
+        return $filter;
+    }
+    private function __filter($filters)
+    {
+
+        $filter = [];
+
+        //标准数组模式
+        if (count($filters) == 3 && array_sum(array_keys($filters)) == 3 && !is_array($filters[0])) {
+            return $this->__parseCondition($filters);
+        }
+        foreach ($filters as $k => $v) {
+
+            //数组模式
+            if ($k > 0 || $k === 0) {
+
+                //子数组
+                if (is_array($v)) {
+                    foreach($v as $vv){
+                        if(is_array($vv)){
+                            $filter = array_merge($filter, $this->__parseCondition($vv));
+                            continue;
+                        }
+                        $filter = array_merge($filter, $this->__parseCondition($v));
+                        break;
+                    }
+                } else {
+                }
+
+                continue;
+            }
+            // ["id"=> [1,2,3,4,5]]
+
+            if(is_array($v) && array_sum(array_keys($v)) > 0){
+                $filter = array_merge($filter, $this->__parseCondition(["in", $k, $v]));
+                continue;
+            }
+            $filter[$k] = $v;
+            // $filter = array_merge($filter, $this->__parseCondition(["=", $k, $v]));
+        }
+        return $filter;
+    }
+
+
     private function _init()
     {
         $this->fields = ["_id" => 0];
@@ -339,23 +452,17 @@ class Mongo
         $this->options = [];
         $this->sorts = [];
         $this->table = 'test.test';
-
-
-
-
-
-
-
-
         $this->fps = [
             "=" => '$eq', // ['age' => 5]
             ">" => '$gt', // ['$gt' => 5]
             ">=" => '$gte', //['$gte' => 2]
             "<" => '$lt', //['$lt' => 5]
             "<=" => '$lte', // ['$lte' => 2]
+
             "!=" => '$ne', //['$ne' => 9]
             "><" => '$ne', //['$ne' => 9]
             "<>" => '$ne', //['$ne' => 9]
+
             "rex" => '$gt', //MongoRegex   ["name" => new MongoRegex("/shi/$i")]
             "or" => '$or', //array('$or' => array(array('id' => 1), array('name' => 'java')))
             "range" => '$gt', //['$gt' => 1,'$lt' => 9]
@@ -412,8 +519,6 @@ class Mongo
 
 
 /*
-
-
     $filter = array();
     $options = array(
 
