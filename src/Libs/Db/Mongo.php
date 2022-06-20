@@ -53,7 +53,8 @@ class Mongo
     /**
      * 刷新查询对象（初始化一切查询、过滤条件）
      */
-    public function flush(){
+    public function flush()
+    {
         $this->_init();
         return $this;
     }
@@ -166,7 +167,8 @@ class Mongo
         }
         ($page < 1) && $page = 1;
 
-        $this->options = array_merge([$this->options, [
+        $this->options = array_merge([
+            $this->options, [
                 'skip'      => ($page - 1) * $limit,
                 'limit'     => $limit
             ]
@@ -231,7 +233,8 @@ class Mongo
         return $result ? $result->toArray()[0]->n : 0;
     }
 
-    public function query(array $filters){
+    public function query(array $filters)
+    {
         $query = new Query($filters, []);
         $result = $this->manager->executeQuery($this->table, $query);
         $items = [];
@@ -244,26 +247,41 @@ class Mongo
         }
 
         $this->lastQuery = $result;
-        return $items; 
+        return $items;
     }
 
     /**
+     * 单条查询
+     * 
+     * @return array
+     */
+    public function find()
+    {
+        $this->limit = 1;
+        $items = $this->select();
+        if (!empty($items)) {
+            $items = $items[0];
+        }
+        return $items;
+    }
+
+
+    /**
      * 查询
-     * @param array options array()
      *
      * @return array
      */
     public function select()
     {
         $calcOptions = ['sort' => $this->sorts];
-        if($this->limit > 0){
+        if ($this->limit > 0) {
             $calcOptions['limit'] = $this->limit;
         }
         //查询指定字段
         if (!empty($this->fields)) {
             $calcOptions['projection'] = $this->fields;
         }
-        $query = new Query($this->filters, array_merge($this->options, $calcOptions) );
+        $query = new Query($this->filters, array_merge($this->options, $calcOptions));
         $result = $this->manager->executeQuery($this->table, $query);
         $items = [];
         foreach ($result as $doc) {
@@ -367,7 +385,8 @@ class Mongo
         return 0;
     }
 
-    public function limit(int $limit){
+    public function limit(int $limit)
+    {
         $this->limit = $limit;
         return $this;
     }
@@ -430,9 +449,9 @@ class Mongo
     }
 
     private function _init()
-    {   
+    {
         $this->usePage = false; //默认当做常规查询（不使用分页查询方法)
-        $this->limit= -1;
+        $this->limit = -1;
         // $this->fields = ["_id" => 1]; // 0 默认不查询_id字段
         $this->fields = []; // 0 默认不查询_id字段
         $this->filters = [];
