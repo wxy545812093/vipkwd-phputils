@@ -15,7 +15,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.0",
-        "awesomite/var-dumper": "^1.5",
+        "vipkwd/var-dumper": "^2.0",
         "jenssegers/imagehash": "^0.8",
         "lys/php-shard-upload": "^4.4",
         "phpmailer/phpmailer": "6.1.6",

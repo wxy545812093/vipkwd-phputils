@@ -10,7 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs;
 
-use \Awesomite\VarDumper\LightVarDumper;
+use \Vipkwd\VarDumper\LightVarDumper;
 
 trait Develop{
     /**
