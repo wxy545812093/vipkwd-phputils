@@ -282,7 +282,7 @@ class Ip
         $ip = $_b(pow(2, 32) * Tools::mathRandom(0, 1, 13) | 0);
         $cidr = 1 + Tools::mathRandom(0, 1, 13) * 29 | 0;
         return ("{$ip}/{$cidr}");
-        return Random::ip();
+        //return Random::ip();
     }
 
     /**
@@ -299,21 +299,21 @@ class Ip
      */
     static function getInfo(string $ip): array
     {
-        list($ip, $cidr) = explode('/', $ip);
-        $qqwryPath = VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat';
-        $iplocation = new Helper_IpLocation($qqwryPath);
+        list($ip, ) = explode('/', $ip);
+
+        $iplocation = new Helper_IpLocation(VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat');
         $location = $iplocation->getlocation($ip);
         $region = static::ip2region($ip);
         $addrParse = Tools::expressAddrParse($location['country']);
-
         ($region['isp'] == '-') && $region['isp'] = $location['area'];
+
         if ($region['city'] == '-' && isset($addrParse['city']) && $addrParse['city']) {
             $region['city'] = $addrParse['city'];
             $region['state'] = "中国";
         } elseif ($region['city'] == '-') {
             $region['city'] = $location['country'];
         }
-        ($region['province'] == '-' && $addrParse['province']) && $region['province'] = $addrParse['province'];
+        ($region['province'] == '-' && isset($addrParse['province']) && $addrParse['province']) && $region['province'] = $addrParse['province'];
         $region['beginip'] = $location['beginip'];
         $region['endip'] = $location['endip'];
         unset($location, $addrParse);
