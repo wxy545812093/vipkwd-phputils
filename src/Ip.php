@@ -7,6 +7,7 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
+
 declare(strict_types=1);
 
 namespace Vipkwd\Utils;
@@ -22,20 +23,24 @@ class Ip
      * -e.g: phpunit("Ip::getClientIp");
      * @return string
      */
-    static function getClientIp():string {
-      $unknown = 'unknown';
-      if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] && strcasecmp($_SERVER['HTTP_X_FORWARDED_FOR'], $unknown) ) {
-          $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-      } elseif ( isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], $unknown) ) {
-          $ip = $_SERVER['REMOTE_ADDR'];
-      }
-      if(!$ip && Tools::isCli()){
-          return "127.0.0.1";
-      }
-      /*
-        处理多层代理的情况
-        或者使用正则方式：$ip = preg_match("/[\d\.]{7,15}/", $ip, $matches) ? $matches[0] : $unknown;
-      */
+    static function getClientIp(): string
+    {
+        $unknown = 'unknown';
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] && strcasecmp($_SERVER['HTTP_X_FORWARDED_FOR'], $unknown)) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } elseif (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], $unknown)) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        if (!isset($ip) && Tools::isCli()) {
+            return "127.0.0.1";
+        }
+        if (!isset($ip)) {
+            return $unknown;
+        }
+        /*
+            处理多层代理的情况
+            或者使用正则方式：$ip = preg_match("/[\d\.]{7,15}/", $ip, $matches) ? $matches[0] : $unknown;
+        */
         if (false !== strpos($ip, ',')) {
             $ip = explode(',', $ip);
             $ip = reset($ip);
@@ -212,7 +217,7 @@ class Ip
     }
 
     /**
-     * 获取本机IP(RC)
+     * 获取本地(网卡)IP(RC)
      *
      * -e.g: phpunit("Ip::getLocalIp");
      *
@@ -223,7 +228,7 @@ class Ip
         try {
             $preg = "/\A((([0-9]?[0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))\.){3}(([0-9]?[0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))\Z/";
             //获取操作系统为win2000/xp、win7的本机IP真实地址
-            exec("ipconfig waitall", $out, $stats);
+            @exec("ipconfig waitall", $out, $stats);
             if (!empty($out)) {
                 if (strripos(Tools::getOS(), "window") >= 0) {
                     foreach ($out as $row) {
@@ -237,7 +242,7 @@ class Ip
                 }
             }
 
-            exec("ifconfig", $out, $stats);
+            @exec("ifconfig", $out, $stats);
             if (!empty($out)) {
                 if (strripos(Tools::getOS(), "linux") >= 0) {
                     // Dev::dump([$out, $stats]);
@@ -277,7 +282,7 @@ class Ip
         $ip = $_b(pow(2, 32) * Tools::mathRandom(0, 1, 13) | 0);
         $cidr = 1 + Tools::mathRandom(0, 1, 13) * 29 | 0;
         return ("{$ip}/{$cidr}");
-        return Random::ip();
+        //return Random::ip();
     }
 
     /**
@@ -294,21 +299,21 @@ class Ip
      */
     static function getInfo(string $ip): array
     {
-        list($ip, $cidr) = explode('/', $ip);
-        $qqwryPath = VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat';
-        $iplocation = new Helper_IpLocation($qqwryPath);
+        list($ip, ) = explode('/', $ip);
+
+        $iplocation = new Helper_IpLocation(VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat');
         $location = $iplocation->getlocation($ip);
         $region = static::ip2region($ip);
         $addrParse = Tools::expressAddrParse($location['country']);
-
         ($region['isp'] == '-') && $region['isp'] = $location['area'];
+
         if ($region['city'] == '-' && isset($addrParse['city']) && $addrParse['city']) {
             $region['city'] = $addrParse['city'];
             $region['state'] = "中国";
         } elseif ($region['city'] == '-') {
             $region['city'] = $location['country'];
         }
-        ($region['province'] == '-' && $addrParse['province']) && $region['province'] = $addrParse['province'];
+        ($region['province'] == '-' && isset($addrParse['province']) && $addrParse['province']) && $region['province'] = $addrParse['province'];
         $region['beginip'] = $location['beginip'];
         $region['endip'] = $location['endip'];
         unset($location, $addrParse);

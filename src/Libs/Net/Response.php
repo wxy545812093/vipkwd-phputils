@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Flight: An extensible micro-framework.
  *
@@ -10,14 +9,12 @@
 namespace Vipkwd\Utils\Libs\Net;
 
 use Vipkwd\Utils\Libs\Net\Request;
-
 /**
  * The Response class represents an HTTP response. The object
  * contains the response headers, HTTP status code, and response
  * body.
  */
-class Response
-{
+class Response {
     /**
      * @var int HTTP status
      */
@@ -126,15 +123,15 @@ class Response
      * @return object|int Self reference
      * @throws \Exception If invalid status code
      */
-    public function status($code = null)
-    {
+    public function status($code = null) {
         if ($code === null) {
             return $this->status;
         }
 
         if (array_key_exists($code, self::$codes)) {
             $this->status = $code;
-        } else {
+        }
+        else {
             throw new \Exception('Invalid status code.');
         }
 
@@ -148,13 +145,13 @@ class Response
      * @param string $value Header value
      * @return object Self reference
      */
-    public function header($name, $value = null)
-    {
+    public function header($name, $value = null) {
         if (is_array($name)) {
             foreach ($name as $k => $v) {
                 $this->headers[$k] = $v;
             }
-        } else {
+        }
+        else {
             $this->headers[$name] = $value;
         }
 
@@ -165,8 +162,7 @@ class Response
      * Returns the headers from the response
      * @return array
      */
-    public function headers()
-    {
+    public function headers() {
         return $this->headers;
     }
 
@@ -176,8 +172,7 @@ class Response
      * @param string $str Response content
      * @return object Self reference
      */
-    public function write($str)
-    {
+    public function write($str) {
         $this->body .= $str;
 
         return $this;
@@ -188,8 +183,7 @@ class Response
      *
      * @return object Self reference
      */
-    public function clear()
-    {
+    public function clear() {
         $this->status = 200;
         $this->headers = array();
         $this->body = '';
@@ -202,8 +196,7 @@ class Response
      * @param int|string $expires Expiration time
      * @return object Self reference
      */
-    public function cache($expires)
-    {
+    public function cache($expires) {
         if ($expires === false) {
             $this->headers['Expires'] = 'Mon, 26 Jul 1997 05:00:00 GMT';
             $this->headers['Cache-Control'] = array(
@@ -212,11 +205,12 @@ class Response
                 'max-age=0'
             );
             $this->headers['Pragma'] = 'no-cache';
-        } else {
+        }
+        else {
             $expires = is_int($expires) ? $expires : strtotime($expires);
             $this->headers['Expires'] = gmdate('D, d M Y H:i:s', $expires) . ' GMT';
-            $this->headers['Cache-Control'] = 'max-age=' . ($expires - time());
-            if (isset($this->headers['Pragma']) && $this->headers['Pragma'] == 'no-cache') {
+            $this->headers['Cache-Control'] = 'max-age='.($expires - time());
+            if (isset($this->headers['Pragma']) && $this->headers['Pragma'] == 'no-cache'){
                 unset($this->headers['Pragma']);
             }
         }
@@ -228,8 +222,7 @@ class Response
      *
      * @return object Self reference
      */
-    public function sendHeaders()
-    {
+    public function sendHeaders() {
         // Send status code header
         if (strpos(php_sapi_name(), 'cgi') !== false) {
             header(
@@ -240,14 +233,14 @@ class Response
                 ),
                 true
             );
-        } else {
+        }
+        else {
             header(
                 sprintf(
                     '%s %d %s',
                     (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1'),
                     $this->status,
-                    self::$codes[$this->status]
-                ),
+                    self::$codes[$this->status]),
                 true,
                 $this->status
             );
@@ -257,10 +250,11 @@ class Response
         foreach ($this->headers as $field => $value) {
             if (is_array($value)) {
                 foreach ($value as $v) {
-                    header($field . ': ' . $v, false);
+                    header($field.': '.$v, false);
                 }
-            } else {
-                header($field . ': ' . $value);
+            }
+            else {
+                header($field.': '.$value);
             }
         }
 
@@ -269,7 +263,7 @@ class Response
             $length = $this->getContentLength();
 
             if ($length > 0) {
-                header('Content-Length: ' . $length);
+                header('Content-Length: '.$length);
             }
         }
 
@@ -281,8 +275,7 @@ class Response
      *
      * @return string Content length
      */
-    public function getContentLength()
-    {
+    public function getContentLength() {
         return extension_loaded('mbstring') ?
             mb_strlen($this->body, 'latin1') :
             strlen($this->body);
@@ -291,13 +284,11 @@ class Response
     /**
      * Gets whether response was sent.
      */
-    public function sent()
-    {
+    public function sent() {
         return $this->sent;
     }
 
-    public function send($data = null, $message = '', $code = 0)
-    {
+    public function send($data = null, $message = '', $code = 0){
         if ((new Request())->ajax || is_array($data)) {
             $this->header('content-type', 'application/json;charset=utf-8');
             !$code && $code = $this->status;
@@ -317,8 +308,7 @@ class Response
     /**
      * Sends a HTTP response.
      */
-    private function _send()
-    {
+    private function _send() {
         if (ob_get_length() > 0) {
             ob_end_clean();
         }

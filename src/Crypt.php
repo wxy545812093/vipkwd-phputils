@@ -52,10 +52,10 @@ class Crypt{
      * @param string $data
      * @param string $key
      * @param string $iv16
-     * @param boolean $trim <true> 去除base64尾部填充
+     * @param boolean $trim <false> 去除base64尾部填充
      * @return string
      */
-    static function aesEncrypt(string $data, string $key, string $iv16, bool $trim = true){
+    static function aesEncrypt(string $data, string $key, string $iv16, bool $trim = false){
         return Aes::instance($key, $iv16)->encrypt($data, $trim);
     }
 
@@ -254,7 +254,7 @@ class Crypt{
     static function authcode(string $string, string $operation = 'DECODE', string $key = '', int $expiry = 0):string {
         $ckey_length = 6;
         $key = md5($key ? $key : $GLOBALS['discuz_auth_key'] ?? "@<<5G-H^0Ywz%.");
-        $decode = strtolower($operation) == "decode" ? true : false;
+        $decode = strtolower($operation) == "decode";
         $keya = md5(substr($key, 0, 16));
         $keyb = md5(substr($key, 16, 16));
         $keyc = $ckey_length ? ($decode ? substr($string, 0, $ckey_length): substr(md5(microtime()), -$ckey_length)) : '';

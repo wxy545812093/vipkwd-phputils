@@ -39,10 +39,10 @@ trait Traits {
     /**
      * 加密
      * @param string 要加密的字符串
-     * @param boolean $trim <true> 去除base64尾部填充
+     * @param boolean $trim <false> 去除base64尾部填充
      * @return string 加密成功返回加密后的字符串，否则返回false
      */
-    public function encrypt(string $str, bool $trim = true){
+    public function encrypt(string $str, bool $trim = false){
         //if (strlen($str) % 4) {
             //$str = str_pad($str,strlen($str) + 4 - strlen($str) % 4, "\0");
         //}
