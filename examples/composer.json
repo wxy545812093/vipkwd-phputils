@@ -24,6 +24,6 @@
         }
       },
     "require": {
-        "vipkwd/utils": "2.0.8-alpha2"
+        "vipkwd/utils": "^2.0"
     }
 }

@@ -15,11 +15,11 @@
     "license": "MIT",
     "require": {
         "php": ">=7.0",
-        "awesomite/var-dumper": "^1.5",
+        "vipkwd/var-dumper": "^2.0",
         "jenssegers/imagehash": "^0.8",
         "lys/php-shard-upload": "^4.4",
-        "phpmailer/phpmailer": "6.1.6",
-        "phpoffice/phpspreadsheet": "*",
+        "phpmailer/phpmailer": "6.5.0",
+        "phpoffice/phpspreadsheet": "1.5.1",
         "symfony/console": "^5.3",
         "zoujingli/ip2region": "^1.0"
     },
