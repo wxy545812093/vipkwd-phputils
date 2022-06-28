@@ -17,7 +17,7 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils\Libs\ZhToPinyin;
 
-use Vipkwd\Utils\Arr;
+use Vipkwd\Utils\Type\Arr;
 
 class Plus
 {

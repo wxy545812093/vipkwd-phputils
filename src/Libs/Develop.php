@@ -52,7 +52,7 @@ trait Develop{
     }
 
     /**
-     * 网页打印var_dump 
+     * 网页打印var_dump
      *
      * @param mixed $data
      * @param boolean $exit
@@ -102,7 +102,7 @@ trait Develop{
         }
         return rtrim($txt, ', ');
     }
-    
+
     static function phpunit($classMethod, array $args = [], array $initArgs = []){
 
         $args_txt = self::buildArgsType($args);

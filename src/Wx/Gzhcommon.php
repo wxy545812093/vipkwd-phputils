@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Vipkwd\Utils\Wx;
 
 use Vipkwd\Utils\Http as vipkwdHttp;
-use Vipkwd\Utils\Str as vipkwdStr;
+use Vipkwd\Utils\Type\Str as vipkwdStr;
 
 class Gzhcommon
 {

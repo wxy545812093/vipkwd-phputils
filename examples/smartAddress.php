@@ -2,7 +2,8 @@
 //订阅
 
 require "autoload.php";
-use Vipkwd\Utils\{Tools,Dev};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
 
 $test = array(
 	// '北京市东城区宵云路36号国航大厦一层',

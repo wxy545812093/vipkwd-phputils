@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Vipkwd\Utils\Wx\Mp;
 
 use Vipkwd\Utils\Http as vipkwdHttp;
-use Vipkwd\Utils\Str as vipkwdStr;
+use Vipkwd\Utils\Type\Str as vipkwdStr;
 
 class Base
 {
@@ -22,7 +22,7 @@ class Base
     private $mp_app_secret;
     public $request;
 
-    static const ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential';
+    const ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential';
 
     private function __construct(string $appid, string $app_secret)
     {

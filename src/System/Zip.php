@@ -8,12 +8,13 @@
  */
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils;
+namespace Vipkwd\Utils\System;
 
 use \ZipArchive;
 use \Exception;
 use \Closure;
-use Vipkwd\Utils\{Tools, File as vipkwdFile};
+use Vipkwd\Utils\Tools;
+use File as vipkwdFile;
 
 class Zip{
 
@@ -47,7 +48,7 @@ class Zip{
 --      composer require vipkwd/utils
 --      
 --      include \"vendor/autoload.php\"
---      Vipkwd\Utils\Zip::addZip(\"demo.zip\", \".\");
+--      Vipkwd\Utils\System\Zip::addZip(\"demo.zip\", \".\");
 --      //And a zip package was created;");
                 $baseDir = null;
                 if(is_string($fileOrPaths)){

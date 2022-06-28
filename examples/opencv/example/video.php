@@ -1,6 +1,12 @@
 <?php
 require "../../autoload.php";
-use Vipkwd\Utils\{Dev, Http, File, Opencv, FFmpeg, Tools, ImageHash};
+
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Http;
+use Vipkwd\Utils\MediumAI\Opencv;
+use Vipkwd\Utils\MediumAI\FFmpeg;
+use Vipkwd\Utils\Image\ImageHash;
+use Vipkwd\Utils\System\File;
 
 $debug = 0;
 $upload = 1;

@@ -1,6 +1,8 @@
 <?php
 require "../autoload.php";
-use Vipkwd\Utils\{Excel, Dev};
+
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Excel;
 
 $sheetName = "XXX仓库盘点表";
 $largerTitle = "总仓xxx: 320";

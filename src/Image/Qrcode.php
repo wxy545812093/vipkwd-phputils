@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @name 二维码
  * 
@@ -8,13 +9,14 @@
  * @copyright The PHP-Tools
  */
 
- declare(strict_types = 1);
+declare(strict_types=1);
 
-namespace Vipkwd\Utils;
+namespace Vipkwd\Utils\Image;
 
 use Vipkwd\Utils\Libs\Qrcode\Qrcode as PHPQRcode;
 
-class Qrcode{
+class Qrcode
+{
 
     /**
      * 生成二维码
@@ -32,7 +34,8 @@ class Qrcode{
      *
      * @return void
      */
-    static function make(string $text, $outFile=false, string $level="7%", int $size=6, int $margin=2, bool $saveAndPrint=false){
+    static function make(string $text, $outFile = false, string $level = "7%", int $size = 6, int $margin = 2, bool $saveAndPrint = false)
+    {
         PHPQRcode::png($text, $outFile, $level, $size, $margin, $saveAndPrint);
         exit;
     }

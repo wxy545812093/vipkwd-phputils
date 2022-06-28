@@ -1,6 +1,10 @@
 <?php
 require "autoload.php";
-use Vipkwd\Utils\{Dev, Thumb, Tools, Photo, Libs\Ocr\Mobile};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Libs\Ocr\Mobile;
+use Vipkwd\Utils\Image\Thumb;
+use Vipkwd\Utils\Image\Photo;
 
 $ins = Thumb::instance();
 $info= $ins->getImageInfo(__DIR__ . '/assets/origin.jpeg');

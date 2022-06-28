@@ -1,7 +1,8 @@
 <?php
 header("content-type: text/html;charset=utf-8");
 require "../autoload.php";
-use \Vipkwd\Utils\{Tools,Dev};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
 $address = urldecode(trim($_GET['address']));
 $callback = trim($_GET['jsonp']);
 $info = Tools::expressAddrParse($address, true, 2);

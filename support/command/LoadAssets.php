@@ -17,7 +17,9 @@ use Symfony\Component\Console\Input\{
 	InputArgument,
 	InputInterface
 };
-use Vipkwd\Utils\{Str, File, Dev};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Type\Str;
+use Vipkwd\Utils\System\File;
 // use \Exception;
 
 class LoadAssets extends Command {
@@ -33,11 +35,11 @@ class LoadAssets extends Command {
 		;
 	}
 	protected function execute(InputInterface $input, OutputInterface $output){
-		$width = 60;
+		$width = 100;
 		self::smartPad($width);
 		// echo "----".str_pad("任务构建",56,'·',STR_PAD_BOTH)."----".PHP_EOL;
 		$maps = json_decode(file_get_contents($this->mapsApi),true);
-		
+
 		$idx = 1;
 		foreach($maps as $file => $map){
 			$sfile = self::buildPath($file);
@@ -105,6 +107,7 @@ trait TaskUtils9973200 {
 	}
 
 	private static function smartPad($width, $text=null, $seper = '###', $prefix=''){
+		$width *= 1;
 		if($text === null){
 			echo str_pad("", $width ,"-").PHP_EOL;
 		}else{

@@ -11,8 +11,10 @@
 declare(strict_types=1);
 
 namespace Vipkwd\Utils;
-
-use Vipkwd\Utils\{Tools, Validate, Dev};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Validate;
+use Vipkwd\Utils\System\File;
 use Ip2Region;
 
 class Ip
@@ -294,28 +296,32 @@ class Ip
      * -e.g: phpunit("Ip::getInfo", ["120.235.131.155"]);
      * -e.g: phpunit("Ip::getInfo", [\Vipkwd\Utils\Ip::randomIp()]);
      *
-     * @param string $ip
+     * @param string|null $ip
      * @return array
      */
-    static function getInfo(string $ip): array
+    static function getInfo(?string $ip = ''): array
     {
+        !$ip && $ip = self::getClientIp();
+        $ip = preg_replace("/[^0-9\.\/]/", '', $ip);
+
         list($ip, ) = explode('/', $ip);
 
         $iplocation = new Helper_IpLocation(VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat');
         $location = $iplocation->getlocation($ip);
         $region = static::ip2region($ip);
-        $addrParse = Tools::expressAddrParse($location['country']);
-        ($region['isp'] == '-') && $region['isp'] = $location['area'];
+        $addrParse = Tools::expressAddrParse(@$location['country']);
+
+        ($region['isp'] == '-') && $region['isp'] = @$location['area'] ?? '-';
 
         if ($region['city'] == '-' && isset($addrParse['city']) && $addrParse['city']) {
             $region['city'] = $addrParse['city'];
             $region['state'] = "中国";
         } elseif ($region['city'] == '-') {
-            $region['city'] = $location['country'];
+            $region['city'] = @$location['country'] ?? '-';
         }
         ($region['province'] == '-' && isset($addrParse['province']) && $addrParse['province']) && $region['province'] = $addrParse['province'];
-        $region['beginip'] = $location['beginip'];
-        $region['endip'] = $location['endip'];
+        $region['beginip'] = $location['beginip'] ?? '-';
+        $region['endip'] = $location['endip'] ?? '-';
         unset($location, $addrParse);
         return $region;
     }
@@ -553,7 +559,7 @@ class Helper_IpLocation
     public function getlocation($ip)
     {
         if (!$this->fp)
-            return null; // 如果数据文件没有被正确打开，则直接返回空
+            return []; // 如果数据文件没有被正确打开，则直接返回空
         $location['ip'] = gethostbyname($ip); // 将输入的域名转化为IP地址
         $ip = $this->packip($location['ip']); // 将输入的IP地址转化为可比较的IP地址
         // 不合法的IP地址会被转化为255.255.255.255

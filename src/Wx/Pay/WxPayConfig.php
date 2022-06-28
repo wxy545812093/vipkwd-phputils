@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils\Wx\Pay;
 
-use Vipkwd\Utils\File;
+use Vipkwd\Utils\System\File;
 
 class WxPayConfig
 {

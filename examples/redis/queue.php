@@ -2,10 +2,10 @@
 //队列
 
 require "../autoload.php";
-use Vipkwd\Utils\Redis;
+use Vipkwd\Utils\Db\Redis;
 use Vipkwd\Utils\Dev;
 
-$redis = Vipkwd\Utils\Redis::instance([
+$redis = Redis::instance([
   "host" => '127.0.0.1',
   "port" => "6379",
   "auth" => ""

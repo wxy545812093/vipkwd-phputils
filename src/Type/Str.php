@@ -8,7 +8,7 @@
  */
 declare(strict_types = 1);
 
-namespace Vipkwd\Utils;
+namespace Vipkwd\Utils\Type;
 
 use \Exception;
 use Vipkwd\Utils\Libs\ZhToPinyin\V1 as ZhToPy;

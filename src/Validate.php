@@ -19,7 +19,7 @@ class Validate{
     static $reg_email = "/\w+([-+.]\w+)*@((\w+([-.]\w+)*)\.)[a-zA-Z]{2,5}$/";
     static $reg_telephone ="/^(((0[1-9]\d{1,2})[ \-]|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/";
     static $reg_zipcode = "/^[1-9]\d{5}(?!\d)$/";
-    
+
     /**
      * 验证移动通讯号码（兼容：国际号码格式）
      *
@@ -407,7 +407,7 @@ class Validate{
     /**
      * 验证境外信用卡
      *
-     * -e.g: $number = \Vipkwd\Utils\Random::creditCardNumber();
+     * -e.g: $number = \Vipkwd\Utils\Type\Random::creditCardNumber();
      * -e.g: phpunit("Validate::creditCard", [$number]);
      * -e.g: phpunit("Validate::creditCardValid", [$number]);
      * 

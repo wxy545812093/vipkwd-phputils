@@ -14,12 +14,14 @@ namespace Vipkwd\Utils;
 
 // use Vipkwd\Utils\Libs\Cookie;
 // use Vipkwd\Utils\Libs\Session;
+use Vipkwd\Utils\Type\Random;
+use Vipkwd\Utils\Type\Arr;
 use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
     Vipkwd\Utils\Libs\SmartParsePro\Address as ExpressAddressAI_V2,
     PHPMailer\PHPMailer\PHPMailer,
     Vipkwd\Utils\Libs\QRcode,
     Vipkwd\Utils\Validate,
-    Vipkwd\Utils\Str as VipkwdStr,
+    Vipkwd\Utils\Type\Str as VipkwdStr,
     \Exception,
     \Closure;
 
@@ -535,6 +537,7 @@ class Tools{
      * @return array
      */
     static function expressAddrParse($data, bool $parseUser = true, int $version=2):array{
+        if(!$data) return [];
         $result = [];
         if( is_string($data)){
             $single= true;

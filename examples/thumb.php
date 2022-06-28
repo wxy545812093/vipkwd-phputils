@@ -1,6 +1,7 @@
 <?php
 require "autoload.php";
-use Vipkwd\Utils\{Thumb,Dev};
+use Vipkwd\Utils\Image\Thumb;
+use Vipkwd\Utils\Dev;
 
 // echo Thumb::instance()->placeholderFigure("200x200",10, "fff", "666", "", 0, 2, 0);
 

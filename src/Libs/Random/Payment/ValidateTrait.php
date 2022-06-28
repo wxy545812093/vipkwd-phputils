@@ -10,7 +10,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs\Random\Payment;
 
-use \Vipkwd\Utils\Random;
+use \Vipkwd\Utils\Type\Random;
 
 trait ValidateTrait {
     
@@ -19,7 +19,7 @@ trait ValidateTrait {
     /**
      * iban账号验证
      *
-     * -e.g: $number = \Vipkwd\Utils\Random::ibanNumber();
+     * -e.g: $number = \Vipkwd\Utils\Type\Random::ibanNumber();
      * -e.g: phpunit("Validate::ibanValid", [$number]);
      * 
      * @param string $iban
@@ -32,7 +32,7 @@ trait ValidateTrait {
     /**
      * 境外信用卡验证
      *
-     * -e.g: $number = \Vipkwd\Utils\Random::creditCardNumber();
+     * -e.g: $number = \Vipkwd\Utils\Type\Random::creditCardNumber();
      * -e.g: phpunit("Validate::creditCardValid", [$number]);
      * -e.g: phpunit("Validate::creditCard", [$number]);
      * 

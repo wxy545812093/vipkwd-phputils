@@ -10,8 +10,8 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs\Random;
 
-use Vipkwd\Utils\DateTime as VipkwdDate;
-use \Vipkwd\Utils\Random;
+use Vipkwd\Utils\Type\DateTime as VipkwdDate;
+use \Vipkwd\Utils\Type\Random;
 
 class Payment{
 

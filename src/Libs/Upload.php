@@ -9,7 +9,7 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs;
-use Vipkwd\Utils\File;
+use Vipkwd\Utils\System\File;
 use \Exception;
 
 class Upload{
@@ -41,9 +41,6 @@ class Upload{
      */
     public function upload($uploadKey = "file", $options = []){
         try{
-            if(!isset($_FILES[$uploadKey])){
-                return null;
-            }
             $this->init($uploadKey, $options);
 
             // err01
@@ -178,7 +175,7 @@ class Upload{
 	}
 
     private function init($uploadKey, $options){
-        $this->file = isset($_FILES[$uploadKey]) ? $_FILES[$uploadKey] : [
+        $this->file = (isset($_FILES[$uploadKey]) && !empty($_FILES[$uploadKey])) ? $_FILES[$uploadKey] : [
             'error' => 4
         ];
 

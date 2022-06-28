@@ -10,11 +10,14 @@
 
 declare(strict_types=1);
 
-namespace Vipkwd\Utils;
+namespace Vipkwd\Utils\System;
 
 use PhpShardUpload\{ShardUpload, ShardUploadStatus, FileManage};
 // use PhpShardUpload\Components\FileDownload;
-use Vipkwd\Utils\{Tools, Dev, Http, Thumb as VipkwdThumb};
+use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Http;
+use Vipkwd\Utils\Image\Thumb as VipkwdThumb;
 use Vipkwd\Utils\Libs\Upload as VipkwdUpload;
 
 class File

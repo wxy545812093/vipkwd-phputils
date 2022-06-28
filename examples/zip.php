@@ -1,8 +1,8 @@
 <?php
 require "autoload.php";
-use Vipkwd\Utils\Zip;
 use Vipkwd\Utils\Dev;
-use Vipkwd\Utils\File;
+use Vipkwd\Utils\System\Zip;
+use Vipkwd\Utils\System\File;
 
 $zipName = "vendor.addzip.zip";
 $unzipName = "vendor___";

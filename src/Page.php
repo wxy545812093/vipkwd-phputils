@@ -40,7 +40,7 @@ echo $page->fpage();
 */
 
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Str;
+use Vipkwd\Utils\Type\Str;
 
 class Page{
 

@@ -1,11 +1,11 @@
 <?php
 require "../../autoload.php";
-use Vipkwd\Utils\{ Tools, Http, Dev, FFmpeg, Thumb };
 
-
-
-
-
+use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Http;
+use Vipkwd\Utils\Image\Thumb;
+use Vipkwd\Utils\MediumAI\FFmpeg;
 
 $img =ASSETS.'/zjz/xgm.png';
 $xml = __DIR__.'/opencv-3.4.3/data/haarcascades_cuda';

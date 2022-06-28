@@ -12,7 +12,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\Str as VipkwdStr;
+use Vipkwd\Utils\Type\Str as VipkwdStr;
 use Vipkwd\Utils\Libs\Net\{Request, Response};
 use \Exception;
 use \Closure;

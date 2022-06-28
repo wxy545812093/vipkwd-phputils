@@ -10,7 +10,8 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 
-use Vipkwd\Utils\{Tools,Dev};
+use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Tools;
 
 final class Callback{
 
