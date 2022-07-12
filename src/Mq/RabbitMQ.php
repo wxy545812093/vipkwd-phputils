@@ -69,7 +69,7 @@ trait _trait__MQ{
 
     /**
      * 实例化MQ
-     * 
+     *
      * @param array $config
      * @return RabbitMq
      */
@@ -134,7 +134,7 @@ trait _trait__MQ{
             $channel = self::$connection->channel();
             $channel->confirm_select();
             $channel->set_nack_handler(function ($a) {
-                
+
             });
             return self::$channelPoolList[] = $channel;
         } else {
@@ -197,15 +197,15 @@ trait _trait__MQ{
 
     /**
      * 消费失败重试
-     * 
+     *
      * 消费支持自动重试，最多尝试重试5次(具体次数由 self::$maxRetryNumber控制 默认5次)，每次消费失败后该消息将会被重新投入到消费队列中。
-     * 重新的时间将会随着失败的次数增多逐渐推移,本客户端支持的重试延迟推移策略为 2^(n-1)次幂秒： 
-     *     失败1次（1秒钟后会再被投递）, 
-     *     失败2次（2秒钟后会再被投递）, 
-     *     失败3次（4秒钟后会再被投递）, 
-     *     失败4次（8秒钟后会再被投递）, 
-     *     失败5次（16秒钟后会再被投递）    
-     * 
+     * 重新的时间将会随着失败的次数增多逐渐推移,本客户端支持的重试延迟推移策略为 2^(n-1)次幂秒：
+     *     失败1次（1秒钟后会再被投递）,
+     *     失败2次（2秒钟后会再被投递）,
+     *     失败3次（4秒钟后会再被投递）,
+     *     失败4次（8秒钟后会再被投递）,
+     *     失败5次（16秒钟后会再被投递）
+     *
      * @param object|null $msgObj
      * @param string $retryQueueName
      * @param string $deadRoutingKey
@@ -274,7 +274,7 @@ trait _trait__MQ{
 
     /**
      * 推送消息到Fanout交换机(支持延迟)
-     * 
+     *
      * @param string $msg 消息体内容
      * @param string $exchange 交换机名称
      * @param int $delaySec  延迟秒数 0表无延迟（即时推送）
@@ -326,7 +326,7 @@ trait _trait__MQ{
 
     /**
      * 推送消息到Direct交换机(支持延迟)
-     * 
+     *
      * @param string $msg 消息体内容
      * @param string $exchange 交换机名称
      * @param string $routingKey 消息的routingKey，consume(get) 方法到bingdingKey 要和routingKey保持一致
@@ -381,12 +381,12 @@ trait _trait__MQ{
 
     /**
      * 推送消息到Topic交换机(支持延迟)
-     * 
+     *
      * @param string $msg 消息体内容
      * @param string $routingKey routingKey 要同consum(get)方法的bindingKey相匹配
 	 *                           bindingKey支持两种特殊的字符"*"、“#”，用作模糊匹配, 其中"*"用于匹配一个单词、“#”用于匹配多个单词(也可以是0个)
 	 *                           无论是bindingKey还是routingKey, 被"."分隔开的每一段独立的字符串就是一个单词, easy.topic.queue, 包含三个单词easy、topic、queue
-	 * 
+	 *
      * @param string $exchange 交换机名称
      * @param int $delaySec   延迟秒数 0表无延迟（即时推送）
      * @return bool
@@ -436,7 +436,7 @@ trait _trait__MQ{
 
     /**
      * 拉取模式下的可靠消费
-     * 
+     *
      * @param string $queue 订阅的队列名称
      * @param string $exchange 交换机名称
      * @param string $bindingKey bindingkey，如果是直链交换机需要同routingKey保持一致
@@ -494,7 +494,7 @@ trait _trait__MQ{
 
     /**
      * 订阅模式下的可靠消费
-     * 
+     *
      * @param string $queue 订阅的队列名称
      * @param string $tag 消费标记
      * @param string $exchange 交换机名称

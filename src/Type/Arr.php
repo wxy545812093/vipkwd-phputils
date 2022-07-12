@@ -16,9 +16,9 @@ final class Arr{
      * 是否为关联数组
      *
      * -e.g: $arr = [];
-     * -e.g: phpunit("Arr::isAssoc", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::isAssoc", [$arr]);
      * -e.g: $arr = [array()];
-     * -e.g: phpunit("Arr::isAssoc", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::isAssoc", [$arr]);
      *
      * @param array $array 数组
      * @return bool
@@ -53,8 +53,8 @@ final class Arr{
      * 判断数组中指定键是否为数组
      *
      * -e.g: echo '$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]]';$arr=["id"=>134,"mobile"=>["131xxxx","132xxx"]];
-     * -e.g: phpunit("Arr::hasKey", [$arr,"id"]);
-     * -e.g: phpunit("Arr::hasKey", [$arr,"mobile"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::hasKey", [$arr,"id"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::hasKey", [$arr,"mobile"]);
      *
      * @param string $field
      * @param array $array
@@ -71,9 +71,9 @@ final class Arr{
      * 不区分大小写的in_array实现
      *
      * -e.g: $arr = ["A","b","as"];
-     * -e.g: phpunit("Arr::hasVal", ["a", $arr]);
-     * -e.g: phpunit("Arr::hasVal", ["B", $arr]);
-     * -e.g: phpunit("Arr::hasVal", ["s", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::hasVal", ["a", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::hasVal", ["B", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::hasVal", ["s", $arr]);
      *
      * @param mixed $val
      * @param array $array
@@ -90,9 +90,9 @@ final class Arr{
      * hasVal方法的别名
      *
      * -e.g: $arr = ["A","b","as"];
-     * -e.g: phpunit("Arr::inArray", ["a", $arr]);
-     * -e.g: phpunit("Arr::inArray", ["B", $arr]);
-     * -e.g: phpunit("Arr::inArray", ["s", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::inArray", ["a", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::inArray", ["B", $arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::inArray", ["s", $arr]);
      *
      * @param mixed $val
      * @param array $array
@@ -106,12 +106,12 @@ final class Arr{
      * 读取数组(支持深度读取)
      *
      * -e.g: $arr = ["a"=>123, "b" => ["c"=>200, "d"=> ["e"=>300]]];
-     * -e.g: phpunit("Arr::get", [$arr, "a"]);
-     * -e.g: phpunit("Arr::get", [$arr, "b.d.e.not-exists-return-null"]);
-     * -e.g: phpunit("Arr::get", [$arr, "b.d.e.not-exists", "Undefined"]);
-     * -e.g: phpunit("Arr::get", [$arr, "b.d.e"]);
-     * -e.g: phpunit("Arr::get", [$arr, "b.c"]);
-     * -e.g: phpunit("Arr::get", [$arr, "b"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "a"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "b.d.e.not-exists-return-null"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "b.d.e.not-exists", "Undefined"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "b.d.e"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "b.c"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::get", [$arr, "b"]);
      *
      * @param array $array
      * @param string $key   简单模式: "province" 深度模式: "province.city.county.town.street"
@@ -138,7 +138,7 @@ final class Arr{
      *
      * -e.g: $arr = [1, 30, 39, 29, 10, 13];
      * -e.g: $fnWithBoolean = function($val):bool{ return $val < 40; };
-     * -e.g: phpunit("Arr::every", [$arr, $fnWithBoolean]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::every", [$arr, $fnWithBoolean]);
      *
      * @param iterable $array
      * @param callable $callback
@@ -158,10 +158,10 @@ final class Arr{
      *
      * -e.g: $fnWithBoolean = function($val):bool{ return $val < 5; };
      * -e.g: $arr = [1, 30, 39, 29, 10, 13];
-     * -e.g: phpunit("Arr::some", [$arr, $fnWithBoolean]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::some", [$arr, $fnWithBoolean]);
      * -e.g:
      * -e.g: $arr = [10, 30, 39, 29, 10, 13];
-     * -e.g: phpunit("Arr::some", [$arr, $fnWithBoolean]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::some", [$arr, $fnWithBoolean]);
      *
      * @param iterable $array
      * @param callable $callback
@@ -182,7 +182,7 @@ final class Arr{
      * -e.g: $arr1 = ["a"=>10, "b"=>20, "number"];
      * -e.g: $arr2 = ["a"=>10, "b"=>20, "number"];
      * -e.g: $arr3 = ["a"=>10, "b"=>20, "number"];
-     * 
+     *
      * -e.g: $inserted = ["c"=>999999,"d"=>888888];
      * -e.g: echo '\Vipkwd\Utils\Type\Arr::insertAfter($arr1, "b", $inserted); // '; \Vipkwd\Utils\Type\Arr::insertAfter($arr1, "b", $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr1);
@@ -192,7 +192,7 @@ final class Arr{
      *
      * -e.g: echo '\Vipkwd\Utils\Type\Arr::insertAfter($arr3, 0, $inserted); // '; \Vipkwd\Utils\Type\Arr::insertAfter($arr3, 0, $inserted);
      * -e.g: \Vipkwd\Utils\Dev::dump($arr3);
-     * 
+     *
      * @param array $array
      * @param string $key
      * @param array $inserted 新数组(键值对)
@@ -236,7 +236,7 @@ final class Arr{
      * -e.g: $callbacks["+"] = function($a, $b, $c):int{return $a + $b + $c;};
      * -e.g: $callbacks["*"] = function($a, $b, $c):int{return $a * $b * $c;};
      * -e.g: $args = [2, 3, 4];
-     * -e.g: phpunit("Arr::invoke", [$callbacks, ...$args]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::invoke", [$callbacks, ...$args]);
      *
      * @param iterable $callbacks
      * @param mixed ...$args
@@ -256,9 +256,9 @@ final class Arr{
      * -e.g: $arr1 = ["a", "b", "c"];
      * -e.g: $arr2 = [4 => 1, 2, 3];
      * -e.g: $arr3 = ["a" => 1, "b" => 2];
-     * -e.g: phpunit("Arr::isList",[$arr1]);echo "<-- \$arr1";
-     * -e.g: phpunit("Arr::isList",[$arr2]);echo "<-- \$arr2";
-     * -e.g: phpunit("Arr::isList",[$arr3]);echo "<-- \$arr3";
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::isList",[$arr1]);echo "<-- \$arr1";
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::isList",[$arr2]);echo "<-- \$arr2";
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::isList",[$arr3]);echo "<-- \$arr3";
      *
      * @param mixed $value
      */
@@ -282,8 +282,8 @@ final class Arr{
      * -- 索引数组范化后 值默认 NULL
      *
      * -e.g: $arr = [1 => "first", "a" => "second"];
-     * -e.g: phpunit("Arr::normalize",[$arr]);
-     * -e.g: phpunit("Arr::normalize",[$arr, "vipkwd.com"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::normalize",[$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::normalize",[$arr, "vipkwd.com"]);
      *
      * @param array $array
      * @param mixed $filling <null>
@@ -307,15 +307,15 @@ final class Arr{
      * -e.g: echo '\Vipkwd\Utils\Type\Arr::pick($arr, "not-exists")); // '; echo \Vipkwd\Utils\Type\Arr::pick($arr, "not-exists");
      * -e.g: \Vipkwd\Utils\Dev::dumper($arr, 0, 0);
      *
-     * @param array $array
+     * @param array $arr
      * @param string $key
      * @param mixed $default <null> key不存在时默认返回此值
      * @return mixed
      */
-	static function pick(array &$array, $key, $default = null){
-		if (array_key_exists($key, $array)) {
-			$value = $array[$key];
-			unset($array[$key]);
+	static function pick(array &$arr, $key, $default = null){
+		if (array_key_exists($key, $arr)) {
+			$value = $arr[$key];
+			unset($arr[$key]);
 			return $value;
 
 		} elseif (func_num_args() < 3) {
@@ -354,9 +354,9 @@ final class Arr{
      * 获取关联数组键的索引位置
      *
      * -e.g: $arr = ["a"=>10, "b"=>20];
-     * -e.g: phpunit("Arr::getKeyOffset", [$arr, "a"]);
-     * -e.g: phpunit("Arr::getKeyOffset", [$arr, "b"]);
-     * -e.g: phpunit("Arr::getKeyOffset", [$arr, "c"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::getKeyOffset", [$arr, "a"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::getKeyOffset", [$arr, "b"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::getKeyOffset", [$arr, "c"]);
      *
      * @param array $array
      * @param string $key
@@ -375,8 +375,8 @@ final class Arr{
      * 数组转对象
      *
      * -e.g: $arr = ["a"=>123, "b" => ["c"=>200, "d"=> ["e"=>300]]];
-     * -e.g: phpunit("Arr::toObject", [$arr, false]);
-     * -e.g: phpunit("Arr::toObject", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::toObject", [$arr, false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::toObject", [$arr]);
      *
      * -e.g: $obj = \Vipkwd\Utils\Type\Arr::toObject($arr,true);
      * -e.g: echo 'echo $obj->b->d->e; // 300 <-- '; echo $obj->b->d->e;
@@ -399,7 +399,7 @@ final class Arr{
      * 返回数组最后一项键值(空数组则返回null)
      *
      * -e.g: $arr = ["a"=>10, "b"=>20];
-     * -e.g: phpunit("Arr::last", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::last", [$arr]);
      *
      * @param array $array
      * @return mixed
@@ -412,7 +412,7 @@ final class Arr{
      * 返回数组第一项键值(空数组则返回null)
      *
      * -e.g: $arr = ["a"=>10, "b"=>20];
-     * -e.g: phpunit("Arr::first", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::first", [$arr]);
      *
      * @param  array $array
      * @return ?mixed
@@ -425,8 +425,8 @@ final class Arr{
      * 返回键值与正则表达式匹配的那些数组项
      *
      * -e.g: $arr = ["a"=>10, "b"=>2048 ,"c"=>"3a", "d"=>"a3"];
-     * -e.g: phpunit("Arr::grep", [$arr, "/^\d+$/"]); // Array([a] => 10 [b] => 2048 )
-     * -e.g: phpunit("Arr::grep", [$arr, "/^\d+/"]); // Array([a] => 10 [b] => 2048 [c] => 3a )
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::grep", [$arr, "/^\d+$/"]); // Array([a] => 10 [b] => 2048 )
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::grep", [$arr, "/^\d+/"]); // Array([a] => 10 [b] => 2048 [c] => 3a )
      *
      * @param string[] $array
      * @param string $pattern
@@ -440,8 +440,8 @@ final class Arr{
      * 将多维数组转换为平面(一维)数组
      *
      * -e.g: $arr=[1, 2, [3, 4, ["birthday"=> 19990909, 5, 6]]];
-     * -e.g: phpunit("Arr::flatten", [$arr]);
-     * -e.g: phpunit("Arr::flatten", [$arr, true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::flatten", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::flatten", [$arr, true]);
      *
      * @param array $array
      * @param boolean $preserveKeys <false> 是否保留源Key
@@ -460,17 +460,17 @@ final class Arr{
      * 对数组所有元素执行回调并返回(回调值)数组
      *
      * -e.g: $arr = ["a"=>1, "b"=>2 ,"c"=>"3a", "d"=>"a3"];
-     * -e.g: $callback = function($v, $k, $arr):string{ return ($v > 0 && $v%2 ===0) ? "{$v} :like Even" : $v;};
-     * -e.g: phpunit("Arr::map", [$arr, $callback]);
+     * -e.g: $callback = function($v, $k, $arr):string{ $_v = intval($v);return ($_v > 0 && $_v%2 ===0) ? "{$v} :like Even" : $v;};
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::map", [$arr, $callback]);
      *
-     * @param iterable $array
+     * @param iterable $arr
      * @param callable $callback
      * @return array
      */
-    static function map(iterable $array, callable $callback):array{
+    static function map(iterable $arr, callable $callback):array{
 		$res = [];
-		foreach ($array as $k => $v) {
-			$res[$k] = $callback($v, $k, $array);
+		foreach ($arr as $k => $v) {
+			$res[$k] = $callback($v, $k, $arr);
 		}
 		return $res;
 	}
@@ -479,8 +479,8 @@ final class Arr{
      * 二维数组去重
      *
      * -e.g: $arr=[["id"=>1,"sex"=>"female"],["id"=>1,"sex"=>"male"],["id"=>2,"age"=>18]];
-     * -e.g: phpunit("Arr::deepUnique",[$arr, "id"]);
-     * -e.g: phpunit("Arr::deepUnique",[$arr, "id", false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::deepUnique",[$arr, "id"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::deepUnique",[$arr, "id", false]);
      *
      * @param array $array 数组
      * @param string $filterKey <"id"> 字段
@@ -500,7 +500,7 @@ final class Arr{
      * 二维数组排序
      *
      * -e.g: $arr=[["age"=>19,"name"=>"A"],["age"=>20,"name"=>"B"],["age"=>18,"name"=>"C"],["age"=>16,"name"=>"D"]];
-     * -e.g: phpunit("Arr::deepSort", [$arr, "age", "asc"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::deepSort", [$arr, "age", "asc"]);
      *
      * @param array $array 排序的数组
      * @param string $orderKey 要排序的key
@@ -526,9 +526,9 @@ final class Arr{
      * -e.g: $arr[]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
      * -e.g: $arr["key"]=["name"=>"王武","roomId"=> "9-1-807", "carPlace"=> [] ];
      * -e.g: echo "含语法填充:";
-     * -e.g: phpunit("Arr::toXml", [$arr]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::toXml", [$arr]);
      * -e.g: echo "无语法填充:";
-     * -e.g: phpunit("Arr::toXml", [$arr, false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::toXml", [$arr, false]);
      *
      * @param array $input 数组
      * @param bool $xmlHeadSyntax <true> 是否填充xml语法头

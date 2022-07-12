@@ -24,21 +24,21 @@ class Bit{
      *  注1、n ≥ 0时，n将舍弃小数部分（如果有）,执行：左位移(乘法)
      *  注2、n < 0时，n将舍弃小数部分（如果有）,执行：右位移(除法)
      * 
-     * -e.g: phpunit("Bit::shiftLeft",[16,2]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[16,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,2]);
      * -e.g: echo "//负数";
-     * -e.g: phpunit("Bit::shiftLeft",[4,-2]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,-3]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,-4]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,-5]);
-     * -e.g: phpunit("Bit::shiftLeft",[-4,2]);
-     * -e.g: phpunit("Bit::shiftLeft",[-4,-1.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,-2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,-3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,-4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,-5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[-4,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[-4,-1.3]);
      * -e.g: echo "//小数";
-     * -e.g: phpunit("Bit::shiftLeft",[4,3.3]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,2.5]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,1.8]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,0.8]);
-     * -e.g: phpunit("Bit::shiftLeft",[4,-1.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,3.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,2.5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,1.8]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,0.8]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftLeft",[4,-1.3]);
      * 
      * @param integer $m
      * @param integer $n
@@ -59,30 +59,30 @@ class Bit{
      *  注2、n < 0时，n将舍弃小数部分（如果有）,执行：右位移(除法)
      * 
      * -e.g: echo "// 16÷(2 ^ 2) =>4";
-     * -e.g: phpunit("Bit::shiftRight",[16,2]);
-     * -e.g: phpunit("Bit::shiftRight",[4,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[16,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,2]);
      * 
      * -e.g: echo "//负数执行乘法(左移) 4x(2 ^ abs(-2)) =>16";
-     * -e.g: phpunit("Bit::shiftRight",[4,-2]);
-     * -e.g: phpunit("Bit::shiftRight",[4,-3]);
-     * -e.g: phpunit("Bit::shiftRight",[4,-4]);
-     * -e.g: phpunit("Bit::shiftRight",[4,-5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,-2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,-3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,-4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,-5]);
      * 
      * -e.g: echo "// -4÷(2 ^ 2) => -1 ";
-     * -e.g: phpunit("Bit::shiftRight",[-4,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[-4,2]);
      * 
      * -e.g: echo "// 4÷(2 ^ int(3.3)) =>4÷8  =>0.5 =>0";
-     * -e.g: phpunit("Bit::shiftRight",[4,3.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,3.3]);
      * 
      * -e.g: echo "// 4÷(2 ^ int(2.3)) =>4÷4  =>1";
-     * -e.g: phpunit("Bit::shiftRight",[4,2.3]);
-     * -e.g: phpunit("Bit::shiftRight",[4,1.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,2.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,1.3]);
      * 
      * -e.g: echo "//负数执行乘法(左移) 4x(2 ^ abs(-1.3)) => 4x(2 ^ 1) => 4x2  =>8";
-     * -e.g: phpunit("Bit::shiftRight",[4,-1.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[4,-1.3]);
      * 
      * -e.g: echo "//负数执行乘法(左移) -4x(2 ^ abs(-1.3)) => -4x(2 ^ 1) => -4x2  =>-8";
-     * -e.g: phpunit("Bit::shiftRight",[-4,-1.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::shiftRight",[-4,-1.3]);
      * 
      * @param integer $m
      * @param integer $n
@@ -101,11 +101,11 @@ class Bit{
      * 对于两个整数x,y，如果用 (x+y)/2 求平均值，结果可能产生溢出，因为 x+y 可能会大于INT_MAX，
      * 但是我们知道它们的平均值是肯定不会溢出的。
      * 
-     * -e.g: phpunit("Bit::avg", [40.5,55]);
-     * -e.g: phpunit("Bit::avg", [0.3,0.3]);
-     * -e.g: phpunit("Bit::avg", [4,5]);
-     * -e.g: phpunit("Bit::avg", [5,5]);
-     * -e.g: phpunit("Bit::avg", [-1,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::avg", [40.5,55]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::avg", [0.3,0.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::avg", [4,5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::avg", [5,5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::avg", [-1,2]);
      * 
      * @param integer $x
      * @param integer $y
@@ -125,8 +125,8 @@ class Bit{
      * 
      *  要求：x >= 0
      * 
-     * -e.g: phpunit("Bit::power2", [4]);
-     * -e.g: phpunit("Bit::power2", [5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::power2", [4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::power2", [5]);
      * 
      * @param integer $x
      * @return boolean
@@ -161,8 +161,8 @@ class Bit{
 	/**
      * 求绝对值(用位运算实现)
      * 
-     * -e.g: phpunit("Bit::abs", [-8]);
-     * -e.g: phpunit("Bit::abs", [7]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::abs", [-8]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::abs", [7]);
      * 
      * @param integer $x
      * @return void
@@ -178,8 +178,8 @@ class Bit{
 	/**
      * 求相反数(用位运算实现)
      * 
-     * -e.g: phpunit("Bit::opposite", [7]);
-     * -e.g: phpunit("Bit::opposite", [-7]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::opposite", [7]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::opposite", [-7]);
      * 
      * @param integer $x
      * @return integer
@@ -205,11 +205,11 @@ class Bit{
      * | = |   0  |   1  |   0  |   1  |   0  |   1  |   0  |   1  |   0  |   1  |
      * ·-------------------------------------------------------------------------·
      * 
-     * -e.g: phpunit("Bit::idSex", ["120101198106165360"]);
-     * -e.g: phpunit("Bit::idSex", ["120101198106165360",true]);
-     * -e.g: phpunit("Bit::idSex", ["520201198907251373",true]);
-     * -e.g: phpunit("Bit::idSex", ["632123820927051"]);
-     * -e.g: phpunit("Bit::idSex", ["632123820927051",true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::idSex", ["120101198106165360"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::idSex", ["120101198106165360",true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::idSex", ["520201198907251373",true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::idSex", ["632123820927051"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Bit::idSex", ["632123820927051",true]);
      * 
      * @param string $id 身份证号码
      * @param boolean $text <false> 是否响应为性别文本(男|女)

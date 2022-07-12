@@ -34,7 +34,7 @@ class ImageHash{
 
     /**
      * 获取图片指纹
-     * 
+     *
      * -e.g: echo "ImageHash::instance()->hash('/Users/yipeng/Pictures/zjz.jpeg');"; echo " ". Vipkwd\Utils\Image\ImageHash::instance()->hash("/Users/yipeng/Pictures/zjz.jpeg");
      * -e.g: echo "ImageHash::instance()->hash('/Users/yipeng/Pictures/zjz.png');"; echo " ". Vipkwd\Utils\Image\ImageHash::instance()->hash("/Users/yipeng/Pictures/zjz.png");
      *
@@ -53,12 +53,12 @@ class ImageHash{
         }
         return $hash;
     }
-    
+
     /**
      * 计算俩图相似度
      *
      * -e.g: echo "ImageHash::instance()->distance('zjz.jpeg','zjz.png');"; echo " ". Vipkwd\Utils\Image\ImageHash::instance()->distance("/Users/yipeng/Pictures/zjz.jpeg","/Users/yipeng/Pictures/WX20220123-212530@2x.png");
-     * 
+     *
      * @param string $imgPath1
      * @param string $imgPath2
      * @return void
@@ -71,7 +71,7 @@ class ImageHash{
         }
         return 0;
     }
-    
+
     public function hashToHex(Object $hash):string{
         return $hash->toHex(); //7878787c7c707c3c
     }

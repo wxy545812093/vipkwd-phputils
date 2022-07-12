@@ -3,7 +3,7 @@
     "name": "vipkwd/utils",
     "description": "PHP常用函数集合",
     "type": "library",
-    "version":"3.0.0",
+    "version":"3.0.1",
     "homepage": "https://www.vipkwd.com",
     "authors": [
         {
@@ -31,6 +31,7 @@
             "Vipkwd\\Command\\": "support/command/"
         },
         "files": [
+            "support/CommonTrait.php",
             "support/VipkwdPreload.php",
             "support/VipkwdException.php"
         ]

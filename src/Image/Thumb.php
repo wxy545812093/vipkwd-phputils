@@ -24,7 +24,7 @@ class Thumb{
 	/**
 	 * 添加描边框
 	 *
-	 * @param integer $frameWidthPiex <10> 
+	 * @param integer $frameWidthPiex <10>
 	 * @param string $frameColor
 	 * @return self
 	 */
@@ -150,7 +150,7 @@ class Thumb{
 	 * 底片效果
 	 *
 	 * @param string $state <true> 状态开关 默认开
-	 * 
+	 *
 	 * @return self
 	 */
 	public function filterNegative(bool $state = true):self{
@@ -174,7 +174,7 @@ class Thumb{
 			$rgbGap);
 		return $this;
 	}
-	
+
 	/**
 	 * 彩图灰化（去彩色）
 	 *
@@ -259,7 +259,6 @@ class Thumb{
 		$this -> Medianfilter = $state;
 		return $this;
 	}
-	
 
 	/**
 	 * 扭曲:旋转
@@ -319,7 +318,7 @@ class Thumb{
 
 	/**
 	 * 调整伽马(灰度)系数
-	 * 
+	 *
 	 * gamma值即伽马值，是对曲线的优化调整，是亮度和对比度的辅助功能。Gamma也叫灰度系数
 	 *
 	 * @param float $coefficient 校正系数 ( 系数 > 0 )
@@ -353,12 +352,12 @@ class Thumb{
 		$this->Brightness = array(1, $depth);
 		return $this;
 	}
-	
+
 	/**
 	 * 设置背景色
 	 *
 	 * @param string $colorHex HEX色值（f00 或 ff0000）
-	 * 
+	 *
 	 * @return self
 	 */
 	public function setBackgroundColor(string $colorHex):self{
@@ -399,7 +398,7 @@ class Thumb{
 	/**
 	 * 透明图像
 	 *
-	 * @param string $color 覆盖色值HEX 
+	 * @param string $color 覆盖色值HEX
 	 * @param integer $type <0> 0=PNG 1=GIF 2=原始文件格式
 	 * @param integer $rgbTolerance <0> RGB容错值（0~100）
 	 * @return self
@@ -417,14 +416,14 @@ class Thumb{
 	 * @param integer $noise <10> 噪点度(0~100)
 	 * @param integer $depth <80> 深褐度(0~100)
 	 * @return self
-	 */ 
+	 */
 	public function filterNostalgic(int $noise =10, int $depth = 80):self{
 		$this->numberRangeLimit($noise);
 		$this->numberRangeLimit($depth);
 		$this -> Ageimage = array(1,$noise,$depth);
 		return $this;
 	}
-	
+
 	/**
 	 * 书签活页夹
 	 *
@@ -481,14 +480,14 @@ class Thumb{
 
 	/**
 	 * 图像相对剪裁(无留白)
-	 * 
-	 * @param integer $type <1> 0=square-crop 1=center-crop 
+	 *
+	 * @param integer $type <1> 0=square-crop 1=center-crop
 	 * @param integer $unit <1> 0=percentage 1=pixels
 	 * @param integer $leftGap <0> 剪除边距
 	 * @param integer $rightGap <0> 剪除边距
 	 * @param integer $topGap <0> 剪除边距
 	 * @param integer $bottomGap <0> 剪除边距
-	 * 
+	 *
 	 * @return self
 	 */
 	public function eventCrop(int $type = 1, int $unit = 1, int $leftGap = 0, int $rightGap = 0, int $topGap = 0, int $bottomGap = 0):self{
@@ -634,10 +633,10 @@ class Thumb{
 		$this -> Perspectivethumb = array(1,$directions[$direction], $perspective);
 		return $this;
 	}
-	 
+
 	/**
 	 * 16进制色值转RGB数值
-	 * 
+	 *
 	 * -- #dfdfdf转换成(239,239,239)
 	 *
 	 * @param string $color
@@ -702,7 +701,7 @@ class Thumb{
 			$ext = 'jpg';
 		}
 		$saves = implode('.', $saves);
-		
+
 		if(!is_dir($savePath)){
 			@mkdir($savePath, 0755, true);
 		}
@@ -765,7 +764,7 @@ class Thumb{
 
 	/**
 	 * 设置定位(水印位置等)
-	 * 
+	 *
 	 * --支持 9宫格( $x=1 ~ 9)
 	 * --支持 百分比 ($x=20%,$y=20%)
 	 * --支持 数值定位 ($x=10, $y=100)
@@ -786,7 +785,7 @@ class Thumb{
 			case "7": $x = "0%";		$y = "100%";break;
 			case "8": $x = "50%";		$y = "100%";break;
 			case "9": $x = "100%";	$y = "100%";break;
-			default: 
+			default:
 				//数值
 				if(!strpos("$x","%") && !strpos("$y","%")){
 					$x = intval($x);
@@ -824,9 +823,9 @@ class Thumb{
 	 * @param string $bgcolor <#666>background color
 	 * @param int $filetype <IMAGETYPE_PNG> PHP常量 IMAGETYPE_XXX
 	 * @param boolean $transparent <false>
-	 * 
+	 *
 	 * @return self
-	 */	
+	 */
 	private function createCanvas(int $width, int $height, string $bgcolor='#666', int $filetype=IMAGETYPE_PNG, bool $transparent=false):self{
 		$this->im=imagecreatetruecolor($width,$height);
 		$this->size=array($width,$height,$filetype);
@@ -850,9 +849,9 @@ class Thumb{
 	 *
 	 * @param bool $storage <false> true 保存到本地
 	 * @param bool $showInfo <false> true返回图片信息
-	 * 
+	 *
 	 * @return array|null
-	 */	
+	 */
 	public function createThumb(bool $storage=false, bool $showInfo=false):array{
 
 		$list = [];
@@ -889,12 +888,12 @@ class Thumb{
 		}
 		return [];
 	}
-    	
+
 	/**
 	 * 输出图片的base64数据
 	 *
 	 * @return string|array
-	 */	
+	 */
 	public function createBase64(){
 
 		$list = [];

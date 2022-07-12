@@ -20,11 +20,11 @@ class Zip{
 
     /**
      * 文件打包（zipfile不存在将自动创建)
-     * 
+     *
      * @param string $zipFile 打包后的文件名
      * @param string|array $fileOrPaths 打包文件组(支持目录)
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
-     * 
+     *
      * @return string|null
      */
     static public function addZip(string $zipFile, $fileOrPaths, ?string $password=""){
@@ -46,7 +46,7 @@ class Zip{
 
 -- composer use:
 --      composer require vipkwd/utils
---      
+--
 --      include \"vendor/autoload.php\"
 --      Vipkwd\Utils\System\Zip::addZip(\"demo.zip\", \".\");
 --      //And a zip package was created;");
@@ -84,11 +84,11 @@ class Zip{
 
 	/**
      * 解压压缩包
-     * 
+     *
      * @param string $zipFile 要解压的压缩包文件名
      * @param string $destPath 解压到指定目录
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
-     * 
+     *
      * @return boolean|null
      */
     static public function unZip(string $zipFile, string $destPath, ?string $password = ""): ?bool{
@@ -127,7 +127,7 @@ class Zip{
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
 	 * @return boolean|null
 	 */
-	static function append(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{
+	static function append(string $zipFile, string $appendFile, string $content="",?string $password=""){
 
 		return self::watchException(function()use(&$zipFile, &$appendFile, &$content, $password){
 			$zip = new ZipArchive;

@@ -37,6 +37,8 @@ class User
     /**
      * 关注公众号
      * @param string $gzh_redirect_url 公众号回调地址 数组接收公众号openid
+     * 
+     * @return array
      */
     public function follow(string $gzh_redirect_url)
     {
@@ -46,6 +48,9 @@ class User
 
     /**
      * 根据openid获取用户的基本信息
+     * @param string $openid
+     * 
+     * @return array
      */
     public function getUserInfoByOpenid($openid)
     {
@@ -55,11 +60,15 @@ class User
 
     /**
      * 获取新用户基本信息(未关注公众号的)
+     * @param string $openid
+     * step1: json = User::class->follow($gzh_redirect_url)
+     * step2: json = User::class->getUserInfo($redirect_url)
+     * 
+     * @return array
      */
-    public function getUserInfo($redirect_url)
+    public function getUserInfo($openid)
     {
-        $res = Base::instance($this->mp_appid, $this->mp_app_secret)->baseAuth($redirect_url);
-        $res = Base::curl($this->openApi('/sns/userinfo', ['openid' => $res['openid'], 'lang' => 'zh_CN']));
+        $res = Base::curl($this->openApi('/sns/userinfo', ['openid' => $openid, 'lang' => 'zh_CN']));
         return static::response($res, 1);
     }
 }

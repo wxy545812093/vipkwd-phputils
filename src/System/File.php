@@ -923,7 +923,7 @@ class File
 
     /**
      * 读取指定INI文件
-     * 
+     *
      * @param string $iniFile ini文件path
      * @return array|boolean
      */
@@ -938,11 +938,11 @@ class File
 
     /**
      * 写入数组到指定ini文件
-     * 
+     *
      * @param array $data
      * @param string $iniFile
      */
-    static function writeIniFile($data, $iniFile) { 
+    static function writeIniFile($data, $iniFile) {
         $content = "";
         $common = '';
         $index = 0;
@@ -956,7 +956,7 @@ class File
                 $content .= "\n";
             }else{
                 $common .= "{$key} = {$elem}\n";
-            } 
+            }
         }
         if($index > 0){
             $content .= "[common]\n" .$common;
@@ -965,13 +965,13 @@ class File
         }
         unset($common, $index);
 
-        if (!$handle = fopen($iniFile, 'w')) { 
-            return false; 
-        } 
-        if (!fwrite($handle, $content)) { 
-            return false; 
-        } 
-        fclose($handle); 
-        return true; 
+        if (!$handle = fopen($iniFile, 'w')) {
+            return false;
+        }
+        if (!fwrite($handle, $content)) {
+            return false;
+        }
+        fclose($handle);
+        return true;
     }
 }

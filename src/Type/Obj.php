@@ -15,7 +15,7 @@ class Obj{
      * 对象转数组
      * 
      * -e.g: $data=(object)[ "a"=>50, "b"=>true, "c"=>null ];
-     * -e.g: phpunit("Obj::toArray", [$data]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Obj::toArray", [$data]);
      * 
      * @param object|array $object 对象
      * 

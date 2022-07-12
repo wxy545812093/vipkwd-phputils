@@ -237,9 +237,6 @@ yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump porn
 
 ### [load::assets ] 下载/更新静态资源
 ```shell
-yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump 10.musume.com
-[Notice] Undefined constant "\Vipkwd\Utils\10\Musume\Com::class" with /data/wwwroot/10musume.com/vendor\vipkwd\utils/src/10/Musume/Com.php
-
 yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd load::assets
 -> 1 Update ttfs/1.ttf ································ (Skiped)
 -> 2 Update ttfs/2.ttf ································ (Skiped)

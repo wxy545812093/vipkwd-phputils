@@ -44,7 +44,7 @@ class Store{
         $exists = false;
         if( substr($key,0,1) == "?" ){
             $exists = true;
-            $key = substr($key,1); 
+            $key = substr($key,1);
         }else{
             //设置
             if( $key != "" && $value != "#null@"){
@@ -77,7 +77,7 @@ class Store{
 
     /**
      * Cookie管理
-     * 
+     *
      * @param string $name   cookie名称
      * @param mixed  $value  cookie值
      * @param int  $expires 有效期 （小于0：删除cookie, 大于0：设置cookie）
@@ -135,10 +135,7 @@ class Store{
             return null;
         }
         return $_COOKIE;
-    }  
-    
-    
-
+    }
 
     /**
      * 保存Cookie

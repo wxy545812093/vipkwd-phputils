@@ -10,7 +10,7 @@
 declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
-
+use Vipkwd\Utils\Type\Str as VipkwdStr;
 class Dev{
     const SEPA = \DIRECTORY_SEPARATOR;
     use \Vipkwd\Utils\Libs\Develop;
@@ -26,7 +26,7 @@ class Dev{
      */
 	static function getLastError(): string{
 		$message = error_get_last()['message'] ?? '';
-		$message = ini_get('html_errors') ? Str::htmlToText($message) : $message;
+		$message = ini_get('html_errors') ? VipkwdStr::htmlToText($message) : $message;
 		$message = preg_replace('#^\w+\(.*?\): #', '', $message);
 		return $message;
 	}

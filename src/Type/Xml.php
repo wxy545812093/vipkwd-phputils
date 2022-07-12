@@ -14,7 +14,7 @@ class Xml{
     /**
      * XML转数组
      *
-     * -e.g: phpunit("Xml::toArray", ["<vipkwd><a>110</a><b>120</b><c><d>true</d></c></vipkwd>"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Xml::toArray", ["<vipkwd><a>110</a><b>120</b><c><d>true</d></c></vipkwd>"]);
      *
      * @param string $xml xml
      *

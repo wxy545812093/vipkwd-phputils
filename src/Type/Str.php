@@ -17,11 +17,11 @@ class Str{
     /**
      * Hash对比（hash_equals函数)
      *
-     * -e.g: phpunit("Str::hashEquals", ["11", "22"]);
-     * -e.g: phpunit("Str::hashEquals", [false, false]);
-     * -e.g: phpunit("Str::hashEquals", [false, 0]);
-     * -e.g: phpunit("Str::hashEquals", ["abc", "abc"]);
-     * -e.g: phpunit("Str::hashEquals", ['', 0]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::hashEquals", ["11", "22"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::hashEquals", [false, false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::hashEquals", [false, 0]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::hashEquals", ["abc", "abc"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::hashEquals", ['', 0]);
      *
      * @param string $str1
      * @param string $str2
@@ -46,10 +46,10 @@ class Str{
     /**
      * HTML转实体符
      *
-     * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
-     * -e.g: phpunit("Str::htmlEncode", ["<&>$"]);
-     * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES]);
-     * -e.g: phpunit("Str::htmlEncode", ["<&>$", ENT_QUOTES,"utf-8"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::htmlEncode", ["<&>$"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::htmlEncode", ["<&>$"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::htmlEncode", ["<&>$", ENT_QUOTES]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::htmlEncode", ["<&>$", ENT_QUOTES,"utf-8"]);
      *
      * @param string $value
      * @param mixed $flags <ENT_QUOTES>
@@ -63,8 +63,8 @@ class Str{
     /**
      * 字符XSS过滤
      *
-     * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script>javascript</script> </div>"]);
-     * -e.g: phpunit("Str::removeXss",["wa haha<div > div> <script >javascript</script> </div>",true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",["wa haha<div > div> <script>javascript</script> </div>"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",["wa haha<div > div> <script >javascript</script> </div>",true]);
      *
      * @param string|array $str 待检字符 或 索引数组
      * @param boolean $DPI <false> 除常规过滤外，是否深度(额外使用正则)过滤。默认false仅常规过滤
@@ -96,7 +96,7 @@ class Str{
     /**
      * 获取纯文本内容(移除一切HTML元素)
      *
-     * -e.g: phpunit("Str::getContentText",["wa haha<div > div> <script>javascript</script> </div>"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getContentText",["wa haha<div > div> <script>javascript</script> </div>"]);
      *
      * @param string $str
      * @return string
@@ -137,12 +137,12 @@ class Str{
     /**
      * (中/英/混合)字符串截取(加强版)
      *
-     * -e.g: phpunit("Str::substrPlus",['$omitted 末尾]】省略符 默认', 0, 14]);
-     * -e.g: phpunit("Str::substrPlus",['$&3张三李】四王麻子', 0, 11, "..."]);
-     * -e.g: phpunit("Str::substrPlus",['$&3张三】李四王麻子', 0, 10, "..."]);
-     * -e.g: phpunit("Str::substrPlus",['$&3张】三李四王麻子', 0, 9, "..."]);
-     * -e.g: phpunit("Str::substrPlus",['$&3】张三李四王麻子', 0, 8, ">"]);
-     * -e.g: phpunit("Str::substrPlus",['$&】3张三李四王麻子', 6, 2, ""]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$omitted 末尾]】省略符 默认', 0, 14]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$&3张三李】四王麻子', 0, 11, "..."]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$&3张三】李四王麻子', 0, 10, "..."]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$&3张】三李四王麻子', 0, 9, "..."]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$&3】张三李四王麻子', 0, 8, ">"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::substrPlus",['$&】3张三李四王麻子', 6, 2, ""]);
      *
      * @param string $str 待截取字符串
      * @param int $start <0> 从第几个字符(包含)开始截取
@@ -221,12 +221,12 @@ class Str{
     /**
      * 统计字符长度(加强版)
      *
-     * -e.g: phpunit("Str::strLenPlus",['$&】3张三李四王麻子']);
-     * -e.g: phpunit("Str::strLenPlus",['&】3张三李四王麻子']);
-     * -e.g: phpunit("Str::strLenPlus",['】3张三李四王麻子']);
-     * -e.g: phpunit("Str::strLenPlus",['3张三李四王麻子']);
-     * -e.g: phpunit("Str::strLenPlus",['张三李四王麻子']);
-     * -e.g: phpunit("Str::strLenPlus",['三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['$&】3张三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['&】3张三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['】3张三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['3张三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['张三李四王麻子']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strLenPlus",['三李四王麻子']);
      *
      * @param string $str
      * @return int
@@ -263,10 +263,10 @@ class Str{
     /**
      * 字符串填充(加强版)
      *
-     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 10]);
-     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 11]);
-     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 12]);
-     * -e.g: phpunit("Str::strPadPlus",['三李四王麻子', 16]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strPadPlus",['三李四王麻子', 10]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strPadPlus",['三李四王麻子', 11]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strPadPlus",['三李四王麻子', 12]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::strPadPlus",['三李四王麻子', 16]);
      *
      * @param string $str
      * @param integer $length
@@ -307,8 +307,8 @@ class Str{
     /**
      * 获取范围内随机数 位数不足补零
      *
-     * -e.g: phpunit("Str::randNumber", [1, 10]);
-     * -e.g: phpunit("Str::randNumber", [90, 105]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::randNumber", [1, 10]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::randNumber", [90, 105]);
      *
      * @param integer $min 最小值
      * @param integer $max 最大值
@@ -321,9 +321,9 @@ class Str{
     /**
      * 自动转换字符集 支持数组转换
      *
-     * -e.g: phpunit("Str::autoCharset", ["张三"]);
-     * -e.g: phpunit("Str::autoCharset", ["张三","gbk","utf-8"]);
-     * -e.g: phpunit("Str::autoCharset", ["张三","utf-8","gbk"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::autoCharset", ["张三"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::autoCharset", ["张三","gbk","utf-8"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::autoCharset", ["张三","utf-8","gbk"]);
      *
      * @param string|array $str
      * @param string $fromCharset
@@ -367,15 +367,15 @@ class Str{
      * -e.g: $search["values"]=[ "field1" => ["%alipay","u%","%com%","%youtu"] ];
      *
      * -e.g: $search["operators"]=["field1" => "like"];
-     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::markSearchWords",[$str, $field, $search]);
      *
      *
      * -e.g: $search["operators"]=["field1" => "like%"];
-     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::markSearchWords",[$str, $field, $search]);
      *
      *
      * -e.g: $search["operators"]=["field1" => "eq"];
-     * -e.g: phpunit("Str::markSearchWords",[$str, $field, $search]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::markSearchWords",[$str, $field, $search]);
      *
      * @param string $str
      * @param string $field 搜索字段名
@@ -429,10 +429,10 @@ class Str{
     /**
      * 检查字符串中是否包含某些字符串
      *
-     * -e.g: phpunit("Str::contains", ["你好阿","你阿"]);
-     * -e.g: phpunit("Str::contains", ["你好阿","你你"]);
-     * -e.g: phpunit("Str::contains", ["你好阿","你好"]);
-     * -e.g: phpunit("Str::contains", ["你好阿",["好","你"]]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::contains", ["你好阿","你阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::contains", ["你好阿","你你"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::contains", ["你好阿","你好"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::contains", ["你好阿",["好","你"]]);
      *
      * @param string $haystack
      * @param string|array $needles
@@ -451,11 +451,11 @@ class Str{
     /**
      * 检查字符串是否以某些字符串结尾
      *
-     * -e.g: phpunit("Str::endsWith", ["你好阿","阿"]);
-     * -e.g: phpunit("Str::endsWith", ["你好阿","好阿"]);
-     * -e.g: phpunit("Str::endsWith", ["你好阿","你好阿"]);
-     * -e.g: phpunit("Str::endsWith", ["你好阿","你好俊阿"]);
-     * -e.g: phpunit("Str::endsWith", ["你好阿","你好俊"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::endsWith", ["你好阿","阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::endsWith", ["你好阿","好阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::endsWith", ["你好阿","你好阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::endsWith", ["你好阿","你好俊阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::endsWith", ["你好阿","你好俊"]);
      * @param  string       $haystack
      * @param  string|array $needles
      * @return bool
@@ -472,9 +472,9 @@ class Str{
     /**
      * 检查字符串是否以某些字符串开头
      *
-     * -e.g: phpunit("Str::startsWith", ["你好阿","你好"]);
-     * -e.g: phpunit("Str::startsWith", ["你好阿","你"]);
-     * -e.g: phpunit("Str::startsWith", ["你好阿","你你你"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::startsWith", ["你好阿","你好"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::startsWith", ["你好阿","你"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::startsWith", ["你好阿","你你你"]);
      *
      * @param  string       $haystack
      * @param  string|array $needles
@@ -492,10 +492,10 @@ class Str{
     /**
      * 汉字转拼音
      *
-     * -e.g: phpunit("Str::getPinyin", ["你好阿"]);
-     * -e.g: phpunit("Str::getPinyin", ["你好阿","head"]);
-     * -e.g: phpunit("Str::getPinyin", ["你好阿","all"]);
-     * -e.g: phpunit("Str::getPinyin", ["你好阿","one"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getPinyin", ["你好阿"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getPinyin", ["你好阿","head"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getPinyin", ["你好阿","all"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getPinyin", ["你好阿","one"]);
      *
      * @param string $str
      * @param string $type [head:首字母|all:全拼音]
@@ -510,7 +510,7 @@ class Str{
      * MD5值16位
      *
      * -e.g: echo 'md5("admin"); // string(32) "'.\md5('admin').'"';
-     * -e.g: phpunit("Str::md5_16",["admin"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::md5_16",["admin"]);
      *
      * @param string $str
      * @return string
@@ -522,8 +522,8 @@ class Str{
     /**
      * 检查字符串是否是UTF8编码
      *
-     * -e.g: phpunit("Str::isUtf8", ["张三"]);
-     * -e.g: phpunit("Str::isUtf8", ["123"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isUtf8", ["张三"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isUtf8", ["123"]);
      *
      * @param string $str 字符串
      * @return Boolean
@@ -607,13 +607,13 @@ class Str{
     /**
      * 检测字符串是否为JSON串
      *
-     * -e.g: phpunit("Str::isJson",['[{"url":"10musume.com"}]']);
-     * -e.g: phpunit("Str::isJson",['[]']);
-     * -e.g: phpunit("Str::isJson",['[{}]']);
-     * -e.g: phpunit("Str::isJson",['{"site":"91.com"}']);
-     * -e.g: phpunit("Str::isJson",['{}']);
-     * -e.g: phpunit("Str::isJson",['{<>}']);
-     * -e.g: phpunit("Str::isJson",['{{}}']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['[{"url":"10musume.com"}]']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['[]']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['[{}]']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{"site":"91.com"}']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{}']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{<>}']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{{}}']);
      *
      * @param string $str
      * @return boolean
@@ -627,11 +627,11 @@ class Str{
      * 获取(最大)相似度文本(不支持中文)
      *
      * -e.g: $items = ["foo", "bar", "baz","你好"];
-     * -e.g: phpunit("Str::getSuggestion",[$items, "fo"]);
-     * -e.g: phpunit("Str::getSuggestion",[$items, "barr"]);
-     * -e.g: phpunit("Str::getSuggestion",[$items, "baz"]);
-     * -e.g: phpunit("Str::getSuggestion",[$items, "好"]);
-     * -e.g: phpunit("Str::getSuggestion",[$items, "你"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "fo"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "barr"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "baz"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "好"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "你"]);
      *
      * @param string[]  $possibilities 查找列表
      * @param string $value 查找文字

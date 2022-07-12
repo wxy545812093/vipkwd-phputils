@@ -86,7 +86,9 @@ trait Develop{
             if(is_callable($v)){
                 $txt .= "\Closure";
             }elseif(gettype($v) == 'object'){
-                $txt .= "\Object";
+                $txt .= "\Object{}";
+            }elseif(gettype($v) == 'array'){
+                $txt .= "[]";
             }elseif(gettype($v) == 'string'){
                 $txt .="\"{$v}\"";
             }else if($v === null){
@@ -108,9 +110,8 @@ trait Develop{
         $args_txt = self::buildArgsType($args);
         $initArgs_txt = self::buildArgsType($initArgs);
         list($className, $method) = explode('::', $classMethod);
-
-        $classPath = "\\Vipkwd\\Utils\\{$className}";
-        $refClass = new \ReflectionClass($classPath);
+        (stristr($className, "Vipkwd\\Utils\\") === false) && $classPath = "\\Vipkwd\\Utils\\{$className}";
+        $refClass = new \ReflectionClass($classPath ?? $className);
         //方法调用路径
         $callPath = '';
         $refMethod = $refClass->getMethod($method);
@@ -139,8 +140,8 @@ trait Develop{
             // $method->invokeArgs($instance, array('snsgou.com'));
             echo " {$callPath}; //";
         }else{
-            echo " \\Vipkwd\\Utils\\{$classMethod}($args_txt); //";
-            $res = call_user_func_array("\\Vipkwd\\Utils\\{$classMethod}", $args);
+            echo " {$classMethod}($args_txt); //";
+            $res = call_user_func_array("{$classMethod}", $args);
         }
 
         switch($type = gettype($res)){

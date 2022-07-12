@@ -37,9 +37,9 @@ class Math{
     /**
      * 基础数值
      * 
-     * -e.g: phpunit("Math::instance", [10]);
-     * -e.g: phpunit("Math::instance", [10.3]);
-     * -e.g: phpunit("Math::instance", ["10"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Math::instance", [10]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Math::instance", [10.3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Math::instance", ["10"]);
      *
      * @param integer|float|numstr $number
      * @return self

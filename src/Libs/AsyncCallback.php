@@ -33,7 +33,7 @@ class AsyncCallback {
     }
 
     private function createTaskId(){
-        // [$m, $s] = explode(" ", microtime() ); 
+        // [$m, $s] = explode(" ", microtime() );
         return "". md5(microtime() . mt_rand(10, 1000));
     }
     //js setTimeout
@@ -43,7 +43,7 @@ class AsyncCallback {
         }
         $this->taskId = $this->createTaskId();
         if($timeout >= 0){
-            $funcName = Crypt::encryptDes(
+            $funcName = Crypt::desEncrypt(
                 str_replace(" ", "",$funcName ),
                 $this->options['desKey'],
                 $this->options['desIv']
@@ -53,7 +53,7 @@ class AsyncCallback {
                 'async__ft_cmd'     => __FUNCTION__,
                 'async__ft_delay'   => $timeout,
                 'async__ft_event'   => $funcName,
-                'async__ft_data'    => Crypt::encryptDes(json_encode($args), $this->options['desKey'], $this->options['desIv']),
+                'async__ft_data'    => Crypt::desEncrypt(json_encode($args), $this->options['desKey'], $this->options['desIv']),
                 'async__ft_expired' => time() +3,
                 "async__ft_limit"   => $count > 1 ? $count : 1,
                 "async__ft_taskId"  => $this->taskId,
@@ -71,7 +71,7 @@ class AsyncCallback {
         $limits = $limit = $this->ft('limit') >= 1 ? $this->ft('limit') : 1;
         $_delay = intval($this->ft('delay'));
         $res = [];
-        $funcName = Crypt::decryptDes(
+        $funcName = Crypt::desDecrypt(
             trim($this->ft('event')),
             $this->options['desKey'],
             $this->options['desIv']
@@ -79,15 +79,15 @@ class AsyncCallback {
 
         if(strripos($funcName,"->")){
             $funcName = explode("->", $funcName);
-            $funcName[0] = new $funcName[0]; 
+            $funcName[0] = new $funcName[0];
         }else if(strripos($funcName,"::")){
             $funcName = explode("::", $funcName);
         }
-        
+
         $this->options['debug'] && $this->taskLog("解码回调函数",true, $funcName);
 
         $args = json_decode(
-            Crypt::decryptDes(
+            Crypt::desDecrypt(
                 $this->ft('data'),
                 $this->options['desKey'],
                 $this->options['desIv']
@@ -107,7 +107,7 @@ class AsyncCallback {
                 $this->taskLog("任务({$idx})响应",true, $res);
             }
         }catch(Exception $e){
-            $this->taskLog("任务({$idx})异常",false, $e->getMessage()); 
+            $this->taskLog("任务({$idx})异常",false, $e->getMessage());
         }
     }
 
@@ -116,7 +116,7 @@ class AsyncCallback {
         $host = parse_url($url,PHP_URL_HOST);
         $path = parse_url($url,PHP_URL_PATH);
         $query = parse_url($url,PHP_URL_QUERY);
-        
+
         $port = parse_url($url,PHP_URL_PORT);
         $port = $port ? $port : 80;
 
@@ -129,7 +129,7 @@ class AsyncCallback {
         }
 
         if($query) $path .= '?'.$query;
-        
+
         $data = $this->data;
 
         ksort($data);
@@ -208,13 +208,13 @@ class AsyncCallback {
         $this->headers = Tools::getHttpHeaders();
         //tests($this->headers);
         if(isset($this->headers['auth']) && isset($this->headers['taskid']) && isset($this->headers['tasktag'])) {
-            
+
             //标记任务已完成，防止“递归”
             $this->_completed = true;
-            
+
             $data = isset($this->headers['data']) ? $this->headers['data'] : "";
             $sign = isset($this->headers['sign']) ? $this->headers['sign'] : "";
-            
+
             if($sign != $this->getDataSign($data) ){
                 return $this->taskLog("验签",false);
                 //验签失败
@@ -224,7 +224,7 @@ class AsyncCallback {
 
             $this->taskId = $this->ft('taskId');
             $this->options['taskTag'] = $this->ft('taskTag');
-            
+
             if($this->headers['auth'] != $this->auth){
                 return $this->taskLog("鉴权",false);
             }

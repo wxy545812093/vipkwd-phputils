@@ -40,8 +40,7 @@ echo $page->fpage();
 */
 
 namespace Vipkwd\Utils;
-use Vipkwd\Utils\Type\Str;
-
+use Vipkwd\Utils\Type\Str as VipkwdStr;
 class Page{
 
     private static $_instance = [];
@@ -191,7 +190,6 @@ class Page{
 		return 0;
 	}
 
-	
 	private function getUri($query) {
         [$url] = explode("?", $_SERVER['REQUEST_URI']);
 
@@ -205,7 +203,7 @@ class Page{
                 foreach($arrs as $k => $v){
                     //GET 覆盖预定义变量
                     if(isset($_GET[ $k ]) ){
-                        $arrs[$k] = Str::htmlEncode( trim($_GET[$k]) );
+                        $arrs[$k] = VipkwdStr::htmlEncode( trim($_GET[$k]) );
                     }else{
                         //如果预定义变量 为空，则丢弃参数
                         if($v == ""){

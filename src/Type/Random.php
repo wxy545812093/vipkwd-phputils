@@ -13,17 +13,17 @@ namespace Vipkwd\Utils\Type;
 use Vipkwd\Utils\Tools;
 use \Vipkwd\Utils\Libs\Random\PersonName;
 use \Vipkwd\Utils\Libs\Random\Payment;
-
+use \Exception;
 class Random extends Payment{
 
     /**
      * 构建一个随机浮点数
      * 
-     * -e.g: phpunit("Random::float");
-     * -e.g: phpunit("Random::float",[0,5,0]);
-     * -e.g: phpunit("Random::float",[0,5,1]);
-     * -e.g: phpunit("Random::float",[0,5,4]);
-     * -e.g: phpunit("Random::float",[0,5,6]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::float");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::float",[0,5,0]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::float",[0,5,1]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::float",[0,5,4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::float",[0,5,6]);
      * 
      * @param integer $min
      * @param integer $max
@@ -51,10 +51,10 @@ class Random extends Payment{
     /**
      * 获取随机的时间
      * 
-     * -e.g: phpunit("Random::date");
-     * -e.g: phpunit("Random::date", ["Y-m-d H:i:s"]);
-     * -e.g: phpunit("Random::date", ["Y-m-d H:i"]);
-     * -e.g: phpunit("Random::date", ["Y/m/d H:i:s"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::date");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::date", ["Y-m-d H:i:s"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::date", ["Y-m-d H:i"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::date", ["Y/m/d H:i:s"]);
      * 
      * @param string $format PHP的时间日期格式化字符
      * @return false|string
@@ -66,9 +66,9 @@ class Random extends Payment{
     /**
      * 随机构建IPv4地址
      * 
-     * -e.g: phpunit("Random::ipv4");
-     * -e.g: phpunit("Random::ipv4");
-     * -e.g: phpunit("Random::ipv4", [3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv4");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv4");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv4", [3]);
      * 
      * @return string|array
      */
@@ -96,13 +96,13 @@ class Random extends Payment{
     /**
      * 随机构建内网ipv4
      *
-     * -e.g: phpunit("Random::localIpv4");
-     * -e.g: phpunit("Random::localIpv4");
-     * -e.g: phpunit("Random::localIpv4",[null]);
-     * -e.g: phpunit("Random::localIpv4",[10]);
-     * -e.g: phpunit("Random::localIpv4",[192]);
-     * -e.g: phpunit("Random::localIpv4",[192]);
-     * -e.g: phpunit("Random::localIpv4",[192, 10]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4",[null]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4",[10]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4",[192]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4",[192]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::localIpv4",[192, 10]);
      * 
      * @param integer|null $point <null> [10|192|null]
      * @param integer $size <1>
@@ -123,9 +123,9 @@ class Random extends Payment{
     /**
      * 随机构建IPv6地址
      *
-     * -e.g: phpunit("Random::ipv6");
-     * -e.g: phpunit("Random::ipv6");
-     * -e.g: phpunit("Random::ipv6", [3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv6");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv6");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ipv6", [3]);
      * 
      * @param integer $size <1>
      * @return string|array
@@ -142,8 +142,8 @@ class Random extends Payment{
     /**
      * 随机生成一个 URL 协议
      * 
-     * -e.g: phpunit("Random::protocol");
-     * -e.g: phpunit("Random::protocol");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::protocol");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::protocol");
      * 
      * @return string
      */
@@ -156,8 +156,8 @@ class Random extends Payment{
     /**
      * 随机生成一个顶级域名
      * 
-     * -e.g: phpunit("Random::tld");
-     * -e.g: phpunit("Random::tld");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::tld");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::tld");
      * 
      * @return string
      */
@@ -179,9 +179,9 @@ class Random extends Payment{
     /**
      * 获取一个随机的域名
      * 
-     * -e.g: phpunit("Random::domain");
-     * -e.g: phpunit("Random::domain");
-     * -e.g: phpunit("Random::domain", [3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::domain");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::domain");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::domain", [3]);
      * 
      * @param integer $size <1>
      * @return string
@@ -196,11 +196,11 @@ class Random extends Payment{
     /**
      * 随机生成一个URL
      * 
-     * -e.g: phpunit("Random::url");
-     * -e.g: phpunit("Random::url");
-     * -e.g: phpunit("Random::url",["http"]);
-     * -e.g: phpunit("Random::url",["https"]);
-     * -e.g: phpunit("Random::url",["https", 3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::url");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::url");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::url",["http"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::url",["https"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::url",["https", 3]);
      * 
      * @param string $protocol <""> 协议名称
      * @param integer $size <1>
@@ -216,11 +216,11 @@ class Random extends Payment{
     /**
      * 随机生成一个邮箱地址
      * 
-     * -e.g: phpunit("Random::email");
-     * -e.g: phpunit("Random::email");
-     * -e.g: phpunit("Random::email",['baidu.com']);
-     * -e.g: phpunit("Random::email",['baidu.com', 3]);
-     * -e.g: phpunit("Random::email",['', 3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::email");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::email");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::email",['baidu.com']);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::email",['baidu.com', 3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::email",['', 3]);
      * 
      * @param string $domain <""> 可以指定邮箱域名
      * @param integer $size <1>
@@ -237,9 +237,9 @@ class Random extends Payment{
     /**
      * 大陆手机号
      * 
-     * -e.g: phpunit("Random::mobilePhone");
-     * -e.g: phpunit("Random::mobilePhone");
-     * -e.g: phpunit("Random::mobilePhone",[3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::mobilePhone");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::mobilePhone");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::mobilePhone",[3]);
      * 
      * @param integer $size <1>
      * @return string|array
@@ -255,9 +255,9 @@ class Random extends Payment{
     /**
      * 大陆身份证号码
      * 
-     * -e.g: phpunit("Random::idcard");
-     * -e.g: phpunit("Random::idcard");
-     * -e.g: phpunit("Random::idcard",[2, true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::idcard");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::idcard");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::idcard",[2, true]);
      * 
      * @param integer $size <1> 生成个数
      * @param boolean $valid <false> 验证格式
@@ -278,9 +278,9 @@ class Random extends Payment{
     /**
      * 生成密码
      * 
-     * -e.g: phpunit("Random::password");
-     * -e.g: phpunit("Random::password", [15]);
-     * -e.g: phpunit("Random::password", [14, false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::password");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::password", [15]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::password", [14, false]);
      * 
      * @param integer $len <16> 生成的密码长度
      * @param boolean $specialChar <true> 是否包含特殊字符
@@ -300,9 +300,9 @@ class Random extends Payment{
     /**
      * 简体字
      * 
-     * -e.g: phpunit("Random::zhCNChar");
-     * -e.g: phpunit("Random::zhCNChar",[4]);
-     * -e.g: phpunit("Random::zhCNChar",[2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::zhCNChar");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::zhCNChar",[4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::zhCNChar",[2]);
      * 
      * @param int $len <1>
      * @return string
@@ -321,13 +321,13 @@ class Random extends Payment{
     /**
      * 验证码
      *
-     * -e.g: phpunit("Random::code");
-     * -e.g: phpunit("Random::code");
-     * -e.g: phpunit("Random::code",[1]);
-     * -e.g: phpunit("Random::code",[4]);
-     * -e.g: phpunit("Random::code",[5]);
-     * -e.g: phpunit("Random::code",[5,true]);
-     * -e.g: phpunit("Random::code",[5,true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code",[1]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code",[4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code",[5]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code",[5,true]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::code",[5,true]);
      * 
      * @param integer $len <6>
      * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
@@ -348,10 +348,10 @@ class Random extends Payment{
     /**
      * 马甲昵称
      *
-     * -e.g: phpunit("Random::nickName");
-     * -e.g: phpunit("Random::nickName");
-     * -e.g: phpunit("Random::nickName");
-     * -e.g: phpunit("Random::nickName",[2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::nickName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::nickName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::nickName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::nickName",[2]);
      * 
      * @param integer $len <1>
      * @return string|array
@@ -365,9 +365,9 @@ class Random extends Payment{
     /**
      * 女性 姓名
      *
-     * -e.g: phpunit("Random::femaleName");
-     * -e.g: phpunit("Random::femaleName",[false]);
-     * -e.g: phpunit("Random::femaleName",[false, 3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::femaleName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::femaleName",[false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::femaleName",[false, 3]);
      * 
      * @param boolean $surName <true> 是不包含复姓，如“上官” “司马”
      * @param integer $len <1>
@@ -382,9 +382,9 @@ class Random extends Payment{
     /**
      * 男性 姓名
      * 
-     * -e.g: phpunit("Random::maleName");
-     * -e.g: phpunit("Random::maleName",[false]);
-     * -e.g: phpunit("Random::maleName",[false,2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::maleName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::maleName",[false]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::maleName",[false,2]);
      *
      * @param boolean $surName <true> 是否包含复姓，如“上官” “司马”
      * @param integer $len <1>
@@ -399,9 +399,9 @@ class Random extends Payment{
     /**
      * MAC地址
      * 
-     * -e.g: phpunit("Random::macAddress");
-     * -e.g: phpunit("Random::macAddress",["+"]);
-     * -e.g: phpunit("Random::macAddress",["-", 2]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::macAddress");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::macAddress",["+"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::macAddress",["-", 2]);
      *
      * @param string $sep 分隔符
      * @param integer $len <1>
@@ -426,10 +426,10 @@ class Random extends Payment{
     /**
      * 布尔值
      *
-     * -e.g: phpunit("Random::boolean");
-     * -e.g: phpunit("Random::boolean");
-     * -e.g: phpunit("Random::boolean");
-     * -e.g: phpunit("Random::boolean");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::boolean");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::boolean");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::boolean");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::boolean");
      * 
      * @return boolean
      */
@@ -440,8 +440,8 @@ class Random extends Payment{
     /**
      * md5
      *
-     * -e.g: phpunit("Random::md5");
-     * -e.g: phpunit("Random::md5");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::md5");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::md5");
      * 
      * @return string
      */
@@ -452,8 +452,8 @@ class Random extends Payment{
     /**
      * sha1
      *
-     * -e.g: phpunit("Random::sha1");
-     * -e.g: phpunit("Random::sha1");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::sha1");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::sha1");
      * 
      * @return string
      */
@@ -464,8 +464,8 @@ class Random extends Payment{
     /**
      * sha256
      *
-     * -e.g: phpunit("Random::sha256");
-     * -e.g: phpunit("Random::sha256");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::sha256");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::sha256");
      * 
      * @return string
      */
@@ -476,8 +476,8 @@ class Random extends Payment{
     /**
      * 币种
      *
-     * -e.g: phpunit("Random::currencyCode");
-     * -e.g: phpunit("Random::currencyCode");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::currencyCode");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::currencyCode");
      * 
      * @link https://en.wikipedia.org/wiki/ISO_4217
      *
@@ -513,8 +513,8 @@ class Random extends Payment{
     /**
      * emoji表情
      *
-     * -e.g: phpunit("Random::emoji");
-     * -e.g: phpunit("Random::emoji");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::emoji");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::emoji");
      * 
      * @link https://en.wikipedia.org/wiki/Emoji#Unicode_blocks
      * 
@@ -543,8 +543,8 @@ class Random extends Payment{
     /**
      * 维度
      *
-     * -e.g: phpunit("Random::latitude");
-     * -e.g: phpunit("Random::latitude");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::latitude");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::latitude");
      * 
      * @param integer $min
      * @param integer $max
@@ -557,8 +557,8 @@ class Random extends Payment{
     /**
      * 经度
      *
-     * -e.g: phpunit("Random::longitude");
-     * -e.g: phpunit("Random::longitude");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::longitude");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::longitude");
      * 
      * @param integer $min
      * @param integer $max
@@ -571,9 +571,9 @@ class Random extends Payment{
     /**
      * 英文字符
      *
-     * -e.g: phpunit("Random::letter");
-     * -e.g: phpunit("Random::letter",[4]);
-     * -e.g: phpunit("Random::letter",[40]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::letter");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::letter",[4]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::letter",[40]);
      * 
      * @param integer $len <1>
      * @return string
@@ -587,9 +587,9 @@ class Random extends Payment{
     /**
      * Ascii字符
      *
-     * -e.g: phpunit("Random::ascii");
-     * -e.g: phpunit("Random::ascii",[3]);
-     * -e.g: phpunit("Random::ascii",[6]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ascii");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ascii",[3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::ascii",[6]);
      * 
      * @param integer $len <1>
      * @return string
@@ -603,9 +603,9 @@ class Random extends Payment{
     /**
      * 数字
      *
-     * -e.g: phpunit("Random::digit");
-     * -e.g: phpunit("Random::digit",[3]);
-     * -e.g: phpunit("Random::digit",[6]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::digit");
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::digit",[3]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Random::digit",[6]);
      * 
      * @param integer $len <1>
      * @return string

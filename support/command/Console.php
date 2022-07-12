@@ -19,7 +19,7 @@ use Symfony\Component\Console\Input\{
 	InputArgument,
 	InputInterface
 };
-use \Vipkwd\Utils\Type\Str;
+use Vipkwd\Utils\Type\Str as VipkwdStr;
 use \Vipkwd\Utils\Dev;
 // use \Exception;
 
@@ -149,7 +149,7 @@ class Console extends Command
 		$checker = function ($line) use (&$widths) {
 			foreach ($widths as $field => $width) {
 				$txt = str_replace(['<info>', '</info>'], "", strval($line[$field]));
-				$len = Str::strLenPlus($txt);
+				$len = VipkwdStr::strLenPlus($txt);
 				if ($len > $width) {
 					$widths[$field] = $len;
 				}
@@ -450,7 +450,7 @@ class Console extends Command
 				return $method->name;
 			}, $methods);
 
-			$alternative = Str::getSuggestion($methods, self::$showMethod);
+			$alternative = VipkwdStr::getSuggestion($methods, self::$showMethod);
 
 			$style = new SymfonyStyle(self::$_input, self::$_output);
 			$style->block(sprintf("%s::%s() method does not exist or does not expose access(public) rights..", $className, self::$showMethod), null, 'error');
@@ -550,7 +550,7 @@ class Console extends Command
 			$septer = " ";
 			// $len -= 2;
 		}
-		$txt = Str::strPadPlus($txt, $len, $septer);
+		$txt = VipkwdStr::strPadPlus($txt, $len, $septer);
 		if ($setColor === true) {
 			//$txt = str_pad($txt, $len, $septer, STR_PAD_BOTH);
 			$txt = "<info>" . $txt . "</info>";

@@ -15,11 +15,11 @@ class DateTime {
     /**
 	 * 转时间戳为xxx秒前
 	 * 
-     * -e.g: phpunit("DateTime::toAgo", ["-100 seconds"]);
-     * -e.g: phpunit("DateTime::toAgo", ["-100 hours"]);
-     * -e.g: phpunit("DateTime::toAgo", ["+100 hours"]);
-     * -e.g: phpunit("DateTime::toAgo", ["35 days"]);
-     * -e.g: phpunit("DateTime::toAgo", ["-35 days"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::toAgo", ["-100 seconds"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::toAgo", ["-100 hours"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::toAgo", ["+100 hours"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::toAgo", ["35 days"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::toAgo", ["-35 days"]);
      * 
      * @param int $timestamp
      * @return string
@@ -52,8 +52,8 @@ class DateTime {
     /**
      * 返回时间
      *
-     * -e.g: phpunit("DateTime::time");
-     * -e.g: phpunit("DateTime::time",["-1 hours"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::time");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::time",["-1 hours"]);
      * 
      * @param string $format
      * @param string $max
@@ -66,7 +66,7 @@ class DateTime {
     /**
      * 月份英文表示
      *
-     * -e.g: phpunit("DateTime::monthName");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::monthName");
      * 
      * @param string $date
      * @return string
@@ -78,7 +78,7 @@ class DateTime {
     /**
      * 日期
      *
-     * -e.g: phpunit("DateTime::day");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::day");
      * 
      * @param string $max
      * @return string
@@ -90,7 +90,7 @@ class DateTime {
     /**
      * 通用格式化接口
      *
-     * -e.g: phpunit("DateTime::date");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::date");
      * 
      * @param string $format <'Y-m-d'>
      * @param string $max
@@ -103,7 +103,7 @@ class DateTime {
     /**
      * 月份数字 "xx"
      *
-     * -e.g: phpunit("DateTime::month");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::month");
      * 
      * @param string $max
      * @return string
@@ -115,7 +115,7 @@ class DateTime {
     /**
      * 年份数字 "xxxx"
      *
-     * -e.g: phpunit("DateTime::year");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::year");
      * 
      * @param string $date
      * @return string
@@ -127,7 +127,7 @@ class DateTime {
     /**
      * 星期
      *
-     * -e.g: phpunit("DateTime::week");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::week");
      * 
      * @param string $max
      * @return string
@@ -139,10 +139,10 @@ class DateTime {
     /**
      * 获取随机 年-月-日
      * 
-     * -e.g: phpunit("DateTime::randomDate");
-     * -e.g: phpunit("DateTime::randomDate", ["H:i:s"]);
-     * -e.g: phpunit("DateTime::randomDate", ["Y-m-d H:i"]);
-     * -e.g: phpunit("DateTime::randomDate", ["Y/m/d H:i:s"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::randomDate");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::randomDate", ["H:i:s"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::randomDate", ["Y-m-d H:i"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::randomDate", ["Y/m/d H:i:s"]);
      * 
      * @param string $format PHP的时间日期格式化字符
      * @param integer $ago <"-50"> 过去50年里随机取一个(单位/时间)
@@ -158,12 +158,12 @@ class DateTime {
      *
      * 日期格式错误返回 false;
      * 
-     * -e.g: phpunit("DateTime::diff", ["2018-12-01","2018-11-05"]);
-     * -e.g: phpunit("DateTime::diff", ["2018-11-31","2018-11-05"]); // <-- 溢出日期自动修复;
-     * -e.g: phpunit("DateTime::diff", ["2018-12-00","2018-11-05"]); // <-- 溢出日期自动修复;
-     * -e.g: phpunit("DateTime::diff", ["2018-11-30","2018-11-05"]);
-     * -e.g: phpunit("DateTime::diff", ["2018-11-05","2018-11-05"]);
-     * -e.g: phpunit("DateTime::diff", ["2018-10-31","2018-11-05"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-12-01","2018-11-05"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-11-31","2018-11-05"]); // <-- 溢出日期自动修复;
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-12-00","2018-11-05"]); // <-- 溢出日期自动修复;
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-11-30","2018-11-05"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-11-05","2018-11-05"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::diff", ["2018-10-31","2018-11-05"]);
      * 
      * @param string $date1 Ymd格式 ，xxxx-xx-xx 或不带分隔符的 xxxxxxxx
      * @param string $date2 Ymd格式 ，xxxx-xx-xx 或不带分隔符的 xxxxxxxx
@@ -182,12 +182,12 @@ class DateTime {
     /**
      * 清理日期中的无效字符
      *
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001-22-03"]);
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001-12-33"]);
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001/12/33"]);
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001年12月33日"]);
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001年2月3日"]);
-     * -e.g: phpunit("DateTime::cleanInvalidChar", ["2001年12月3日"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001-22-03"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001-12-33"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001/12/33"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001年12月33日"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001年2月3日"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::cleanInvalidChar", ["2001年12月3日"]);
      * 
      * @param string $date
      * @return string
@@ -208,13 +208,13 @@ class DateTime {
     /**
      * 检测是否为合法日期
      *
-     * -e.g: phpunit("DateTime::isDate", ["+1 days"]);
-     * -e.g: phpunit("DateTime::isDate", ["now"]);
-     * -e.g: phpunit("DateTime::isDate", ["2002"]);
-     * -e.g: phpunit("DateTime::isDate", ["20010203"]);
-     * -e.g: phpunit("DateTime::isDate", ["2001-02-03"]);
-     * -e.g: phpunit("DateTime::isDate", ["2001-22-03"]);
-     * -e.g: phpunit("DateTime::isDate", ["2001-12-33"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["+1 days"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["now"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["2002"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["20010203"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["2001-02-03"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["2001-22-03"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::isDate", ["2001-12-33"]);
      * 
      * @param string $date
      * @return boolean|string
@@ -232,7 +232,7 @@ class DateTime {
     /**
      * 日期返回 "1994-02-26T00:00:00+08:00"
      *
-     * -e.g: phpunit("DateTime::iso8601",["2022-02-23"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::iso8601",["2022-02-23"]);
      * 
      * @param string $date
      * @return string
@@ -245,9 +245,9 @@ class DateTime {
     /**
      * 区间内随机时间转DateTime对象
      *
-     * -e.g: phpunit("DateTime::dateTimeBetween");
-     * -e.g: phpunit("DateTime::dateTimeBetween",["-2 months"]);
-     * -e.g: phpunit("DateTime::dateTimeBetween",["-2 months", "-1 months"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeBetween");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeBetween",["-2 months"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeBetween",["-2 months", "-1 months"]);
      * 
      * @param string $startDate <'-30 years'> 
      * @param string $endDate <'now'>
@@ -269,9 +269,9 @@ class DateTime {
     /**
      * 时间转 DateTime对象
      *
-     * -e.g: phpunit("DateTime::dateTimeInstance");
-     * -e.g: phpunit("DateTime::dateTimeInstance",["-2 months"]);
-     * -e.g: phpunit("DateTime::dateTimeInstance",["-2 months", 'Asia/Seoul' ]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeInstance");
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeInstance",["-2 months"]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\DateTime::dateTimeInstance",["-2 months", 'Asia/Seoul' ]);
      * 
      * @param string $max
      * @param string|null $timezone

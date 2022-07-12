@@ -35,12 +35,12 @@ class DBdic{
 	public $html = '';
 	public $exportTables = array(); // 要导出的表
     public $menu = array(); //左侧表名的菜单
-    
+
 	public static function ini(string $host, string $dbname, string $user, string $pwd):self
 	{
 		return new self($host, $dbname, $user, $pwd);
 	}
-	
+
     private function __construct($host, $dbname, $user, $pwd)
     {
         // 配置数据库
@@ -49,7 +49,7 @@ class DBdic{
         $this->database['DB_USER'] = $user;
         $this->database['DB_PWD'] = $pwd;
     }
-	
+
 	private function build():self
 	{
 		//链接MySQL
@@ -57,30 +57,28 @@ class DBdic{
         $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 2); //超时2s
         $mysqli->options(MYSQLI_INIT_COMMAND, "set names utf8mb4;");
         $mysqli->real_connect($this->database['DB_HOST'], $this->database['DB_USER'], $this->database['DB_PWD'], $this->database['DB_NAME']) or die("Mysql connect is error.");
-    
+
         // 取得所有表名
         $rs = $mysqli->query('show tables');
         $arrTableName = array_column($rs->fetch_all(), $value=0);
 
         // 取得所有表信息
         foreach ($arrTableName as $name) {
-			
+
             $isExport = $this->isNeedExport($name);
-			
 			if (!$isExport) {
 			    continue;
             }
-        
             //表注释
             $sql = "select * from information_schema.tables where table_schema = '{$this->database['DB_NAME']}' and table_name = '{$name}' "; //查询表信息
             $rs = $mysqli->query($sql);
             $arrTableInfo = $rs->fetch_assoc();
-        
+
             //各字段信息
             $sql = "select * from information_schema.columns where table_schema ='{$this->database['DB_NAME']}' and table_name = '{$name}' "; //查询字段信息
             $rs = $mysqli->query($sql);
             $arrColumnInfo = $rs->fetch_all(MYSQLI_ASSOC);
-        
+
             //索引信息
             $sql = "show index from {$name}";
             $rs = $mysqli->query($sql);
@@ -89,27 +87,26 @@ class DBdic{
 			} else {
 				$arrIndexInfo = array();
 			}
-            
-        
+
             $this->tables[] = array(
                 'TABLE' => $arrTableInfo,
                 'COLUMN' => $arrColumnInfo,
                 'INDEX' => $this->getIndexInfo($arrIndexInfo)
             );
         }
-    
+
         //组装HTML
         $html = '';
         foreach($this->tables as $k => $v)
         {
             //左侧菜单信息
             $this->menu[$k] = $v['TABLE']['TABLE_NAME'];
-            
+
             //主要内容
             $html .= '<table align="center">';
             $html .= '<caption id="menu_'.$k.'"><h3>' . $v['TABLE']['TABLE_NAME'] . ' ' . $v['TABLE']['TABLE_COMMENT'] . '</h3></caption>';
             $html .= '<tbody><tr><th>字段名</th><th>数据类型</th><th>默认值</th><th>允许非空</th><th>索引/自增</th><th>备注(字段数: '. count($v['COLUMN']).')</th></tr>';
-        
+
             foreach ($v['COLUMN'] AS $f) {
                 $html .= '<tr>'.PHP_EOL;
                 $html .= '<td class="c1">' . $f['COLUMN_NAME']      . '</td>'.PHP_EOL;
@@ -120,7 +117,7 @@ class DBdic{
                 $html .= '<td class="c6">' . $f['COLUMN_COMMENT']   . '</td>'.PHP_EOL;
                 $html .= '</tr>'.PHP_EOL;
             }
-        
+
 			if (!empty($v['INDEX'])) {
 				$html .= '<tr><th colspan="2">索引名</th><th colspan="4">索引顺序</th></tr>';
 				foreach ($v['INDEX'] as $indexName => $indexContent) {
@@ -130,15 +127,14 @@ class DBdic{
 					$html .= '</tr>'.PHP_EOL;
 				}
 			}
-            
+
             $html .= '</tbody></table><br>'.PHP_EOL;
         }
         $this->htmlTable = $html;
-		
+
 		return $this;
 	}
-    
-	
+
 	/**
      * 设置需要导出的表, 参数为单个表
      *
@@ -150,8 +146,7 @@ class DBdic{
 		$this->exportTables[] = $tableName;
 		return $this;
 	}
-	
-	
+
 	/**
      * 设置需要导出的表, 参数为数组
      *
@@ -163,7 +158,7 @@ class DBdic{
 		$this->exportTables = $arrTableName;
 		return $this;
 	}
-	
+
     /**
      * 判断当前表是否要导出
      *
@@ -174,7 +169,7 @@ class DBdic{
     {
         $isExport = TRUE;
         if (!empty($this->exportTables)) {
-        
+
             if (in_array($tname, $this->exportTables)) {
                 //当前表在导出列表中
                 $isExport = TRUE;
@@ -182,7 +177,7 @@ class DBdic{
                 $isExport = FALSE;
                 //正则匹配
                 foreach ($this->exportTables as $tableName) {
-                
+
                     if (strpos($tableName, '*') !== FALSE ||
                         strpos($tableName, '+') !== FALSE ||
                         strpos($tableName, '\\') !== FALSE ||
@@ -200,7 +195,7 @@ class DBdic{
         }
         return $isExport;
     }
-	
+
 	/**
      * 整合单个表的所有索引(归纳复合索引)
      *
@@ -215,10 +210,10 @@ class DBdic{
             // $index[$v['Key_name']][] = $v['Seq_in_index'].': '.$v['Column_name'].$unique;
             $index[$v['Key_name']][] = $v['Column_name'].$unique;
         }
-        
+
         return $index;
     }
-    
+
     /**
      * 获取HTML菜单(表名列表)
      *
@@ -232,10 +227,10 @@ class DBdic{
             $html .= '<li><a href="#'.$id.'">'.$v.'</a></li>';
         }
         $html .= '</ul></div>';
-        
+
         return $html;
     }
-    
+
     /**
      * 输出到浏览器, 左侧有目录
      *
@@ -267,11 +262,11 @@ class DBdic{
         $html .= $this->getHtmlMenu();
         $html .= '<div id="content">'.$this->htmlTable.'</div>';
         $html .= '</body></html>';
-        
+
         echo $html;
         // return $this;
     }
-    
+
     /**
      * 输出到浏览器, 表格宽度用百分比
      *
@@ -280,7 +275,7 @@ class DBdic{
     public function outForBrowser():string
     {
 		$this->build();
-		
+
 		header("Content-type:text/html;charset=utf-8");
         $html = '<html>
               <meta charset="utf-8">
@@ -298,12 +293,12 @@ class DBdic{
         $html .= '<p style="text-align:center;margin:20px auto;">生成时间：' . date('Y-m-d H:i:s') . '  总共：' . count($this->tables) . '个数据表</p>';
         $html .= $this->htmlTable;
         $html .= '</body></html>';
-		
+
 		$this->html = $html;
 		echo $html;
 		// return $this;
     }
-    
+
     /**
      * 输出到word文档(定宽720px)
      *
@@ -312,15 +307,15 @@ class DBdic{
     public function outForWord():string
     {
 		$this->build();
-		
+
         /* 下载word */
 		header("Content-type:text/html;charset=utf-8");
-		header("Content-type: application/octet-stream");  
-		header("Accept-Ranges: bytes");  
+		header("Content-type: application/octet-stream");
+		header("Accept-Ranges: bytes");
         header("Content-type:application/vnd.ms-word" );
 		header('Cache-Control: max-age=0');
         header("Content-Disposition:attachment;filename={$this->database['DB_NAME']}数据字典.docx" );
-    
+
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 				<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head>
               <title>'.$this->database['DB_NAME'].'数据字典</title>
@@ -345,12 +340,12 @@ class DBdic{
         $html .= '<p style="text-align:center;margin:20px auto;">生成时间：' . date('Y-m-d H:i:s') . '  总共：' . count($this->tables) . '个数据表</p>';
         $html .= $this->htmlTable;
         $html .= '</body></html>';
-		
+
 		$this->html = $html;
 		echo $html;
 		// return $this;
     }
-	
+
 	private function out()
 	{
 		// echo $this->html;

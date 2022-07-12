@@ -71,9 +71,9 @@ class FFmpeg
         $ret['basic'] = self::fileBaseInfo($filepath);
 
         // Metadata:
-        // major_brand     : qt  
+        // major_brand     : qt
         // minor_version   : 0
-        // compatible_brands: qt  
+        // compatible_brands: qt
         // creation_time   : 2020-08-08T07:04:03.000000Z
         // com.apple.quicktime.location.ISO6709: +22.7832+114.4695+032.000/
         // com.apple.quicktime.make: Apple
@@ -142,29 +142,29 @@ class FFmpeg
      *                  -- file 媒体文件绝对地址
      *                  -- degrees <180> 角度 [0 | 90 | 18 | 270 | 360]
      *                  -- direction 旋转方向 l:向左 r: 向右
-     * 
+     *
      *                  -- output_dir <"./"> 输出目录（建议指定绝对路径）
      *                  -- ext <null> 输入文件格式  默认保留原始格式
-     * 
+     *
      * @return array
      */
     public function rotate(array $options): array
     {
         /*
           #逆时针旋转画面90度水平翻转
-          ffmpeg -i test.mp4 -vf "transpose=0" out.mp4 
+          ffmpeg -i test.mp4 -vf "transpose=0" out.mp4
 
           #顺时针旋转画面90度
-          ffmpeg -i test.mp4 -vf "transpose=1" out.mp4 
+          ffmpeg -i test.mp4 -vf "transpose=1" out.mp4
 
           #逆时针旋转画面90度
-          ffmpeg -i test.mp4 -vf "transpose=2" out.mp4 
+          ffmpeg -i test.mp4 -vf "transpose=2" out.mp4
 
           #顺时针旋转画面90度再水平翻转
-          ffmpeg -i test.mp4 -vf "transpose=3" out.mp4 
+          ffmpeg -i test.mp4 -vf "transpose=3" out.mp4
 
           #水平翻转视频画面
-          ffmpeg -i test.mp4 -vf hflip out.mp4 
+          ffmpeg -i test.mp4 -vf hflip out.mp4
 
           #垂直翻转视频画面
           ffmpeg -i test.mp4 -vf vflip out.mp4
@@ -223,11 +223,11 @@ class FFmpeg
      *                  -- file {string} 媒体文件绝对地址
      *                  -- start {integer|string} 开始位置 (1、可以 以秒为单位计数： 80；2、可以是 H:i:s 格式 00:01:20)
      *                  -- end {integer|string}  结束位置 (1、可以 以秒为单位计数： 80；2、可以是 H:i:s 格式 00:01:20)
-     * 
+     *
      *                  -- ext {string} <null> 输入文件格式  默认保留原始格式
      *                  -- output_dir {string} <"./"> 输出目录（建议指定绝对路径）
      *                  -- save_name {string} <null> 输出媒体文件名称(不含扩展名)
-     * 
+     *
      * @return array
      */
     public function cut(array $options): array
@@ -260,7 +260,7 @@ class FFmpeg
      *                  -- rate <1> 每秒帧数
      *                  -- vcodec <mpeg4>
      *                  -- file <""> 图片列表正则 "/Users/Pictures/2018/A7_%05d.JPG"
-     * 
+     *
      * @return array
      */
     public function mergeImage(array $options)
@@ -315,12 +315,12 @@ class FFmpeg
 
     /**
      * 拼接 (如 ts媒体)
-     * 
+     *
      * 适用于视频切割产生的分段，被合并的视频必须是相同的参数
      *
      * @param array $options
      *                  -- files {array} 媒体文件列表绝对地址 一维数组
-     * 
+     *
      *                  -- ext {string} <null> 输入文件格式  默认保留原始格式
      *                  -- output_dir {string} <"./"> 输出目录（建议指定绝对路径)
      *                  -- save_name {string} <null> 输出媒体文件名称(不含扩展名)
@@ -362,7 +362,7 @@ class FFmpeg
 
     /**
      * 拼接/同时显示
-     * 
+     *
      * 适用于DY视频的同屏幕
      *
      * @param array $inputFileList 媒体文件列表绝对地址 一维数组
@@ -565,11 +565,11 @@ class FFmpeg
      * @param array $options
      *                  -- file {string} 媒体文件列表绝对地址
      *                  -- scale {string} 目标尺寸 （固定缩放到: 320x240 、320:240 ； 自适应缩放到: 320: 、320:-1
-     * 
+     *
      *                  -- ext {string} <null> 输入文件格式  默认保留原始格式
      *                  -- output_dir {string} <"./"> 输出目录（建议指定绝对路径)
      *                  -- save_name {string} <null> 输出媒体文件名称(不含扩展名)
-     * 
+     *
      * @return array
      */
     public function scaleResize(array $options): array
@@ -612,17 +612,17 @@ class FFmpeg
      * https://www.cnblogs.com/yongfengnice/p/7095846.html ffmpeg调整缩放裁剪视频的基础知识
      * https://www.cnblogs.com/yongfengnice/p/7099172.html ffmpeg填充、翻动、旋转视频的基础知识
      * https://blog.csdn.net/ternence_hsu/article/details/109705234
-     * 
+     *
      * @param array $options
      *                  -- file {string} 媒体文件列表绝对地址
      *                  -- scale {string} 目标尺寸 （固定缩放到: 320x240 、320:240 ； 自适应缩放到: 320: 、320:-1
      *                  -- axis {string} <0,0> 裁剪的左上边坐标
      *                  -- seconds {integer} <null> 裁剪时长（秒数） 默认全部时长
-     * 
+     *
      *                  -- ext {string} <null> 输入文件格式  默认保留原始格式
      *                  -- output_dir {string} <"./"> 输出目录（建议指定绝对路径)
      *                  -- save_name {string} <null> 输出媒体文件名称(不含扩展名)
-     * 
+     *
      * @return array
      */
     public function cropPlus(array $options): array
@@ -659,7 +659,7 @@ class FFmpeg
      *
      * @param array $options
      *                  -- position"  <lt> 水印位置 // lt/rt/rb/lb/lr/rl
-     *                  -- file <''> 媒体文件 
+     *                  -- file <''> 媒体文件
      *                  -- image <''> 水印文件
      *                  -- output_dir <''> 输出目录 默认输出到媒体文件目录
      *                  -- save_name <''> 默认随机名
@@ -806,7 +806,7 @@ class FFmpeg
     {
         // ffmpeg –i test.avi –r 1 –f image2 image-%3d.jpeg        //提取图片
         // ffmpeg -i input.mp4 -ss 00:00:20 -t 10 -r 1 -q:v 2 -f image2 pic-%03d.jpeg
-        // -ss 表示开始时间 -t表示共要多少时间。 
+        // -ss 表示开始时间 -t表示共要多少时间。
         // 如此，ffmpeg会从input.mp4的第20s时间开始，往下10s，即20~30s这10秒钟之间，每隔1s就抓一帧，总共会抓10帧
         // pic-001.jpeg
         // ...
@@ -1120,20 +1120,20 @@ class FFmpeg
 
     // 常用参数说明：
     //   主要参数：
-    //     -i 设定输入流 
-    //     -f 设定输出格式 
+    //     -i 设定输入流
+    //     -f 设定输出格式
     //     -ss 开始时间
-    //   视频参数： 
-    //     -b 设定视频流量，默认为200Kbit/s 
-    //     -r 设定帧速率，默认为25 
-    //     -s 设定画面的宽与高 
-    //     -aspect 设定画面的比例 
-    //     -vn 不处理视频 
+    //   视频参数：
+    //     -b 设定视频流量，默认为200Kbit/s
+    //     -r 设定帧速率，默认为25
+    //     -s 设定画面的宽与高
+    //     -aspect 设定画面的比例
+    //     -vn 不处理视频
     //     -vcodec 设定视频编解码器，未设定时则使用与输入流相同的编解码器
-    //   音频参数： 
-    //     -ar 设定采样率 
-    //     -ac 设定声音的Channel数 
-    //     -acodec 设定声音编解码器，未设定时则使用与输入流相同的编解码器 
+    //   音频参数：
+    //     -ar 设定采样率
+    //     -ac 设定声音的Channel数
+    //     -acodec 设定声音编解码器，未设定时则使用与输入流相同的编解码器
     //     -an 不处理音频
 
     /**

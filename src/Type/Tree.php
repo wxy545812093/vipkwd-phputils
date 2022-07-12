@@ -2,7 +2,7 @@
 /**
  * @name 数据树
  * 无限分类树（支持子分类排序）
- * 
+ *
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
@@ -50,7 +50,7 @@ class Tree{
 
     /**
      * 一维数组转无限级分类
-     * 
+     *
      * -e.g: $list=[];
      * -e.g: $list[]=["id"=>1,    "pid"=>0,   "name"=>"中国大陆"];
      * -e.g: $list[]=["id"=>2,    "pid"=>1,   "name"=>"北京"];
@@ -59,14 +59,14 @@ class Tree{
      * -e.g: $list[]=["id"=>196,  "pid"=>22,  "name"=>"广州市"];
      * -e.g: $list[]=["id"=>1200, "pid"=>54,  "name"=>"海淀区"];
      * -e.g: $list[]=["id"=>3907, "pid"=>196, "name"=>"黄浦区"];
-     * -e.g: phpunit("Arr::toTree", [$list, "id", "pid", "child", 0]);
-     * 
+     * -e.g: phpunit("Vipkwd\Utils\Type\Arr::toTree", [$list, "id", "pid", "child", 0]);
+     *
      * @param array $list 归类的数组
      * @param string $pk <"id"> 父级ID
      * @param string $pid <"pid"> 父级PID
      * @param string $child <"child"> 子节点容器名称
      * @param string $rootPid <0> 顶级ID(pid)
-     * 
+     *
      * @return array
      */
     static function listToTree(array $list, string $pk = 'id', string $pid = 'pid', string $child = 'child', int $rootPid = 0): array{
@@ -96,7 +96,7 @@ class Tree{
 
     /**
      * 将层级数组遍历成一维数组
-     * 
+     *
      * @param array $list
      * @param int $level
      * @param string $title
