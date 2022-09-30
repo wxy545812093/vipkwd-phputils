@@ -22,7 +22,7 @@ class Gzhcommon
     private $mp_app_secret;
     private $request;
 
-    static const ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential';
+    const ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential';
 
     private function __construct(string $appid, string $app_secret)
     {

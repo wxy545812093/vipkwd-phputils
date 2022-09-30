@@ -70,7 +70,7 @@ class Base
     }
 
     //微信公众号CURL
-    static function curl($url, $type = 'get', $data = '', bool $responseArray = false)
+    static function curl($url, $type = 'get', $data = '', bool $responseRaw = false, bool $debug = false)
     {
         if (function_exists('curl_init')) {
             $ch = curl_init();
@@ -83,16 +83,23 @@ class Base
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
             }
             $output = curl_exec($ch);
+            if($debug){
+                $headerInfo = curl_getinfo($ch);
+            }
             curl_close($ch);
             //        if( curl_error($ch)){
             //            return curl_error($ch);
             //        }else{
             //返回数组
             //如果需要返回数组
-            if ($responseArray) {
+            if ($responseRaw) {
                 return $output;
             } else {
-                return json_decode($output, true);
+                $output = json_decode($output, true);
+                if(isset($headerInfo)){
+                    $output['_headerInfo'] = $headerInfo;
+                }
+                return $output;
             }
             //}
         }

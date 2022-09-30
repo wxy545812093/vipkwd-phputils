@@ -24,14 +24,14 @@ class Subscribe
 
     /**
      * 推送订阅模板消息给到授权微信用户
-     * 
+     *
      * @link https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html#3
      * @param string $user_gzh_openid 用户绑定的公众号OPEN_ID
      * @param string $template_id 订阅消息模板ID
      * @param array $data 具体匹配模板的数据 参考示例结构
      * @param array $miniprogram <[]> 跳转小程序配置 参考示例结构
      * @param string $url <''> 必须有ICP备案
-     * 
+     *
      * @return array
      */
     public function send(string $user_gzh_openid, string $template_id, array $data, string $url = '', array $miniprogram = [])
@@ -42,7 +42,7 @@ class Subscribe
             'content' => '',
             'color' => '#000000'
         ], $data);
-        
+
         if(empty($data['content']) || empty($user_gzh_openid) || empty($template_id) || empty($data['title'])){
             return ['code' => 1, '参数无效'];
         }
@@ -57,7 +57,8 @@ class Subscribe
                 'content' => [
                     'value' => trim($data['content']),
                     'color' => Color::colorHexFix($data['color']),
-                ]
+                ],
+                // ....
             ],
             'miniprogram' => $miniprogram,
             // 'miniprogram' => [
