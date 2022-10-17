@@ -134,9 +134,9 @@ trait Traits
 
     /**
      * 快速复用 公众ID、秘钥
-     * @param class $classMap  类映射 ...cloneWidth(Image::class)
+     * @param class $classMap  类映射 ...cloneWith(Image::class)
      */
-    public function cloneWidth($classMap){
+    public function cloneWith($classMap){
         return $classMap::instance($this->mp_appid, $this->mp_app_secret);
     }
 }
