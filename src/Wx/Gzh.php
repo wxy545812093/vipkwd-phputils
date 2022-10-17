@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @name 公众号
  * @author vipkwd <service@vipkwd.com>
@@ -12,7 +13,7 @@ namespace Vipkwd\Utils\Wx;
 use \Exception;
 use \Vipkwd\Utils\Wx\Gzhcommon;
 use Vipkwd\Utils\Http as vipkwdHttp;
-class Ghz{
+class Gzh {
 
     private $mp_appid;
     private $mp_app_secret;
@@ -27,7 +28,7 @@ class Ghz{
 
     /**
      * 秘钥实例化
-     * 
+     *
      * @param string $appid 公众号APPID
      * @param string $app_secret 公众号APP秘钥
      */
@@ -76,6 +77,6 @@ class Ghz{
      */
     public function follow(string $gzh_redirect_url){
         Gzhcommon::instance($this->mp_appid, $this->mp_app_secret)->baseAuth($gzh_redirect_url);
-    } 
+    }
 
 }

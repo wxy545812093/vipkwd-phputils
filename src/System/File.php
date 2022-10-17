@@ -280,7 +280,7 @@ class File
      * @param integer $pointLength <10> 小数点长度
      * @return string
      */
-    static public function bytesTo(int $size, int $pointLength = 10): string
+    static function bytesTo(int $size, int $pointLength = 10): string
     {
         $pos = 0;
         while ($size >= 1024) {
@@ -731,7 +731,6 @@ class File
             if (self::realpath($origin) !== self::realpath($target)) {
                 static::delete($target);
             }
-
             if (!@rename($origin, $target)) { // @ is escalated to exception
                 throw new \Exception(sprintf(
                     "Unable to rename file or directory '%s' to '%s'. %s",

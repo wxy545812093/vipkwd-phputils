@@ -143,7 +143,7 @@ class Compress
 		$tmp = imagecreatetruecolor($nWidth, $nHeight);
 		//将原图复制到载体上，并且按照一定比例压缩,极大的保持了清晰度(imagecopyresampled)
 		imagecopyresampled($tmp, $this->image, 0, 0, 0, 0, $nWidth, $nHeight, $this->imageInfo['width'], $this->imageInfo['height']);
-		imagedestroy($this->image);
+		$this->image && imagedestroy($this->image);
 		$this->image = $tmp;
 		unset($tmp);
 	}
@@ -160,6 +160,6 @@ class Compress
 	 */
 	public function __destruct()
 	{
-		imagedestroy($this->image);
+		$this->image && imagedestroy($this->image);
 	}
 }
