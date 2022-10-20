@@ -60,7 +60,7 @@ class VipkwdException {
      * @param mixed $exception
      */
 	public static function exception($exception) {
-		if ($exception instanceof DbException) {
+		if ($exception instanceof \DbException) {
 			$type = 'db';
 		} else {
 			$type = 'system';

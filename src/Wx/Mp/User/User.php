@@ -68,10 +68,11 @@ class User
      * @return void
      */
     static function followSuccessView($message = '订阅/绑定成功'){
-        echo '<div style="display:flex; align-items:center;justify-content: center;height: 600px;flex-direction: column;">';
-        echo '    <div><svg t="1664185253350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2561" width="100" height="100"><path d="M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z" fill="#4CAF50" p-id="2562"></path><path d="M738.133333 311.466667L448 601.6l-119.466667-119.466667-59.733333 59.733334 179.2 179.2 349.866667-349.866667z" fill="#CCFF90" p-id="2563"></path></svg></div>';
-        echo '    <div style="font-size:3rem"><p>' . $message . '</p></div>';
-        echo '</div>';
+        // echo '<div style="display:flex; align-items:center;justify-content: center;height: 600px;flex-direction: column;">';
+        // echo '    <div><svg t="1664185253350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2561" width="100" height="100"><path d="M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z" fill="#4CAF50" p-id="2562"></path><path d="M738.133333 311.466667L448 601.6l-119.466667-119.466667-59.733333 59.733334 179.2 179.2 349.866667-349.866667z" fill="#CCFF90" p-id="2563"></path></svg></div>';
+        // echo '    <div style="font-size:3rem"><p>' . $message . '</p></div>';
+        // echo '</div>';
+        self::wxBrowserMessage($message);
     }
     /**
      * 关注公众号 - 失败默认视图
@@ -79,10 +80,11 @@ class User
      * @return void
      */
     static function followFailView($message = '订阅/绑定失败，请退回重新尝试')    {
-        echo '<div style="display:flex; align-items:center;justify-content: center;height: 600px;flex-direction: column;">';
-        echo '    <div><svg t="1664185381981" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3670" width="100" height="100"><path d="M549.044706 512l166.189176-166.249412a26.383059 26.383059 0 0 0 0-36.98447 26.383059 26.383059 0 0 0-37.044706 0L512 475.015529l-166.249412-166.249411a26.383059 26.383059 0 0 0-36.98447 0 26.383059 26.383059 0 0 0 0 37.044706L475.015529 512l-166.249411 166.249412a26.383059 26.383059 0 0 0 0 36.98447 26.383059 26.383059 0 0 0 37.044706 0L512 548.984471l166.249412 166.249411a26.383059 26.383059 0 0 0 36.98447 0 26.383059 26.383059 0 0 0 0-37.044706L548.984471 512zM512 1024a512 512 0 1 1 0-1024 512 512 0 0 1 0 1024z" fill="#E84335" p-id="3671"></path></svg></div>';
-        echo '    <div style="font-size:3rem"><p>' . $message . '</p></div>';
-        echo '</div>';
+        // echo '<div style="display:flex; align-items:center;justify-content: center;height: 600px;flex-direction: column;">';
+        // echo '    <div><svg t="1664185381981" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3670" width="100" height="100"><path d="M549.044706 512l166.189176-166.249412a26.383059 26.383059 0 0 0 0-36.98447 26.383059 26.383059 0 0 0-37.044706 0L512 475.015529l-166.249412-166.249411a26.383059 26.383059 0 0 0-36.98447 0 26.383059 26.383059 0 0 0 0 37.044706L475.015529 512l-166.249411 166.249412a26.383059 26.383059 0 0 0 0 36.98447 26.383059 26.383059 0 0 0 37.044706 0L512 548.984471l166.249412 166.249411a26.383059 26.383059 0 0 0 36.98447 0 26.383059 26.383059 0 0 0 0-37.044706L548.984471 512zM512 1024a512 512 0 1 1 0-1024 512 512 0 0 1 0 1024z" fill="#E84335" p-id="3671"></path></svg></div>';
+        // echo '    <div style="font-size:3rem"><p>' . $message . '</p></div>';
+        // echo '</div>';
+        self::wxBrowserMessage($message, 'error');
     }
 
     /**
@@ -109,5 +111,54 @@ class User
     {
         $res = Base::curl($this->openApi('/sns/userinfo', ['openid' => $openId, 'lang' => 'zh_CN']));
         return static::response($res, 1);
+    }
+
+
+    /**
+     * 模拟微信客户端错误
+     * 
+     * @param string $message
+     * @param string $styleType [ success|info|safe_warn|warn|waiting|error|cancel ]
+     * @param boolean $html 消息体是否为HTML(默认文本直接嵌入H4标签里的)
+     */
+    static function wxBrowserMessage(string $message = '操作成功', string $styleType = 'success', bool $html = false){
+
+        $styleClassName = [
+            'success' => 'weui_icon_success',
+            'info' => 'weui_icon_info',
+            'safe_warn' => 'weui_icon_safe_warn',
+            'warn' => 'weui_icon_warn',
+            'waiting' => 'weui_icon_waiting',
+            'error' => 'weui_icon_cancel',
+            'cancel' => 'weui_icon_clear',
+        ];
+
+        if($html === false){
+            $message = "<h4 class=\"weui_msg_title\">{$message}</h4>";
+        }
+
+        $html=<<<HTML
+        <!DOCTYPE html><html>
+            <head>
+                <title></title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+                <link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css">
+                <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+            </head>
+            <body>
+                <div class="weui_msg"><div class="weui_icon_area"><i class="%styleclass% weui_icon_msg"></i></div><div class="weui_text_area">{$message}</div></div>
+                <!-- <script type="text/javascript">
+                    var ua = navigator.userAgent.toLowerCase();
+                    var isWeixin = ua.indexOf('micromessenger') != -1;
+                    var isAndroid = ua.indexOf('android') != -1;
+                    var isIos = (ua.indexOf('iphone') != -1) || (ua.indexOf('ipad') != -1);
+                    if (!isWeixin) {
+                        document.head.innerHTML = '<title>-</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"><link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css">';
+                        document.body.innerHTML = '<div class="weui_msg"><div class="weui_icon_area"><i class="%styleclass% weui_icon_msg"></i></div><div class="weui_text_area"><h4 class="weui_msg_title">%message%</h4></div></div>';
+                    }
+                </script> -->
+            </body>
+        </html>
+HTML;
+        echo str_ireplace(['%styleclass%'], [ $styleClassName[$styleType] ], $html);
     }
 }

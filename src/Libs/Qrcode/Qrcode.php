@@ -2,6 +2,7 @@
 
 namespace Vipkwd\Utils\Libs\Qrcode;
 
+use \Exception;
 /*
  * PHP QR Code encoder
  *
