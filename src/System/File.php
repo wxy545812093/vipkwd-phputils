@@ -825,7 +825,7 @@ class File
         if ($file) {
             // 如果下载成功
             $newf = fopen($newfname, "wb");
-            // 远在文件文件
+            // 远程文件内容
             if ($newf) {
                 // 如果文件保存成功
                 while (!feof($file)) {

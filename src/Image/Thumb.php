@@ -12,8 +12,10 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Image;
 
+
 use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Http;
 use Vipkwd\Utils\Type\Str as VipkwdStr;
 use Vipkwd\Utils\System\File;
 
@@ -1122,7 +1124,7 @@ class Thumb{
 		header('max-age: 31536000');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s", strtotime(date('Y-m-01 00:00:00'))) . ' GMT');
 		header("Etag:" . $etag);
-		header('Content-type: image/'.$mime);
+		header('Content-type: image/'.$ext);
 		header('Content-Length:'.strlen($content));
 		exit($content);
 	}
