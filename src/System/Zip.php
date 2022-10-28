@@ -42,7 +42,7 @@ class Zip{
                     }
                 }
                 $zip->setArchiveComment('vipkwd/utils');
-                $zip->addFromString('pakg-license.txt', "This zip package create by PHP utils with \"vipkwd/utils\"
+                $zip->addFromString('package-license.txt', "This zip package create by PHP utils with \"vipkwd/utils\"
 
 -- composer use:
 --      composer require vipkwd/utils
