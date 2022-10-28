@@ -3,7 +3,7 @@
     "name": "vipkwd/utils",
     "description": "PHP常用函数集合",
     "type": "library",
-    "version":"3.0.1",
+    "version":"3.0.2",
     "homepage": "https://www.vipkwd.com",
     "authors": [
         {
