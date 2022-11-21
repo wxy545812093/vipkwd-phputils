@@ -22,7 +22,8 @@
         "phpoffice/phpspreadsheet": ">=1.5",
         "symfony/console": "^5.3",
         "zoujingli/ip2region": "^1.0",
-        "mongodb/mongodb": "^1.6"
+        "mongodb/mongodb": "^1.6",
+        "jsondb/jsondb":"*"
     },
     "bin":["bin/vipkwd"],
     "autoload": {
