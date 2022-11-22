@@ -15,4 +15,8 @@ use \JsonDb\JsonDb\JsonDb;
 
 class Json extends JsonDb
 {
+    // ¾²Ì¬ÊµÀý»¯
+    static function instance(array $options = []){
+        return new static($options);
+    }
 }

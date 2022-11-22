@@ -11,7 +11,7 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils;
 use Vipkwd\Utils\Type\Str as VipkwdStr;
-class Dev{
+class Dev {
     const SEPA = \DIRECTORY_SEPARATOR;
     use \Vipkwd\Utils\Libs\Develop;
 

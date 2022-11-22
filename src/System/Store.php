@@ -14,47 +14,50 @@ namespace Vipkwd\Utils\System;
 
 // use Vipkwd\Utils\Libs\Cookie;
 // use Vipkwd\Utils\Libs\Session;
-use Vipkwd\Utils\Type\Str as VipkwdStr,
-    \Exception,
-    \Closure;
+use Vipkwd\Utils\Type\Str as VipkwdStr;
 
 class Store{
     /**
      * session管理函数
      * 
-     * $key 支持“.”号深度访问 如："user.id"
-     * $key = null, 删除SESSION
-     * $key = "" 返回全局SESSION
-     * 要设置$key等于Null，请使用 null 而非 "null"
+     * $name 支持“.”号深度访问 如：“user.id”
+     * $name = '?user.id' 检测数组“user”是否存在“id”键
+     * $name === null, 删除SESSION
+     * $name == false 返回全局SESSION
+     * 要设置$name等于Null，请使用 null 而非 "null"
      *
-     * @param string $key
+     * @param string $name
      * @param mixed $value
      * @return void
      */
-    static function session($key = "", $value = "#null@"){
-        if($key === null){
+    static function session($name = "", $value = "#null@"){
+        if (!isset($_SESSION)) {
+            @session_start(); // 自动启动会话
+        }    
+        if($name === null){
             $_SESSION = [];
             return true;
         }
-        if(!$key){
+        $name = trim(str_replace(' ','',$name),".");
+
+        if(!$name){
             return $_SESSION;
         }
-        $key = trim(str_replace(' ','',$key),".");
 
-        $exists = false;
-        if( substr($key,0,1) == "?" ){
-            $exists = true;
-            $key = substr($key,1);
+        $checkHasKey = false;
+        if( substr($name, 0, 1) == "?" ){
+            $checkHasKey = true;
+            $name = substr($name,1);
         }else{
             //设置
-            if( $key != "" && $value != "#null@"){
+            if( $value != "#null@"){
                 if($value === null){
-                    if(!isset($_SESSION[$key])){
+                    if(!isset($_SESSION[$name])){
                         return false;
                     }
-                    unset($_SESSION[$key]);
+                    unset($_SESSION[$name]);
                 }else{
-                    $_SESSION[$key] = $value;
+                    $_SESSION[$name] = $value;
                 }
                 return true;
             }
@@ -62,16 +65,16 @@ class Store{
 
         //获取
         $sess = $_SESSION;
-        $keys = $key != "" ? explode('.', $key ) : [];
-        foreach($keys as $sk){
+        $names = explode('.', $name);
+        foreach($names as $sk){
             if(!is_array($sess) || !isset($sess[$sk])){
-                $sess = null;
+                $sess = $checkHasKey ? false : null;
                 break;
             }
             $sess = $sess[$sk];
             unset($sk);
         }
-        unset($keys);
+        unset($names);
         return $sess;
     }
 
@@ -80,32 +83,32 @@ class Store{
      *
      * @param string $name   cookie名称
      * @param mixed  $value  cookie值
-     * @param int  $expires 有效期 （小于0：删除cookie, 大于0：设置cookie）
+     * @param int  $expire 有效期 （小于0：删除cookie, 大于0：设置cookie）
      * @return mixed
      */
-    static function cookie(string $name = null, $value = null, int $expires = 0){
+    static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false){
         $name && $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
         $defaults = [
             // cookie 保存时间
-            'expires'   => 86400 * 7,
+            'expire'   => 86400 * 7,
             // cookie 保存路径
-            'path'     => '/',
+            'path'     => $path ?: '/',
             // cookie 有效域名
-            'domain'   => '',
+            'domain'   => $domain ?: '',
             //  cookie 启用安全传输
-            'secure'   => false,
+            'secure'   => $secure ? true : false,
             // httponly设置
-            'httponly' => true,
+            'httponly' => $httponly ? true : true,
             // samesite 设置，支持 'strict' 'lax'
             'samesite' => '',
         ];
-
-        if($name && is_null($value) && $expires < 0 ){
+        
+        if( $name && is_null($value) && $expire < 0){
             //删除
             return self::saveCookie(
                 $name,
                 "",
-                time() - 86400,
+                -1,
                 $defaults['path'],
                 $defaults['domain'],
                 $defaults['secure'],
@@ -113,11 +116,18 @@ class Store{
                 $defaults['samesite']
             );
         }else if($name && !is_null($value) ){
+
+            //失效时间兼容处理
+            if($expire > 0){
+
+                //整数 补时间戳
+                $defaults['expire'] = ( $expire - time() >= 0) ? ($expire - time()) : $expire;
+            }
             //设置
             return self::saveCookie(
                 $name,
-                is_array($value) ? json_encode($value) : "$value",
-                $expires > 0 ? $expires : $defaults['expires'] + time(),
+                is_array($value) ? 'base:'. base64_encode(json_encode($value)) : "$value",
+                $defaults['expire'] + time(),
                 $defaults['path'],
                 $defaults['domain'],
                 $defaults['secure'],
@@ -127,10 +137,16 @@ class Store{
         }
         if($name){
             if(isset($_COOKIE[$name])){
-                if(VipkwdStr::isJson($_COOKIE[$name])){
-                    return json_decode($_COOKIE[$name],true);
+                $data = $_COOKIE[$name];
+
+                if(substr($data, 0, 5) == 'base:'){
+                    $data = base64_decode($data);
                 }
-                return $_COOKIE[$name];
+
+                if(VipkwdStr::isJson($data)){
+                    return json_decode($data,true);
+                }
+                return $data;
             }
             return null;
         }
