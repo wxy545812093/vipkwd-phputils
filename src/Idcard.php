@@ -13,6 +13,7 @@ namespace Vipkwd\Utils;
 use \Exception;
 use \Closure;
 use Vipkwd\Utils\Tools;
+use Vipkwd\Utils\Type\Random;
 class Idcard {
     // https://blog.csdn.net/claram/article/details/104271307
 

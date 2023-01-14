@@ -158,6 +158,10 @@ class Request {
             'headers'   => new Collection(self::getHeaders()),
             'files'     => new Collection(self::getFiles()),
         );
+
+        $queryPos = strpos($default['url'], '?');
+        $default['domain'] = $default['scheme'] . '://'.$default['host'];
+        $default['url_path'] = $default['domain'] . ($queryPos ? substr($default['url'], 0, $queryPos) : $default['url']);
         $config = array_merge( $default, $config);
         $this->init($config);
     }

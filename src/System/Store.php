@@ -26,9 +26,13 @@ class Store{
      * $name == false 返回全局SESSION
      * 要设置$name等于Null，请使用 null 而非 "null"
      *
+     * -e.g: $store=[ 'user' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120, ] ]
+     * -e.g: phpunit('system.store::session', ['info', $store]);
+     * -e.g: phpunit('system.store::session', ['info']);
+     * 
      * @param string $name
      * @param mixed $value
-     * @return void
+     * @return mixed
      */
     static function session($name = "", $value = "#null@"){
         if (!isset($_SESSION)) {
@@ -80,11 +84,18 @@ class Store{
 
     /**
      * Cookie管理
-     *
+     * 
+     * -e.g: $store=[ 'user' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120] ];
+     * -e.g: phpunit('system.Store::cookie', ['info', $store]);
+     * -e.g: phpunit('system.Store::cookie', ['info']);
+     * -e.g: phpunit('system.Store::cookie', ['info', null]);
+     * -e.g: phpunit('system.Store::cookie', ['info', null, 0]);
+     * -e.g: phpunit('system.Store::cookie', ['info']);
+     * 
      * @param string $name   cookie名称
      * @param mixed  $value  cookie值
      * @param int  $expire 有效期 （小于0：删除cookie, 大于0：设置cookie）
-     * @return mixed
+     * @return boolean|array|null|string
      */
     static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false){
         $name && $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
@@ -140,7 +151,7 @@ class Store{
                 $data = $_COOKIE[$name];
 
                 if(substr($data, 0, 5) == 'base:'){
-                    $data = base64_decode($data);
+                    $data = base64_decode(substr($data, 5));
                 }
 
                 if(VipkwdStr::isJson($data)){

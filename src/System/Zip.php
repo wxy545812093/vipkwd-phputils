@@ -14,7 +14,7 @@ use \ZipArchive;
 use \Exception;
 use \Closure;
 use Vipkwd\Utils\Tools;
-use File as vipkwdFile;
+// use File as vipkwdFile;
 
 class Zip{
 

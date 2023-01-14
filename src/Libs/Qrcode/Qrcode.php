@@ -957,7 +957,6 @@ Qrtools::markTime('start');
                     ImagePng($image, $filename);
                 }
             }
-            
             ImageDestroy($image);
         }
     
