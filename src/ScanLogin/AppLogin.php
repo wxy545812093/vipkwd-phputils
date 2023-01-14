@@ -46,11 +46,11 @@ class AppLogin
      * @param string $qrcodeId 手机最后扫码的那一个码ID
      * @param string $event 自协商的场景事件类型（如二维码用于后台登录，则可为 "admin-login"）
      * @param array $params 自定义数据
-     * @param string $dataType 响应数据类型 array|header header时自动发送图片类型的二进制流
+     * @param bool $dataType 响应数据类型 true时返回数组，false时php ob函数自动发送jpeg类型的二进制流
      * 
      * @return \header
      */
-    public function createQrcode(string $clientId, string $qrcodeId, string $event, array $params = [], string $type = 'array')
+    public function createQrcode(string $clientId, string $qrcodeId, string $event, array $params = [], bool $dataType = true)
     {
         $params = array_merge(['clientId' => $clientId, 'qrcodeId' => $qrcodeId], $params);
         $params['clientIp'] = VkIP::getClientIp();
@@ -72,7 +72,7 @@ class AppLogin
             'colorDark' => '#000000',
             'colorLight' => '#ffffff',
         ]);
-        if ($type === 'array') {
+        if ($dataType === true) {
             return $qrcodeData;
         }
         //text 加密后的扫码核心数据
@@ -89,7 +89,7 @@ class AppLogin
      * 
      * @return array
      */
-    public function scanEventInvoke(string $text, $scanUserId = 0, string $event, \Closure $eventCallback = null): array
+    public function scanEventInvoke(string $text, string $event, $scanUserId = 0, \Closure $eventCallback = null): array
     {
         $isEvent = substr($text, 0, 3) == 'ev.';
         $arr = explode('|', $text);
@@ -190,7 +190,7 @@ class AppLogin
      * 
      * @return array|null
      */
-    public function scanEventConfirm(string $clientId, string $qrcodeId, string $event, array $params, $scanUserId = 0): ?array
+    public function scanEventConfirm(string $clientId, string $qrcodeId, string $event, array &$params, $scanUserId = 0): ?array
     {
         $params = array_merge(['event' => $event, 'scan_user_id' => 0, 'text' => '', 'clientId' => $clientId, 'qrcodeId' => $qrcodeId], $params);
         if ($event == $params['event']) {

@@ -17,19 +17,63 @@ $qrcodeId = 'qrcodeId000000';
 $event = 'login-admin';
 $userId = 10010;
 
-//监听扫码完成“确认授权”事件
-$params = [];
-$res = $WebLogin->scanEventComplete($clientId, $qrcodeId, $event, $params, $userId);
+
+//监听生成新二维码(header自动输出图片)
+    //--返回二维码数据供APP前端绘制二维码
+    //$qrcodeData = $WebLogin->createQrcode($clientId, $qrcodeId, $event, []);
+    $qrcodeData = $WebLogin->createQrcode($clientId, $qrcodeId, $event, [],true);
+
+    //--PHP ob函数自动发送jpeg类型二进制流
+    $WebLogin->createQrcode($clientId, $qrcodeId, $event, [], false);
+
+
+//监听“扫码”事件
+$encryptText = 'ev.login-admins|39c0fb8cmMDV/vEEbZpNjv6eRZrFSrWkJQ5mzSmxdviD97trCQ1M0jD+Z8VyVR6wkwqcCoOhE2JJn1ujDxrMZ1Ms0U8Ca1YpeOS9XIJXNhJXCb86+3Q3+n/cqYD7OI5jPEq3h++WoeQP0weyB/mYqDkNV4wimnXXvs56ugUaJNeGFVSzAYU73igSZZ22s';
+$res = $WebLogin->scanEventInvoke($text, $event, $userId, function($data){
+    
+    return true;
+    return false;
+});
 if($res !== null){
+
+
+    if($res['scan_state'] = 0){
+
+
+        //下发“扫码成功”事件（res === null ，表事件未触发）
+        $params = [];
+        $res = $WebLogin->scanEventComplete($clientId, $qrcodeId, $event, $params, $userId);
+        if($res !== null){
+            Dev::dumper($res,1);
+        }
+
+
+        //下发扫码完成“确认授权”事件（res === null ，表事件未触发）
+        $params = [];
+        $res = $WebLogin->scanEventConfirm($clientId, $qrcodeId, $event, $params, $userId);
+        if($res !== null){
+            Dev::dumper($res,1);
+        }
+
+
+
+
+
+
+    }
     Dev::dumper($res,1);
 }
 
 
-//监听“扫码”事件
-$text = 'ev.login-admins|39c0fb8cmMDV/vEEbZpNjv6eRZrFSrWkJQ5mzSmxdviD97trCQ1M0jD+Z8VyVR6wkwqcCoOhE2JJn1ujDxrMZ1Ms0U8Ca1YpeOS9XIJXNhJXCb86+3Q3+n/cqYD7OI5jPEq3h++WoeQP0weyB/mYqDkNV4wimnXXvs56ugUaJNeGFVSzAYU73igSZZ22s';
-Dev::dumper($WebLogin->scanEventInvoke($text, $userId),1);
 
-//监听生成新二维码(header自动输出图片)
-$WebLogin->createQrcode($clientId, $qrcodeId, $event, []);
+//服务端登录接口解码
+// -- encryptText:  scanEventConfirm方法下发的各自定义参数 加密串
+
+$data = $WebLogin->decryptFormData($clientId, $qrcodeId, $_POST['encryptText']);
+if(isset($data['scan_user_id'])){
+    //身份识别成功
+    //BA LA BA LA
+
+}
 
 </pre></html>
