@@ -139,6 +139,7 @@ class Gzhcommon
         $code = $this->request->query->code;
         if (!isset($code)) {
             header('Location:' . $snsapi_base_url);
+            exit;
         }
 
         //3.通过code换取网页授权access_token和openid
@@ -174,6 +175,7 @@ class Gzhcommon
         $code = $this->request->query->code;
         if (!isset($code)) {
             header('Location:' . $snsapi_base_url);
+            exit;
         }
         /*根据code获取用户openid*/
         //3.通过code换取网页授权access_token和openid

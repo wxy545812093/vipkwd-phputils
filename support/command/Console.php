@@ -502,18 +502,39 @@ class Console extends Command
 							echo $_console;
 							echo "\r\n";
 						}
+						echo "[" . str_pad("$idx", 2, "0", STR_PAD_LEFT) . "]";
+
 						if (substr($_eg, 0, 1) == '$') {
-							$_eg = "echo '[•] {$_eg}';{$_eg}";
+							echo "[•] {$_eg}";
+							// $_eg = "{$_eg}; echo '[•] {$_eg}'";
 						}
 
 						if (preg_match("/(echo ['\"])/i", $_eg)) {
 							$_eg = preg_replace("/(echo ['\"])/i", "$1 ", $_eg);
 						} else if (preg_match("/phpunit\(/", $_eg)) {
-							$_eg = "\\Vipkwd\\Utils\\Dev::${_eg}";
+							// $_eg = "\\Vipkwd\\Utils\\Dev::${_eg}";\
+
+							list($nameSpace, $method) = explode('::', $_eg);
+							$nameSpace = str_replace(' ', '', $nameSpace);
+							list($prefix, $subfix) = explode('punit(', $nameSpace);
+							$nameSpace = substr($subfix, 1);
+
+							$buildClassName = function($nameSpace){
+								$_tmp = explode('.', $nameSpace);
+								$_tmp = array_map(function($p){
+									return ucfirst($p);
+								}, $_tmp);
+								$nameSpace = implode('\\', $_tmp);
+								unset($_tmp);
+						
+								(stristr($nameSpace, "Vipkwd\\Utils\\") === false) && $nameSpace = "\\Vipkwd\\Utils\\{$nameSpace}";
+								return $nameSpace;
+							};
+							$nameSpace = $buildClassName($nameSpace);
+							$_eg = $prefix . 'punit(' .(substr($subfix, 0, 1)).  $nameSpace . '::'.$method;
 						}
 
-						echo "[" . str_pad("$idx", 2, "0", STR_PAD_LEFT) . "]";
-						\Vipkwd\Utils\Dev::console(eval("$_eg"), false, false);
+						\Vipkwd\Utils\Dev::console(eval("$_eg"), !1, !1);
 						$idx++;
 					}
 				}

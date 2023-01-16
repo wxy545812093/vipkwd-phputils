@@ -1,0 +1,186 @@
+<html>
+<pre>
+use Vipkwd\Utils\Http;
+use Vipkwd\Utils\ScanLogin\WebLogin;
+
+
+$Scaner = Vipkwd\Utils\ScanLogin\WebLogin::instance([
+    'web_pusher_url' => 'https://demo.com/ws/api',
+    'salt_key' => '' //指定消息签名盐值
+]);
+
+
+$createUrlQrcode = function ($decrypt) use ($Scaner) {
+    //说明解码方法调用场景不当（即没有捕获在解码必要的参数，也即应该先调用createUrlQrcode生成二维码）
+    if ($decrypt['error_state'] === 300) {
+
+        //todo $url参数应该是可达当前脚本/方法的有效url地址
+        $Scaner->createUrlQrcode(Http::request()->domain, [
+            'clientId' => 'clientId',
+            'qrcodeId' => 'qrcodeId',
+
+            ...[],
+            'userId' => 111,
+        ]);
+    }
+};
+
+
+//监听确认授权（同意授权登录）
+$decrypt = $Scaner->decryptConfirmUrlQrcode();
+if (is_array($decrypt)) {
+    if ($decrypt['error_state'] > 0) {
+
+        $createUrlQrcode();
+
+        //授权失败
+        if (isset($decrypt['clientId'])) {
+            $result = $Scaner->pushWebMsg($decrypt['clientId'], $decrypt['qrcodeId'], 'fail', [
+                'msg' => $decrypt['error_msg'],
+
+                'saltKey' => '', //指定签名盐值(签名完成后, socket发送前会自动剔除此字段)
+            ]);
+            exit;
+        }
+
+        exit($decrypt['error_msg']);
+    }
+    //授权成功
+    $result = $Scaner->pushWebMsg($decrypt['clientId'], $decrypt['qrcodeId'], 'confirm', [
+        'userId' => 100, //假设 站内用户身份标识为100 (userId = 100)
+
+        'saltKey' => '', //指定签名盐值(签名完成后, socket发送前会自动剔除此字段)
+    ]);
+    exit;
+}
+
+//监听取消授权（不同意授权登录）
+$decrypt = $Scaner->decryptCancelUrlQrcode();
+if (is_array($decrypt)) {
+    if ($decrypt['error_state'] > 0) {
+
+        $createUrlQrcode();
+
+        //授权失败
+        exit($decrypt['error_msg']);
+    }
+    //授权成功
+    var_dump($decrypt);
+    exit;
+}
+
+//鉴定扫码结果
+$decrypt = $Scaner->decryptUrlQrcode();
+//TODO 扫码结果不正确
+if ($decrypt['error_state'] > 0) {
+
+    $createUrlQrcode();
+
+    //注意：此扫码状态下，验签不成功时 $decrypt不携带的$clientId和qrcodeId
+    if (isset($decrypt['clientId'])) {
+        $result = $Scaner->pushWebMsg($decrypt['clientId'], $decrypt['qrcodeId'], 'fail',[
+            'msg' => $decrypt['error_msg'],
+        ]);
+        exit;
+    }
+}
+
+//TODO 扫描结果正确
+//刷新网页二维码的扫描状态( 已扫码，请在手机上确认 )
+$result = $Scaner->pushWebMsg($decrypt['clientId'], $decrypt['qrcodeId'], 'complete',[
+    //自定义推送数据
+]);
+
+var_dump($decrypt);
+
+
+/*
+# 微信扫码策略
+
+ - 服务端扫码确认接口 $qrcodeConfirmUrl
+
+    $qrcodeConfirmUrl = 'http://demo.test.com/login/qrcodeVerify'
+
+ - 网页调用的 二维码地址$qrcodeUrl  <img src="http://demo.test.com/login/qrcode?clientId=xxxxxxxx&qrcodeId=yyyyyyyyyyyyyy" />
+ - -- 其中clientId 为socket客户端身份标识, qrcodeId 为网页自定义的二维码唯一标识
+ 
+    $qrcodeUrl = 'http://demo.test.com/login/qrcode?clientId=xxxxxxxx&qrcodeId=yyyyyyyyyyyyyy'
+
+
+
+// step1: 生成登录二维码
+// 二维码地址: http://demo.test.com/login/qrcode
+
+// - 内部将尝试自动捕获get参数 clientId 和 qrcodeId
+$WebLogin->createUrlQrcode($qrcodeConfirmUrl,[
+    'userId'=>111,
+    ...[],
+]);
+
+
+step2：微信扫码跳转到 $qrcodeConfirmUrl
+    
+    // 获取微信与本站点的唯一身份标识(openId)
+    // 根据openId 获取站内用户身份（通常是 uid）
+    // 检测扫码结果
+        -扫码正确：
+            1、刷新网页二维码的扫描状态
+            2、收到确认授权事件
+                2-1、确认授权（同意授权登录）
+                    2-1-a、携带加密后的站内用户身份标识(如 b2339o84kljsdfkljsdf,注意:此数据需能逆向出 站内用户身份标识 )刷新网页二维码的授权状态
+                    2-1-b、网页收到“同意授权”后，携带 加密身份标识 提交到登录接口
+                    2-1-c、登录接口服务端 鉴定(解码) 加密身份标识，
+                        2-1-c-1)、 解码成功：按解码结果接入用户登录流程
+                        2-1-c-2)、 解码失败：接口响应 常规登录流程错误状态
+                2-2、手动取消授权（不同意）
+                    2-2-a、$qrcodeConfirmUrl 页面关闭授权事件功能组
+                    2-2-b、[建议动作]刷新网页二维码的授权状态（如 "拒绝授权"字样）
+        
+        -扫码失败(如验签不通过)
+            1、$qrcodeConfirmUrl 页面展示扫码错误视图（如 "二维码已过期"字样）
+            2、【可选动作】刷新网页二维码的授权状态（如 "二维码已过期"字样）
+
+    //鉴定扫码结果
+    $decrypt = $WebLogin->decryptUrlQrcode();
+
+    //TODO 扫码结果不正确
+    if($decrypt['error_state'] > 0){
+        var_dump($decrypt);exit;
+        //注意：此扫码状态下，$decrypt携带的$clientId和qrcodeId不一定真实有效，请谨慎推送（建议不推送 扫码失败状态）
+        $result = $WebLogin->pushWebMsg($clientId', $qrcodeId, 'fail', 'https://demo.com/ws/api',[
+            //自定义推送数据
+        ]);
+    }
+
+    //TODO 扫描结果正确
+    //刷新网页二维码的扫描状态( 已扫码，请在手机上确认 )
+    $result = $WebLogin->pushWebMsg($decrypt['clientId'], $decrypt['qrcodeId'], 'complete', 'https://demo.com/ws/api',[
+        //自定义推送数据
+    ]);
+
+    html: a-link=$decrypt['confirm_url']
+
+
+    // 确认授权（同意授权登录）
+    $decrypt = $WebLogin->decryptConfirmUrlQrcode();
+    if($decrypt){
+        if($decrypt['error_state'] > 0){
+            //授权失败
+
+        }
+
+        //授权成功
+    }
+
+
+    saltKey
+
+    var_dump($result);
+
+step3: 自定义扫码确认接口页面: $qrcodeConfirmUrl
+    - 通常有[ 确认授权， 取消授权/忽略授权 ]事件
+        -- 确认授权: 可以携带 确认事件参数（如 scanConfirm = true） 跳转到当前页面 $qrcodeConfirmUrl
+*/
+
+
+</pre></html>

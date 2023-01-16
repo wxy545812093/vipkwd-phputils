@@ -109,9 +109,23 @@ trait Develop{
 
         $args_txt = self::buildArgsType($args);
         $initArgs_txt = self::buildArgsType($initArgs);
-        list($className, $method) = explode('::', $classMethod);
-        (stristr($className, "Vipkwd\\Utils\\") === false) && $classPath = "\\Vipkwd\\Utils\\{$className}";
-        $refClass = new \ReflectionClass($classPath ?? $className);
+
+        list($classPath, $method) = explode('::', $classMethod);
+
+        $buildClassName = function($classPath){
+            $_tmp = explode('.', $classPath);
+            $_tmp = array_map(function($p){
+                return ucfirst($p);
+            }, $_tmp);
+            $classPath = implode('\\', $_tmp);
+            unset($_tmp);
+    
+            (stristr($classPath, "Vipkwd\\Utils\\") === false) && $classPath = "\\Vipkwd\\Utils\\{$classPath}";
+            return $classPath;
+        };
+        $classPath = $buildClassName($classPath);
+
+        $refClass = new \ReflectionClass($classPath);
         //方法调用路径
         $callPath = '';
         $refMethod = $refClass->getMethod($method);
@@ -141,7 +155,8 @@ trait Develop{
             echo " {$callPath}; //";
         }else{
             echo " {$classMethod}($args_txt); //";
-            $res = call_user_func_array("{$classMethod}", $args);
+            // $res = call_user_func_array("{$classMethod}", $args);
+            $res = call_user_func_array([$classPath, $method], $args);
         }
 
         switch($type = gettype($res)){
@@ -160,9 +175,8 @@ trait Develop{
             default:
                 break;
         }
-        echo "<{$type}:>“";
-        self::dump($res, false, false);
-        echo '”';
+        echo "<{$type}>";
+        self::dumper($res, false, false);
         echo "\r\n";
     }
 

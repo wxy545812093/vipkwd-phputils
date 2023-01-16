@@ -25,6 +25,7 @@ use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
     \Exception,
     \Closure;
 
+use Vipkwd\Utils\System\Store;
 class Tools{
     // use \Vipkwd\Utils\Libs\Develop;
 
@@ -293,58 +294,23 @@ class Tools{
 
     /**
      * session管理函数
+     * 
+     * $name 支持“.”号深度访问 如：“user.id”
+     * $name = '?user.id' 检测数组“user”是否存在“id”键
+     * $name === null, 清空全部SESSION
+     * $name == (false|''|0) 返回全局SESSION
+     * 要设置$name等于Null，请使用 全等于null 而非 "null"
      *
-     * $key 支持“.”号深度操作 如："user.id"
-     * $key = null, 删除SESSION
-     * $key = "" 返回全局SESSION
-     * 要设置$key等于Null，请使用 null 而非 "null"
-     *
-     * @param string $key
+     * -e.g: $store=[ 'users' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120, ] ]
+     * -e.g: phpunit('Tools::session', ['info', $store]);
+     * -e.g: phpunit('Tools::session', ['info']);
+     * 
+     * @param string $name
      * @param mixed $value
-     * @return void
+     * @return mixed
      */
-    static function session($key = "", $value = "null"){
-        if($key === null){
-            $_SESSION = [];
-            return true;
-        }
-        if($key == ""){
-            return $_SESSION;
-        }
-        $key = trim($key,".");
-        $keys =explode('.', $key);
-        $sess = $_SESSION;
-        unset($key);
-        //设置
-        if(!empty($keys) && $value !== "null"){
-            krsort($keys);
-            $tmp = [];
-            foreach($keys as $arr_node_key){
-                $__tmp = $tmp;
-                if(empty($__tmp)){
-                    $__tmp[$arr_node_key]=$value;
-                    $tmp = $__tmp;
-                }else{
-                    $tmp = [];
-                    $tmp[$arr_node_key] = $__tmp;
-                }
-                unset($__tmp);
-            }
-            $_SESSION = array_merge($_SESSION, $tmp);
-            unset($tmp, $keys, );
-            return true;
-        }
-        //获取
-        foreach($keys as $sk){
-            if(!is_array($sess) || !isset($sess[$sk])){
-                $sess = NULL;
-                break;
-            }
-            $sess = $sess[$sk];
-            unset($sk);
-        }
-        unset($keys);
-        return $sess;
+    static function session($name = "", $value = "#null@"){
+        return Store::session($name, $value);
     }
 
     /**
@@ -354,27 +320,29 @@ class Tools{
      *
      * @param string $key
      * @param string $confDir 配置文件所在目录
-     * @param string $confSuffix 配置文件后缀 <.php>
+     * @param string $confSuffix 配置文件后缀 <php>
      *
      * @return mixed
      */
-    static function config(string $key, string $confDir, string $confSuffix=".php"){
+    static function config(string $key, string $confDir, string $confSuffix="php"){
         static $__config_;
         !is_array($__config_) && $__config_ = [];
+        $key = str_replace(' ', '', $key);
         $key = trim($key, ".");
         $l = explode('.', $key);
-        if(!isset($__config_[$l[0]])){
+        if(!isset($__config_[ ($l[0]) ])){
             $f =  rtrim($confDir, "/") . "/{$l[0]}.".ltrim($confSuffix, ".");
-            file_exists($f) && $__config_[$l[0]] = require_once($f);
+            file_exists($f) && $__config_[ ($l[0]) ] = require_once($f);
             unset($f);
         }
-        $r = $__config_[$l[0]];
+        $r = $__config_[ ($l[0]) ];
         unset($l[0]);
         foreach($l as $conf_arr_key){
             if( is_array($r) && isset($r[$conf_arr_key])){
                 $r = $r[$conf_arr_key];
             }else{
                 $r = NULL;
+                break;
             }
             unset($conf_arr_key);
         }
@@ -384,60 +352,21 @@ class Tools{
 
     /**
      * Cookie管理
-     *
+     * 
+     * -e.g: $store=[ 'user' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120] ];
+     * -e.g: phpunit('Tools::cookie', ['info', $store]);
+     * -e.g: phpunit('Tools::cookie', ['info']);
+     * -e.g: phpunit('Tools::cookie', ['info', null]);
+     * -e.g: phpunit('Tools::cookie', ['info', null, 0]);
+     * -e.g: phpunit('Tools::cookie', ['info']);
+     * 
      * @param string $name   cookie名称
      * @param mixed  $value  cookie值
-     * @param int  $expires 有效期 （小于0：删除cookie, 大于0：设置cookie）
-     * @return mixed
+     * @param int  $expire 有效期 （小于0：删除cookie, 大于0：设置cookie）
+     * @return boolean|array|null|string
      */
-    static function cookie(string $name = null, $value = null, int $expires = 0){
-
-        $name && $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
-
-        $defaults = [
-            // cookie 保存时间
-            'expires'   => 86400 * 7,
-            // cookie 保存路径
-            'path'     => '/',
-            // cookie 有效域名
-            'domain'   => '',
-            //  cookie 启用安全传输
-            'secure'   => false,
-            // httponly设置
-            'httponly' => true,
-            // samesite 设置，支持 'strict' 'lax'
-            'samesite' => '',
-        ];
-
-        if($name && is_null($value) && $expires < 0 ){
-            //删除
-            return self::saveCookie(
-                $name,
-                "",
-                time() - 86400,
-                $defaults['path'],
-                $defaults['domain'],
-                $defaults['secure'],
-                $defaults['httponly'],
-                $defaults['samesite']
-            );
-        }else if($name && !is_null($value) ){
-            //设置
-            return self::saveCookie(
-                $name,
-                "$value",
-                $expires > 0 ? $expires : $defaults['expires'] + time(),
-                $defaults['path'],
-                $defaults['domain'],
-                $defaults['secure'],
-                $defaults['httponly'],
-                $defaults['samesite']
-            );
-        }
-        if($name){
-            return $_COOKIE[$name] ?? null;
-        }
-        return $_COOKIE;
+    static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false){
+        return Store::cookie($name, $value, $expire, $path, $domain, $secure, $httponly);
     }
 
     /**
@@ -681,4 +610,40 @@ class Tools{
         return Arr::arrayArrRange($input);
     }
 
+    /**
+     * 检测是否为移动端
+     * 
+     * -e.g: phpunit("Tools::isMobile");
+     */
+    static function isMobile(){
+        // 如果有HTTP_X_WAP_PROFILE则一定是移动设备
+        if (isset ($_SERVER['HTTP_X_WAP_PROFILE']))
+            return true;
+        //此条摘自TPM智能切换模板引擎，适合TPM开发
+        if(isset ($_SERVER['HTTP_CLIENT']) &&'PhoneClient'==$_SERVER['HTTP_CLIENT'])
+            return true;
+        //如果via信息含有wap则一定是移动设备,部分服务商会屏蔽该信息
+        if (isset ($_SERVER['HTTP_VIA']))
+            //找不到为flase,否则为true
+            return stristr($_SERVER['HTTP_VIA'], 'wap') ? true : false;
+        //判断手机发送的客户端标志,兼容性有待提高
+        if (isset ($_SERVER['HTTP_USER_AGENT'])) {
+            $clientkeywords = array(
+                'nokia','sony','ericsson','mot','samsung','htc','sgh','lg','sharp','sie-','philips','panasonic','alcatel','lenovo','iphone','ipod','blackberry','meizu','android','netfront','symbian','ucweb','windowsce','palm','operamini','operamobi','openwave','nexusone','cldc','midp','wap','mobile'
+            );
+            //从HTTP_USER_AGENT中查找手机浏览器的关键字
+            if (preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) {
+                return true;
+            }
+        }
+        //协议法，因为有可能不准确，放到最后判断
+        if (isset ($_SERVER['HTTP_ACCEPT'])) {
+            // 如果只支持wml并且不支持html那一定是移动设备
+            // 如果支持wml和html但是wml在html之前则是移动设备
+            if ((strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') !== false) && (strpos($_SERVER['HTTP_ACCEPT'], 'text/html') === false || (strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') < strpos($_SERVER['HTTP_ACCEPT'], 'text/html')))) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

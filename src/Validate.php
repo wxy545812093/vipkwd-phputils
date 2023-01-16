@@ -186,7 +186,7 @@ class Validate{
         return self::mobileOfChina($str,false)
             || self::isEnChar($str, 6, 20)
             || self::isCnChar($str, 6, 20)
-            || self::isChineseEnglishMixture($str, 6, 20);
+            || self::isCnEnMixture($str, 6, 20);
     }
 
     /**
@@ -210,7 +210,7 @@ class Validate{
     static function webAccount(string $str, int $minLength=5, int $maxLength=18):bool{
         return self::isCnChar($str,$minLength, $maxLength)
             || self::isEnChar($str, $minLength, $maxLength)
-            || self::isChineseEnglishMixture($str, $minLength,$maxLength);
+            || self::isCnEnMixture($str, $minLength,$maxLength);
     }
     /**
      * 验证url（|^[a-z]+://[^\s]*|i）
@@ -549,6 +549,9 @@ class Validate{
     }
 
 
+    /**
+     * 解析长度数值边界
+     */
     private static function parseMaxMinLength(int &$minLength, int &$maxLength, int $prefixLength=0){
         $prefixLength < 0 && $prefixLength = 0;
         if($minLength < $prefixLength)

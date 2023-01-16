@@ -17,13 +17,10 @@
     "repositories": {
         "0": {
           "type": "path",
-          "url": "F:/phpEnv/www/github/vipkwd-phputils",
+          "url": "e:/code/github/vipkwd-phputils",
           "options": {
             "symlink": true
           }
         }
-      },
-    "require": {
-        "vipkwd/utils": "^2.0"
-    }
+      }
 }

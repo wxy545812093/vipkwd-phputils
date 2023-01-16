@@ -4,9 +4,11 @@ define("ASSETS", __DIR__.'/assets');
 
 $autoload = '/vendor/autoload.php';
 $autoloadPath=[];
+//$rootPath = realPath(__DIR__ .'/../examples');
 $deep ="";
-for($i=0; $i<5; $i++){
+for($i=0; $i<10; $i++){
     $i>0 && $deep .= "/..";
+    // $autoloadPath[] = $autoLoadFile = realpath($rootPath . $deep) . $autoload;
     $autoloadPath[] = $autoLoadFile = realpath(__DIR__ . $deep) . $autoload;
     if(file_exists($autoLoadFile)){   
         $i=true;
