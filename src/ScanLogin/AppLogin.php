@@ -40,17 +40,17 @@ class AppLogin
     }
 
     /**
-     * 步骤1、生成后台登录二维码原始数据
+     * 步骤1、生成二维码原始数据
      * 
-     * @param string $clientId  为socket标识
-     * @param string $qrcodeId 手机最后扫码的那一个码ID
      * @param string $event 自协商的场景事件类型（如二维码用于后台登录，则可为 "admin-login"）
      * @param array $params 自定义数据
      * @param bool $dataType 响应数据类型 true时返回数组，false时php ob函数自动发送jpeg类型的二进制流
+     * @param string $clientId  为socket标识
+     * @param string $qrcodeId 手机最后扫码的那一个码ID
      * 
      * @return \header
      */
-    public function createQrcode(string $clientId, string $qrcodeId, string $event, array $params = [], bool $dataType = true)
+    public function createQrcode(string $event, array $params = [], string $clientId = '', string $qrcodeId = '', bool $dataType = true)
     {
         $params = array_merge(['clientId' => $clientId, 'qrcodeId' => $qrcodeId], $params);
         $params['clientIp'] = VkIP::getClientIp();
@@ -80,7 +80,7 @@ class AppLogin
     }
 
     /**
-     * 步骤2、解密（扫码）前端提交含有预定义事件 的二维码扫描结果
+     * 步骤2、解密APP扫码的结果（含有事件标识的）
      * 
      * @param string $text 扫描二维码得到的原始加密文本
      * @param string|integer $scanUserId 扫码人的身份标识（通常是user_id）
@@ -136,7 +136,7 @@ class AppLogin
     }
 
     /**
-     * 步骤3、监听需要下发“扫码完成”的事件
+     * 步骤3、下发“扫码成功”事件
      * 
      * @param string $clientId  为socket标识
      * @param string $qrcodeId 手机最后扫码的那一个码ID
@@ -157,17 +157,10 @@ class AppLogin
 
                 if (isset($params['clientId']) && $data['clientId'] == $params['clientId'] && isset($params['qrcodeId']) && $data['qrcodeId'] == $params['qrcodeId']) {
                     //通知页面扫码结果
-                    if ($this->pushWebMsg($params['clientId'], $params['qrcodeId'], 'complete')) {
-                        return [
-                            'scan_state' => 0,
-                            'scan_msg' => '远程通知成功'
-                        ];
-                    } else {
-                        return [
-                            'scan_state' => 20,
-                            'scan_msg' => '远程通知失败'
-                        ];
+                    if ($this->pushWebMsg($params['clientId'], $params['qrcodeId'], 'complete', $params)) {
+                        return [ 'scan_state' => 0, 'scan_msg' => '远程通知成功' ];
                     }
+                    return [ 'scan_state' => 20, 'scan_msg' => '远程通知失败' ];
                 }
             }
         }
@@ -179,68 +172,46 @@ class AppLogin
     }
 
     /**
-     * 步骤4、解密（扫码）结果中包含的Hook事件确认
-     * 如：手机端确认扫码
+     * 步骤4、下发扫码完成“确认授权”事件
      * 
      * @param string $clientId  为socket标识
      * @param string $qrcodeId 手机最后扫码的那一个码ID
      * @param string $event 约定的事件类型匹配
-     * @param array $params
-     * @param string|integer $scanUserId 扫码人的身份标识（前序流程已约定值）
+     * @param array $params [text,time]
      * 
      * @return array|null
      */
-    public function scanEventConfirm(string $clientId, string $qrcodeId, string $event, array &$params, $scanUserId = 0): ?array
+    public function scanEventConfirm(string $clientId, string $qrcodeId, string $event, array &$params = []): ?array
     {
         $params = array_merge(['event' => $event, 'scan_user_id' => 0, 'text' => '', 'clientId' => $clientId, 'qrcodeId' => $qrcodeId], $params);
         if ($event == $params['event']) {
-            $parmas['scan_user_id'] = $scanUserId;
-            if ($this->pushWebMsg($params['clientId'], $params['qrcodeId'], 'confirm', $params)) {
-                return [
-                    'scan_state' => 0,
-                    'scan_msg' => '远程通知成功'
-                ];
+            // $parmas['scan_user_id'] = $scanUserId;
+            if ($this->pushWebMsg($params['clientId'], $params['qrcodeId'], 'confirm', [
+                'clientId' => $clientId,
+                'qrcodeId' => $qrcodeId,
+                'event' => $event,
+                'time' => $params['time'],
+                'formData' => $params['text']
+            ])) {
+                return [ 'scan_state' => 0, 'scan_msg' => '远程通知成功' ];
             }
-            return [
-                'scan_state' => 30,
-                'scan_msg' => '远程通知失败'
-            ];
+            return [ 'scan_state' => 30, 'scan_msg' => '远程通知失败' ];
         }
         return null;
     }
-    
+
     /**
-     * 步骤5、解码“确认授权”时的自定义参数（携带站内用户身份标识的）
+     * 步骤5、服务端接口解码
      * 
      * @param string $clientId  为socket标识
      * @param string $qrcodeId 手机最后扫码的那一个码ID
      * @param string $event 约定的事件类型匹配
      * @param array $params
      * 
-     * @return array
+     * @return array|string
      */
-    public function decryptFormData(string $clientId, string $qrcodeId, string $text):array
+    static function decryptFormData(string $text, string $event)
     {
-        if ($clientId && $qrcodeId && $text) {
-            $form = json_decode(base64_decode($text), true);
-            if (is_array($form)) {
-                $sign = $form['sign'];
-                unset($form['sign']);
-                ksort($form);
-                $vSign = md5(http_build_query($form) . $this->_options['salt_key']);
-                //3秒登录超时
-                if ($sign == $vSign && $form['clientId'] == $clientId && $form['qrcodeId'] == $qrcodeId) {
-
-                    if ($form['time'] > 0) {
-                        if ($form['time'] > (time() - 3)) {
-                            return $form;
-                        }
-                    } else {
-                        return $form;
-                    }
-                }
-            }
-        }
-        return [];
+        return self::qrcodeScan($text, $event);
     }
 }

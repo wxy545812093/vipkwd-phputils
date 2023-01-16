@@ -83,7 +83,7 @@ trait Traits
         if ($text) {
             $data = json_decode($text, true);
             if (is_array($data) && !empty($data)) {
-                if ($data['expires'] > time()) {
+                if ( $data['expires'] === 0 || $data['expires'] > time()) {
                     if (isset($data['event']) && $data['event'] == $event) {
                         return $data;
                     }
@@ -104,7 +104,7 @@ trait Traits
      * 
      * @return boolean
      */
-    private static function paramValidator(array $params = [], $fields = [])
+    static function paramValidator(array $params = [], $fields = [])
     {
         if (!is_array($fields)) {
             $fields = [$fields];
