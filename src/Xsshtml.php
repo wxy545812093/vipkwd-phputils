@@ -1,6 +1,6 @@
 <?php
 /**
- * @name PHP富文本XSS过滤类
+ * @name 富文本XSS过滤器
  * 
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
