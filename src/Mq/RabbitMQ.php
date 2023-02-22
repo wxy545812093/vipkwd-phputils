@@ -562,6 +562,3 @@ trait _trait__MQ{
 class RabbitMQ {
     use _trait__MQ;
 }
-// class RabbitMq {
-//     use _trait__MQ;
-// }
