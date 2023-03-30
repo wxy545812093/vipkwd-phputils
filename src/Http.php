@@ -44,7 +44,6 @@ class Http
             }
             $url = $url . '?' . http_build_query($data);
         }
-
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -113,7 +112,35 @@ class Http
         // $context = stream_context_create($opts);
         // $html = file_get_contents('http://localhost/e/admin/test.html', false, $context);
     }
-
+		
+    /**
+     * CURL测试链接连通性
+     * 
+     * @param string $url
+     * @param array $header
+     * @param integer $timeout <3000>
+     * @return array
+     */
+    static function connectTest(string $url, array $header = [], int $timeout = 3000)
+    {
+        $ch = curl_init();
+        if (!empty($header)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        }
+        curl_setopt($ch,CURLOPT_TIMEOUT,$timeout);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        $result = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+        return $info;
+    }
+    
     /**
      * Request 请求处理类
      *
