@@ -8,7 +8,8 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Vipkwd\Utils;
 
@@ -26,7 +27,9 @@ use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
     \Closure;
 
 use Vipkwd\Utils\System\Store;
-class Tools{
+
+class Tools
+{
     // use \Vipkwd\Utils\Libs\Develop;
 
     /**
@@ -36,9 +39,9 @@ class Tools{
      *
      * @return boolean
      */
-    static function isCli(){
-        $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
-        return (bool)preg_match("/cli/i", $str );
+    static function isCli()
+    {
+        return Dev::isCli();
     }
 
     /**
@@ -49,7 +52,8 @@ class Tools{
      * @param string $str
      * @return string
      */
-    static function md5_16(string $str):string{
+    static function md5_16(string $str): string
+    {
         return VipkwdStr::md5_16($str);
     }
     /**
@@ -67,9 +71,42 @@ class Tools{
      * @param string $separator 分隔符 <"-">
      * @return string
      */
-    static function uuid(bool $toUppercase = false, string $prefix = '', string $separator="-"):string{
+    static function uuid(bool $toUppercase = false, string $prefix = '', string $separator = "-"): string
+    {
         return VipkwdStr::uuid($toUppercase, $prefix, $separator);
     }
+
+    /**
+     * PHP代码格式化
+     * 
+     * @param string $data 文件PATH或代码字符串
+     * @return string|null;
+     */
+    static function formatPhpCode(string $data): ?string
+    {
+        if (is_file($data)) {
+            $file = $data;
+        } else {
+            $file = __DIR__ . '/' . date('YmdHis') . mt_rand(1000, 9999) . '.php';
+            file_put_contents($file, $data);
+            unset($data);
+        }
+        if (is_dir(VIPKWD_UTILS_LIB_ROOT . '/vendor')) {
+            $vendor = VIPKWD_UTILS_LIB_ROOT;
+        } elseif (is_dir(realpath(VIPKWD_UTILS_LIB_ROOT . '/../../../vendor'))) {
+            $vendor = realpath(VIPKWD_UTILS_LIB_ROOT . '/../../../');
+        } else {
+            exit('php-cs-fixer 插件缺失');
+        }
+        @exec("php {$vendor}/vendor/bin/php-cs-fixer fix {$file} --quiet --allow-risky=yes --rules=@Symfony,@PSR12,-full_opening_tag,-indentation_type,-blank_line_before_statement,strict_comparison", $resArr, $state);
+        if (!isset($data)) {
+            $data = file_get_contents($file);
+            @unlink($file);
+            return $data;
+        }
+        return null;
+    }
+
     /**
      * 获取文件夹大小
      *
@@ -78,8 +115,9 @@ class Tools{
      * @param string $dir
      * @return float
      */
-    static function getDirSize(string $dir):float{
-        if(!is_dir($dir)){
+    static function getDirSize(string $dir): float
+    {
+        if (!is_dir($dir)) {
             return "\"$dir\" is not a directory";
         }
         static $sizeResult = 0;
@@ -104,10 +142,11 @@ class Tools{
      *
      * @return string
      */
-    static function getOS(): string{
-        if(PATH_SEPARATOR == ':'){
+    static function getOS(): string
+    {
+        if (PATH_SEPARATOR == ':') {
             return 'Linux';
-        }else{
+        } else {
             return 'Windows';
         }
     }
@@ -127,7 +166,8 @@ class Tools{
      *
      * @return string
      */
-    static function format($input, int $decimal = 2): string{
+    static function format($input, int $decimal = 2): string
+    {
         return sprintf("%." . $decimal . "f", $input);
     }
 
@@ -145,7 +185,8 @@ class Tools{
      * @param integer $decimal <0> 小数位数
      * @return string
      */
-    static function mathRandom(int $min=0, int $max=1, int $decimal= 0){
+    static function mathRandom(int $min = 0, int $max = 1, int $decimal = 0)
+    {
         $decimal = $decimal === true ? 10 : $decimal;
         return Random::float($min, $max, $decimal);
     }
@@ -162,22 +203,23 @@ class Tools{
      *                      当匿名函数 return === false 时，将退出本函数所有层次的递归模式
      * @return boolean|null
      */
-    static function dirScan(string $dir, ?callable $fileCallback=null):?bool{
-        if(!is_dir($dir)){
+    static function dirScan(string $dir, ?callable $fileCallback = null): ?bool
+    {
+        if (!is_dir($dir)) {
             return null;
         }
         $return = null;
         $fd = opendir($dir);
-        while(false !== ($file = readdir($fd))){
-            if($file != "." && $file != ".."){
-                if(is_dir($dir."/".$file)){
-                    $return = self::dirScan($dir."/".$file, $fileCallback);
-                }else{
-                    if(is_callable($fileCallback)){
+        while (false !== ($file = readdir($fd))) {
+            if ($file != "." && $file != "..") {
+                if (is_dir($dir . "/" . $file)) {
+                    $return = self::dirScan($dir . "/" . $file, $fileCallback);
+                } else {
+                    if (is_callable($fileCallback)) {
                         $return = $fileCallback($file, $dir);
                     }
                 }
-                if($return === false ){
+                if ($return === false) {
                     break;
                 }
             }
@@ -194,24 +236,25 @@ class Tools{
      * @param string $dir
      * @return void
      */
-    static function dirTree(string $dir):array{
-        if(!is_dir($dir)){
+    static function dirTree(string $dir): array
+    {
+        if (!is_dir($dir)) {
             return [];
         }
         $dir = rtrim($dir, "/");
         $path = array();
         $stack = array($dir);
-        while($stack){
+        while ($stack) {
             $thisdir = array_pop($stack);
-            if($dircont = scandir($thisdir)){
-                $i=0;
-                while(isset($dircont[$i])){
-                    if($dircont[$i] !== '.' && $dircont[$i] !== '..'){
-                        $current_file = $thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
-                        if(is_file($current_file)){
-                            $path[] = "f:".$thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
-                        }elseif (is_dir($current_file)){
-                            $path[] = "d:".$thisdir.DIRECTORY_SEPARATOR.$dircont[$i];
+            if ($dircont = scandir($thisdir)) {
+                $i = 0;
+                while (isset($dircont[$i])) {
+                    if ($dircont[$i] !== '.' && $dircont[$i] !== '..') {
+                        $current_file = $thisdir . DIRECTORY_SEPARATOR . $dircont[$i];
+                        if (is_file($current_file)) {
+                            $path[] = "f:" . $thisdir . DIRECTORY_SEPARATOR . $dircont[$i];
+                        } elseif (is_dir($current_file)) {
+                            $path[] = "d:" . $thisdir . DIRECTORY_SEPARATOR . $dircont[$i];
                             $stack[] = $current_file;
                         }
                     }
@@ -230,7 +273,8 @@ class Tools{
      *
      * @return mixed
      */
-    static public function sendMail(array $form, array $data) {
+    static public function sendMail(array $form, array $data)
+    {
         $mail = new PHPMailer(true);       // 实例化PHPMailer对象
         $mail->CharSet = 'UTF-8';                               // 设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
         $mail->isSMTP();                                        // 设定使用SMTP服务
@@ -282,9 +326,8 @@ class Tools{
         // $mail->addAddress('xxxxxx@163.com');
 
         // 是否携带附件
-        if (isset($data['attachment']) && is_array($data['attachment'])){
-            foreach ($data['attachment'] as $file)
-            {
+        if (isset($data['attachment']) && is_array($data['attachment'])) {
+            foreach ($data['attachment'] as $file) {
                 is_file($file) && $mail->AddAttachment($file);
             }
         }
@@ -309,7 +352,8 @@ class Tools{
      * @param mixed $value
      * @return mixed
      */
-    static function session($name = "", $value = "#null@"){
+    static function session($name = "", $value = "#null@")
+    {
         return Store::session($name, $value);
     }
 
@@ -324,29 +368,30 @@ class Tools{
      *
      * @return mixed
      */
-    static function config(string $key, string $confDir, string $confSuffix="php"){
+    static function config(string $key, string $confDir, string $confSuffix = "php")
+    {
         static $__config_;
         !is_array($__config_) && $__config_ = [];
         $key = str_replace(' ', '', $key);
         $key = trim($key, ".");
         $l = explode('.', $key);
-        if(!isset($__config_[ ($l[0]) ])){
-            $f =  rtrim($confDir, "/") . "/{$l[0]}.".ltrim($confSuffix, ".");
-            file_exists($f) && $__config_[ ($l[0]) ] = require_once($f);
+        if (!isset($__config_[($l[0])])) {
+            $f =  rtrim($confDir, "/") . "/{$l[0]}." . ltrim($confSuffix, ".");
+            file_exists($f) && $__config_[($l[0])] = require_once($f);
             unset($f);
         }
-        $r = $__config_[ ($l[0]) ];
+        $r = $__config_[($l[0])];
         unset($l[0]);
-        foreach($l as $conf_arr_key){
-            if( is_array($r) && isset($r[$conf_arr_key])){
+        foreach ($l as $conf_arr_key) {
+            if (is_array($r) && isset($r[$conf_arr_key])) {
                 $r = $r[$conf_arr_key];
-            }else{
+            } else {
                 $r = NULL;
                 break;
             }
             unset($conf_arr_key);
         }
-        unset($key,$l);
+        unset($key, $l);
         return $r;
     }
 
@@ -365,7 +410,8 @@ class Tools{
      * @param int  $expire 有效期 （小于0：删除cookie, 大于0：设置cookie）
      * @return boolean|array|null|string
      */
-    static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false){
+    static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false)
+    {
         return Store::cookie($name, $value, $expire, $path, $domain, $secure, $httponly);
     }
 
@@ -408,11 +454,12 @@ class Tools{
      *
      * @return array
      */
-    static function getHttpHeaders():array{
+    static function getHttpHeaders(): array
+    {
         $headers = array();
         foreach ($_SERVER as $key => $value) {
-            if('HTTP_' == substr($key,0,5)) {
-                $key = substr($key,5);
+            if ('HTTP_' == substr($key, 0, 5)) {
+                $key = substr($key, 5);
                 $key = strtolower($key);
                 $headers[$key] = $value;
             }
@@ -428,9 +475,10 @@ class Tools{
      * @param string $mobile
      * @return string
      */
-    static function encryptMobile(string $mobile):string{
-		return preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $mobile);
-	}
+    static function encryptMobile(string $mobile): string
+    {
+        return preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $mobile);
+    }
 
     /**
      * 快递地址智能解析(提取)
@@ -465,15 +513,16 @@ class Tools{
      * @param boolean $parseUser <true> 是否提取收件人
      * @return array
      */
-    static function expressAddrParse($data, bool $parseUser = true, int $version=2):array{
-        if(!$data) return [];
+    static function expressAddrParse($data, bool $parseUser = true, int $version = 2): array
+    {
+        if (!$data) return [];
         $result = [];
-        if( is_string($data)){
-            $single= true;
+        if (is_string($data)) {
+            $single = true;
             $data = [$data];
         }
         $Api = $version === 1 ? new ExpressAddressAI_V1 : new ExpressAddressAI_V2;
-        foreach($data as $address){
+        foreach ($data as $address) {
             $result[] = $Api->smart($address, $parseUser);
         }
         return isset($single) ? $result[0] : $result;
@@ -494,7 +543,8 @@ class Tools{
      * @param integer $currencyDigits
      * @return string
      */
-    static function convertCurrency($currencyDigits=0) {
+    static function convertCurrency($currencyDigits = 0)
+    {
         // Constants:
         $MAXIMUM_NUMBER = 99999999999.99;
         // Predefine the radix characters and currency symbols for output:
@@ -523,23 +573,23 @@ class Tools{
         if ($currencyDigits == "") {
             throw new Exception("请输入金额!");
         }
-        $currencyDigits = str_replace([",","，"," ","-"],'', $currencyDigits);
-        if (preg_match("/[^\.\d]/",$currencyDigits)) {
+        $currencyDigits = str_replace([",", "，", " ", "-"], '', $currencyDigits);
+        if (preg_match("/[^\.\d]/", $currencyDigits)) {
             throw new Exception("无效的金额输入!");
         }
         // if (($currencyDigits).match(/^((\d{1,3}(,\d{3})*(.((\d{3},)*\d{1,3}))?)|(\d+(.\d+)?))$/) == null) {
         //     alert("非法的字符，请输入数字!");
         //     return "";
         // }
-        if ( ($currencyDigits *1) > $MAXIMUM_NUMBER) {
+        if (($currencyDigits * 1) > $MAXIMUM_NUMBER) {
             throw new Exception("仅支持转换千亿以下金额");
         }
         // Process the coversion from currency digits to characters:
         // Separate integral and decimal parts before processing coversion:
-        $parts = explode('.',strval($currencyDigits));
+        $parts = explode('.', strval($currencyDigits));
         if (count($parts) > 1) {
             $integral = $parts[0];
-            $decimal = substr(str_pad($parts[1],2,"0"), 0, 2);
+            $decimal = substr(str_pad($parts[1], 2, "0"), 0, 2);
         } else {
             $integral = $parts[0];
             $decimal = "";
@@ -552,7 +602,7 @@ class Tools{
         // Start processing:
         $outputCharacters = "";
         // Process integral part if it is larger than 0:
-        if ($integral *1 > 0) {
+        if ($integral * 1 > 0) {
             $zeroCount = 0;
             $integral = strval($integral);
             for ($i = 0; $i < strlen($integral); $i++) {
@@ -567,10 +617,10 @@ class Tools{
                         $outputCharacters .= $digits[0];
                     }
                     $zeroCount = 0;
-                    $outputCharacters .= $digits[($d *1)] . $radices[$modulus];
+                    $outputCharacters .= $digits[($d * 1)] . $radices[$modulus];
                 }
                 if ($modulus == 0 && $zeroCount < 4) {
-                    $outputCharacters.= $bigRadices[$quotient];
+                    $outputCharacters .= $bigRadices[$quotient];
                 }
             }
             $outputCharacters .= $CN_DOLLAR;
@@ -580,7 +630,7 @@ class Tools{
             for ($i = 0; $i < strlen($decimal); $i++) {
                 $d = substr($decimal, $i, 1);
                 if ($d != "0") {
-                    $outputCharacters .= $digits[($d *1)] . $decimals[$i];
+                    $outputCharacters .= $digits[($d * 1)] . $decimals[$i];
                 }
             }
         }
@@ -606,7 +656,8 @@ class Tools{
      *
      * @return array
      */
-    static function arrayToSku(array $input){
+    static function arrayToSku(array $input)
+    {
         return Arr::arrayArrRange($input);
     }
 
@@ -615,21 +666,22 @@ class Tools{
      * 
      * -e.g: phpunit("Tools::isMobile");
      */
-    static function isMobile(){
+    static function isMobile()
+    {
         // 如果有HTTP_X_WAP_PROFILE则一定是移动设备
-        if (isset ($_SERVER['HTTP_X_WAP_PROFILE']))
+        if (isset($_SERVER['HTTP_X_WAP_PROFILE']))
             return true;
         //此条摘自TPM智能切换模板引擎，适合TPM开发
-        if(isset ($_SERVER['HTTP_CLIENT']) &&'PhoneClient'==$_SERVER['HTTP_CLIENT'])
+        if (isset($_SERVER['HTTP_CLIENT']) && 'PhoneClient' == $_SERVER['HTTP_CLIENT'])
             return true;
         //如果via信息含有wap则一定是移动设备,部分服务商会屏蔽该信息
-        if (isset ($_SERVER['HTTP_VIA']))
+        if (isset($_SERVER['HTTP_VIA']))
             //找不到为flase,否则为true
             return stristr($_SERVER['HTTP_VIA'], 'wap') ? true : false;
         //判断手机发送的客户端标志,兼容性有待提高
-        if (isset ($_SERVER['HTTP_USER_AGENT'])) {
+        if (isset($_SERVER['HTTP_USER_AGENT'])) {
             $clientkeywords = array(
-                'nokia','sony','ericsson','mot','samsung','htc','sgh','lg','sharp','sie-','philips','panasonic','alcatel','lenovo','iphone','ipod','blackberry','meizu','android','netfront','symbian','ucweb','windowsce','palm','operamini','operamobi','openwave','nexusone','cldc','midp','wap','mobile'
+                'nokia', 'sony', 'ericsson', 'mot', 'samsung', 'htc', 'sgh', 'lg', 'sharp', 'sie-', 'philips', 'panasonic', 'alcatel', 'lenovo', 'iphone', 'ipod', 'blackberry', 'meizu', 'android', 'netfront', 'symbian', 'ucweb', 'windowsce', 'palm', 'operamini', 'operamobi', 'openwave', 'nexusone', 'cldc', 'midp', 'wap', 'mobile'
             );
             //从HTTP_USER_AGENT中查找手机浏览器的关键字
             if (preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) {
@@ -637,7 +689,7 @@ class Tools{
             }
         }
         //协议法，因为有可能不准确，放到最后判断
-        if (isset ($_SERVER['HTTP_ACCEPT'])) {
+        if (isset($_SERVER['HTTP_ACCEPT'])) {
             // 如果只支持wml并且不支持html那一定是移动设备
             // 如果支持wml和html但是wml在html之前则是移动设备
             if ((strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') !== false) && (strpos($_SERVER['HTTP_ACCEPT'], 'text/html') === false || (strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') < strpos($_SERVER['HTTP_ACCEPT'], 'text/html')))) {

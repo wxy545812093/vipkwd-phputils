@@ -20,7 +20,10 @@ trait Develop{
      * @param boolean $exit
      * @return void
      */
-    static function dump($data, $exit = false){
+    static function dump($data, $exit = false, $printr=true){
+		if(!$printr){
+			return self::vdump($data, $exit);
+		}
         if(self::isCli() == false){ echo "<pre>";}
         print_r($data);
         if(self::isCli() == false){ echo "</pre>";}
@@ -32,6 +35,7 @@ trait Develop{
      *
      * @param mixed $data
      * @param boolean $exit
+     * @param boolean $format
      * @return void
      */
     static function dumper($data, $exit = false, bool $format = true){
@@ -190,6 +194,8 @@ trait Develop{
      * @return boolean
      */
     static function isCli(){
-        return preg_match("/cli/i", @php_sapi_name()) ? true : false;
+        //return preg_match("/cli/i", @php_sapi_name()) ? true : false;
+        $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
+        return (bool)preg_match("/cli/i", $str );
     }
 }

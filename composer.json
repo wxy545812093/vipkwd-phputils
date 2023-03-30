@@ -3,7 +3,7 @@
     "name": "vipkwd/utils",
     "description": "PHP常用函数集合",
     "type": "library",
-    "version":"3.0.3",
+    "version":"3.1.1",
     "homepage": "https://www.vipkwd.com",
     "authors": [
         {
@@ -23,7 +23,8 @@
         "symfony/console": "^5.3",
         "zoujingli/ip2region": "^1.0",
         "mongodb/mongodb": "^1.6",
-        "jsondb/jsondb":"*"
+        "jsondb/jsondb":"*",
+        "friendsofphp/php-cs-fixer":"*"
     },
     "bin":["bin/vipkwd"],
     "autoload": {
