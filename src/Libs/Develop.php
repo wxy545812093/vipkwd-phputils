@@ -198,4 +198,23 @@ trait Develop{
         $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
         return (bool)preg_match("/cli/i", $str );
     }
+
+    static function colorPrint($string, $color)
+	{
+		if (preg_match("/[A-Z]/i", "$color")) {
+			$color = str_replace("black", "30", $color);
+			$color = str_replace("red", "31", $color);
+			$color = str_replace("green", "32", $color);
+			$color = str_replace("yellow", "33", $color);
+			$color = str_replace("blue", "34", $color);
+			$color = str_replace("purple", "35", $color);
+			$color = str_replace("dark_green", "36", $color);
+			$color = str_replace("darkgreen", "36", $color);
+			$color = str_replace("white", "37", $color);
+			$color = str_replace("underline", "4", $color);
+			$color = str_replace("cover", "7", $color);
+		}
+		return "\033[{$color}m{$string}\033[0m";
+	}
+
 }

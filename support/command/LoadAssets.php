@@ -18,7 +18,7 @@ use Symfony\Component\Console\Input\{
 	InputArgument,
 	InputInterface
 };
-// use Vipkwd\Utils\Dev;
+use Vipkwd\Utils\Dev;
 // use Vipkwd\Utils\Type\Str;
 use Vipkwd\Utils\System\File;
 use Vipkwd\Utils\Http;
@@ -55,16 +55,16 @@ class LoadAssets extends Command
 
 		$apiHeaderInfo = Http::connectTest($api, [], 1000);
 		if ($apiHeaderInfo['http_code'] == "0") {
-			exit(sprintf(" --- " . self::colorPrint("CDN", 31) . " (" . self::colorPrint($cdn, 33) . ")" . self::colorPrint(" 已失效", 31) . "\r\n"));
+			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" 已失效", 31) . "\r\n"));
 		} elseif ($apiHeaderInfo['http_code'] == "404") {
-			echo sprintf(" --- CDN连通性($cdn)：[http-code: " . self::colorPrint("OK", 32) . "\r\n");
-			exit(sprintf(" --- 资源映射(%s): [http-code: " . self::colorPrint($apiHeaderInfo['http_code'], 31) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi)));
+			echo sprintf(" --- CDN连通性($cdn)：[http-code: " . Dev::colorPrint("OK", 32) . "\r\n");
+			exit(sprintf(" --- 资源映射(%s): [http-code: " . Dev::colorPrint($apiHeaderInfo['http_code'], 31) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi)));
 		} elseif ($apiHeaderInfo['http_code'] != "200") {
-			exit(sprintf(" --- " . self::colorPrint("CDN", 31) . " (" . self::colorPrint($cdn, 33) . ")" . self::colorPrint(" 服务异常", 31) . " [http-code: {$apiHeaderInfo['http_code']}]\r\n"));
+			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" 服务异常", 31) . " [http-code: {$apiHeaderInfo['http_code']}]\r\n"));
 		}
 		self::smartPad($width - 7);
-		echo sprintf("--- CDN连通性($cdn)：" . self::colorPrint("Connected", 32) . "\r\n");
-		echo sprintf("--- 资源映射(%s): " . self::colorPrint("Connected", 32) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi));
+		echo sprintf("--- CDN连通性($cdn)：" . Dev::colorPrint("Connected", 32) . "\r\n");
+		echo sprintf("--- 资源映射(%s): " . Dev::colorPrint("Connected", 32) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi));
 		self::smartPad($width - 7);
 		echo "\r\n";
 		unset($apiHeaderInfo);
@@ -78,13 +78,13 @@ class LoadAssets extends Command
 			$mapLength >= 5 && $idx = str_pad("$idx", strlen("$mapLength"), " ", STR_PAD_LEFT);
 			$sfile = self::buildPath($file);
 			$key = file_exists($sfile) ? hash_file('md5', $sfile) : null;
-			self::smartPad($width, "--> [{$idx}] " . self::colorPrint($file, 36) . " [" . self::colorPrint($map['hash'], 35) . "]");
+			self::smartPad($width, "--> [{$idx}] " . Dev::colorPrint($map['hash'], 35) . " " . Dev::colorPrint($file, "4;7;37"));
 			if ($key != $map['hash']) {
 				File::downloadHttpFile($map['url'], $sfile);
-				self::smartPad($width, "   ### (" . ($key === null ? 'Download' : 'Update') . self::colorPrint(" completed", 32) . ")", "###", "  └-");
+				self::smartPad($width, "   ### (" . ($key === null ? 'Download' : 'Update') . Dev::colorPrint(" completed", 32) . ")", "###", "  └-");
 				usleep(600);
 			} else {
-				self::smartPad($width, "   ### (Exists" . self::colorPrint(" Skiped", 33) . ")", "###", "  └-");
+				self::smartPad($width, "   ### (Exists" . Dev::colorPrint(" Skiped", 33) . ")", "###", "  └-");
 			}
 			$mapLength >= 10 && $idx = intval($idx);
 			$idx++;
@@ -142,11 +142,6 @@ trait TaskUtils9973200
 		$dir = dirname($file);
 		File::createDir($dir);
 		return $file;
-	}
-
-	private static function colorPrint($string, $color)
-	{
-		return "\033[{$color}m{$string}\033[0m";
 	}
 
 	private static function smartPad($width, $text = null, $seper = '###', $prefix = '')
