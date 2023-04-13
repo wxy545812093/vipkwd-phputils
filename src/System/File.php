@@ -175,25 +175,28 @@ class File
      *
      * @param string $localFilePath 要下载的文件路径
      * @param string $rename <null>文件名称,为空则与下载的文件名称一样
-     * @param integer $downloadSpeed <1>下载限速 单位MB，必须大于0
+     * @param integer $downloadSpeed <200>下载限速 单位KB，必须大于0
      * @param boolean $breakpoint <true> 是否开启断点续传
      *
      * @return void
      */
-    static public function download(string $localFilePath, $rename = null, int $downloadSpeed = 1, bool $breakpoint = true)
+    static function download(string $localFilePath, $rename = null, int $downloadSpeed = 200, bool $breakpoint = true)
     {
         // 验证文件
         if (!is_file($localFilePath) || !is_readable($localFilePath)) {
             return false;
         }
-
+        // if (!is_file($localFilePath)) {
+        //     header("HTTP/1.1 400 Invalid Request");
+        //     exit("<h3>File Not Found</h3>");
+        // }
+        set_time_limit(0);
         // 获取文件大小
         $fileSize = filesize($localFilePath);
 
-        // 获取header range信息
+        // 获取header range续传信息
         if ($breakpoint && isset($_SERVER['HTTP_RANGE']) && !empty($_SERVER['HTTP_RANGE'])) {
-            $range = $_SERVER['HTTP_RANGE'];
-            $range = preg_replace('/[\s|,].*/', '', $range);
+            $range = preg_replace('/[\s|,].*/', '', $_SERVER['HTTP_RANGE']);
             $range = explode('-', substr($range, 6));
             if (count($range) < 2) {
                 $range[1] = $fileSize;
@@ -205,63 +208,140 @@ class File
             if (empty($range['end'])) {
                 $range['end'] = $fileSize;
             }
+
+            $range['start'] *= 1;
+            $range['end'] *= 1;
+            // file_put_contents('98k.txt', json_encode([
+            //     'range' => $range,
+            //     'http_range' => $_SERVER['HTTP_RANGE'],
+            // ]) . "\r\n", FILE_APPEND);
         }
 
         // 重命名
         (!isset($rename) || !$rename) && $rename = $localFilePath;
 
         // 字节流
-        header('HTTP/1.1 200 OK');
-        header('Accept-Length:' . $fileSize);
-        header('Content-Length:' . $fileSize);
-        header('cache-control:public');
-        header('Content-Type:application/octet-stream');
-        header('Content-Disposition: attachment;localFilePath=' . basename($rename));
+
+        $ua = $_SERVER["HTTP_USER_AGENT"]; //判断是什么类型浏览器
+        $encoded_filename = str_replace("+", "%20", urlencode(basename($rename)));
+        //解决下载文件名乱码
+        if (preg_match("/MSIE/", $ua) || preg_match("/Trident/", $ua)) {
+            header('Content-Disposition: attachment; filename="' . $encoded_filename . '"');
+        } else if (preg_match("/Firefox/", $ua)) {
+            header('Content-Disposition: attachment; filename*="utf8\'\'' . basename($rename) . '"');
+        } else if (preg_match("/Chrome/", $ua)) {
+            header('Content-Disposition: attachment; filename="' . $encoded_filename . '"');
+        } else {
+            header('Content-Disposition: attachment; filename="' . basename($rename) . '"');
+        }
 
         // 校验是否限速(文件超过0.5M自动限速为 0.5Mb/s )
-        $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed, 1) : 0.5) * 1024 * 1024;
+        // $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed, 1) : 1) * 1024 * 1024;
+        $limit = self::toBytes(($downloadSpeed > 0 ? ($downloadSpeed < 1024 ? $downloadSpeed : 500) : 50) . "KB", true);
 
         if ($fileSize <= $limit) {
             readfile($localFilePath);
         } else {
-            // 读取文件资源
-            $file = fopen($localFilePath, 'rb');
+
 
             // 强制结束缓冲并输出
-            ob_end_clean();
-            ob_implicit_flush();
-            header('X-Accel-Buffering: no');
+            // if (extension_loaded('zlib')) {
+            //     ob_end_flush();
+            // }
+            // ob_implicit_flush();
+            
+            // ini_set('output_buffering', 'Off');
+            // ini_set('zlib.output_compression', 'Off');
 
-            // 读取位置标
-            $count = 0;
+            $lastModified = gmdate('D, d M Y H:i:s', filemtime($localFilePath)) . ' GMT';
+            $etag = sprintf('vk/"%s:%s"', md5($lastModified . hash_file('md5', $localFilePath)), $fileSize);
+            // headers 
+            header(sprintf('Last-Modified: %s', $lastModified));
+            header(sprintf('ETag: %s', $etag));
+            header('Content-Type:application/octet-stream');
+            // header('X-Accel-Buffering: no');
+            // 读取文件资源
+            $fileHandler = fopen($localFilePath, 'rb');
+
+            // file_put_contents('98k.txt', json_encode($_SERVER ?? []) . "\r\n", FILE_APPEND);
 
             if ($breakpoint && isset($range)) { // 使用续传
                 header('HTTP/1.1 206 Partial Content');
                 header('Accept-Ranges:bytes');
-                // 剩余长度
+                // 剩余长度 
                 header(sprintf('Content-Length:%u', $range['end'] - $range['start']));
-                // range信息
+                // range信息 
                 header(sprintf('Content-Range:bytes %s-%s/%s', $range['start'], $range['end'], $fileSize));
-
-                // 读取位置标
-                // file指针跳到断点位置
-                fseek($file, intval(sprintf('%u', $range['start'])));
-                $count = $range['start'];
+                // fp指针跳到断点位置 
+                fseek($fileHandler, $range['start']);
+            } else {
+                // header('cache-control:public');
+                header('HTTP/1.1 200 OK');
+                header('Content-Length:' . $fileSize);
             }
+
+            while (!feof($fileHandler)) {
+                echo fread($fileHandler, $limit);
+                ob_flush();
+                flush();
+                sleep(1); // 用于测试,减慢下载速度 
+            }
+
+            ($fileHandler != null) && fclose($fileHandler);
 
             // 下载
-            while (!feof($file) && $fileSize - $count > 0) {
-                $res = fread($file, $limit);
-                $count += $limit;
-                echo $res;
-                flush(); //输出缓冲
-                //ob_flush();
-                // usleep(mt_rand(500,1500));
-                sleep(1);
-            }
-            ($file != null) && fclose($file);
+            // // while (!feof($fileHandler) && $fileSize - $count > 0 && !connection_aborted()) {
+            // while (!feof($fileHandler) && !connection_aborted()) {
+            //     // $count += $limit;
+            //     echo fread($fileHandler, $limit);
+            //     ob_flush();
+            //     flush(); //输出缓冲
+            //     sleep(1);
+            // }
+            // // ob_end_clean();
+            // ($fileHandler != null) && fclose($fileHandler);
         }
         exit;
+    }
+
+    /**
+     * Nginx x-sendfile文件下载
+     *
+     * @param string $filePath 要下载的文件路径
+     * @param string $accelPath nginx控制的路劲
+     * @param integer $speed <50>下载限速 单位KB，必须大于0
+     * @param string $origin_name 下载文件名(默认同源文件名)
+     *
+     * @return void
+     */
+    static function downloadWidthXSendfile(string $filePath, string $accelPath, int $speed = 50, string $origin_name = '')
+    {
+        // 文件不存在
+        if (!is_file($filePath)) {
+            if (!is_file(File::realpath($accelPath . '/' . $filePath))) {
+                throw new \Exception('文件不存在，可能已被删除');
+            }
+        } else {
+            $filePath = str_replace($accelPath, '', $filePath);
+        }
+        $_file_path = '/' . ltrim(ltrim($filePath, '/'), '\\');
+        $_file_path = File::pathToUnix($_file_path);
+        $_file_limit_size = self::toBytes(($speed > 0 ? ($speed < 1024 ? $speed : 500) : 50) . "KB");
+
+        // 启用 nginx X-Accel 下载
+        header('Content-Type: application/octet-stream');
+        $encoded_fname = rawurlencode($origin_name ? $origin_name: basename($_file_path));
+        header('Content-Disposition: attachment;filename="' . $encoded_fname . '";filename*=utf-8' . "''" . $encoded_fname);
+
+        header('X-Accel-Redirect: ' . $_file_path);
+        header('X-Accel-Buffering: yes');
+        header('X-Accel-Charset: utf-8');
+        //header("Accept-Ranges: none");//单线程 限制多线程
+
+        // 不限速下载
+        if ($speed !== "") {
+            header('X-Accel-Limit-Rate:' . $_file_limit_size);
+        }
     }
 
     /**
@@ -315,7 +395,7 @@ class File
         $size *= pow(1024, $pos);
         unset($unit, $str, $pos);
         if ($toInt === true) {
-            return ceil($size);
+            return intval(ceil($size));
         }
         return round($size);
     }
@@ -612,6 +692,10 @@ class File
      */
     static function normalizePath(string $path): string
     {
+        //模糊检测网址
+        if (strrpos($path, ':') > 0) {
+            return $path;
+        }
         $parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
         $res = [];
         foreach ($parts as $part) {
@@ -656,7 +740,6 @@ class File
     {
         try {
             $dir = self::normalizePath($dir);
-            is_file($dir) && $dir = dirname($dir);
             !is_dir($dir) && @mkdir($dir, $mode, true);
             return is_dir($dir);
         } catch (\Exception $e) {
@@ -746,13 +829,20 @@ class File
      * 从文件读取内容
      *
      * @param string $file
-     *
+     * @param string|null $method[get|post]
      * @throws \Exception  on error occurred
      * @return string
      */
-    static function read(string $file): string
+    static function read(string $file, ?string $method = null): string
     {
-        $content = @file_get_contents($file); // @ is escalated to exception
+        if ($method) {
+            $opts = array('http' => array('method' => strtoupper($method), 'timeout' => 3,));
+            $context = stream_context_create($opts);
+            $content = @file_get_contents($file, false, $context);
+        } else {
+            $content = @file_get_contents($file); // @ is escalated to exception
+        }
+
         if ($content === false) {
             throw new \Exception(sprintf(
                 "Unable to read file '%s'. %s",
@@ -771,12 +861,13 @@ class File
      * @param integer|null $mode <0666>
      *
      * @throws \Exception  on error occurred
-     * @return void
+     * @return int
      */
-    static function write(string $file, string $content, ?int $mode = 0666): void
+    static function write(string $file, string $content, ?int $mode = 0666): int
     {
         static::createDir(self::dirname($file));
-        if (@file_put_contents($file, $content) === false) { // @ is escalated to exception
+        $int = @file_put_contents($file, $content);
+        if ($int === false) { // @ is escalated to exception
             throw new \Exception(sprintf(
                 "Unable to write file '%s'. %s",
                 self::normalizePath($file),
@@ -792,6 +883,7 @@ class File
                 Dev::getLastError()
             ));
         }
+        return $int;
     }
 
     /**
@@ -922,14 +1014,14 @@ class File
 
     /**
      * 读取指定INI文件
-     *
+     * 
      * @param string $iniFile ini文件path
      * @return array|boolean
      */
     static function readIniFile(string $iniFile)
     {
         if (file_exists($iniFile)) {
-            return parse_ini_file( $iniFile, true);
+            return parse_ini_file($iniFile, true);
         } else {
             return false;
         }
@@ -937,29 +1029,30 @@ class File
 
     /**
      * 写入数组到指定ini文件
-     *
+     * 
      * @param array $data
      * @param string $iniFile
      */
-    static function writeIniFile($data, $iniFile) {
+    static function writeIniFile($data, $iniFile)
+    {
         $content = "";
         $common = '';
         $index = 0;
-        foreach ($data as $key=>$elem) {
-            if(is_array($elem)){
-                $index ++;
+        foreach ($data as $key => $elem) {
+            if (is_array($elem)) {
+                $index++;
                 $content .= "[{$key}]\n";
-                foreach($elem as $k2 => $v2){
+                foreach ($elem as $k2 => $v2) {
                     $content .= "{$k2} = {$v2}\n";
                 }
                 $content .= "\n";
-            }else{
+            } else {
                 $common .= "{$key} = {$elem}\n";
             }
         }
-        if($index > 0){
-            $content .= "[common]\n" .$common;
-        }else{
+        if ($index > 0) {
+            $content .= "[common]\n" . $common;
+        } else {
             $content = $common;
         }
         unset($common, $index);

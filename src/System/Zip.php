@@ -42,7 +42,7 @@ class Zip{
                     }
                 }
                 $zip->setArchiveComment('vipkwd/utils');
-                $zip->addFromString('package-license.txt', "This zip package create by PHP utils with \"vipkwd/utils\"
+                $zip->addFromString('license.txt', "This zip package create by PHP utils with \"vipkwd/utils\"
 
 -- composer use:
 --      composer require vipkwd/utils
@@ -127,7 +127,7 @@ class Zip{
      * @param string|null $password 压缩包密码 不支持一切宽松等于(==)布尔False 的密码
 	 * @return boolean|null
 	 */
-	static function append(string $zipFile, string $appendFile, string $content="",?string $password=""){
+	static function append(string $zipFile, string $appendFile, string $content="",?string $password=""):?bool{
 
 		return self::watchException(function()use(&$zipFile, &$appendFile, &$content, $password){
 			$zip = new ZipArchive;

@@ -34,16 +34,20 @@ class Http
     static function get(string $url, array $data = [], array $header = [])
     {
         $ch = curl_init();
-
-        if (!empty($header)) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-        }
+        $header = array_merge([
+            'DNT' => '1',
+            'Connection' => 'keep-alive',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8'
+        ], $header);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         if (!empty($data)) {
             if (strrpos($url, "?") > 0) {
                 $url = substr($url, 0, strrpos($url, "?") - 1);
             }
             $url = $url . '?' . http_build_query($data);
         }
+
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -68,7 +72,8 @@ class Http
      *
      * @return mixed
      */
-    static function post(string $url, string $param="", string $dataType = 'form', array $header = []){
+    static function post(string $url, string $param = "", string $dataType = 'form', array $header = [])
+    {
         $ch = curl_init();
         $dataTypeArr = [
             'form' => ['content-type: application/x-www-form-urlencoded;charset=UTF-8'],
