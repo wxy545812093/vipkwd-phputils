@@ -13,6 +13,7 @@ namespace Vipkwd\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Input\{
 	InputOption,
 	InputArgument,
@@ -28,25 +29,35 @@ class LoadAssets extends Command
 {
 
 	use TaskUtils9973200;
-
+	private $width = 120;
 	private $mapsApi = "{%cdn%}/vipkwd-cdn/maps.php";
-
+	private $cdnList = [
+		'http://vipkwd.eu5.net',
+		'http://vipkwd.totalh.net',
+		'http://dl.vipkwd.com',
+		'http://vipkwd.byethost13.com',
+		'http://dl.dev.tcnas.cn',
+	];
 	protected function configure()
 	{
 		$this->setName("load:assets")
 			->setDescription('Download/Update static resources remotely for utils.')
 			->setHelp('Download static resources remotely for utils.')
-			->addOption("cdn", "c", InputOption::VALUE_OPTIONAL, 'Test the method in "className" class.', "http://dl.vipkwd.com");
+			->addOption("cdn", "c", InputOption::VALUE_OPTIONAL, 'Test the method in "className" class.', "")
+			->addOption("cdns", "l", InputOption::VALUE_OPTIONAL, 'Print the default support list of CDNS.', "list");
 	}
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		$width = 120;
-		//self::smartPad($width);
+		//self::smartPad($this->width);
 		echo "\r\n";
-
 		$cdn = trim($input->getOption('cdn') ?? "");
+
 		if (!$cdn) {
-			$cdn = 'dl.vipkwd.com';
+			// $cdn = $this->$cdnList[0];
+			$cdn = $this->dumpCdnList($input, $output, "");
+			if ($cdn == null) {
+				return 1;
+			}
 		}
 		$api = str_replace('{%cdn%}', trim($cdn, '/'), $this->mapsApi);
 		if (!preg_match("/^https?:\/\//", $api)) {
@@ -55,22 +66,33 @@ class LoadAssets extends Command
 
 		$apiHeaderInfo = Http::connectTest($api, [], 1000);
 		if ($apiHeaderInfo['http_code'] == "0") {
-			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" 已失效", 31) . "\r\n"));
+			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" Lost efficacy", 31) . "\r\n"));
 		} elseif ($apiHeaderInfo['http_code'] == "404") {
-			echo sprintf(" --- CDN连通性($cdn)：[http-code: " . Dev::colorPrint("OK", 32) . "\r\n");
-			exit(sprintf(" --- 资源映射(%s): [http-code: " . Dev::colorPrint($apiHeaderInfo['http_code'], 31) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi)));
+			echo sprintf(" --- CDN Ping( $cdn )：[" . Dev::colorPrint("OK", 32) . "]\r\n");
+			exit(sprintf(" --- CDN Maps( %s ): [" . Dev::colorPrint('Not found', 31) . "]\r\n", str_replace('{%cdn%}', $cdn, $this->mapsApi)));
 		} elseif ($apiHeaderInfo['http_code'] != "200") {
-			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" 服务异常", 31) . " [http-code: {$apiHeaderInfo['http_code']}]\r\n"));
+			exit(sprintf(" --- " . Dev::colorPrint("CDN", 31) . " (" . Dev::colorPrint($cdn, 33) . ")" . Dev::colorPrint(" Service exception", 31) . " [http-code: {$apiHeaderInfo['http_code']}]\r\n"));
 		}
-		self::smartPad($width - 7);
-		echo sprintf("--- CDN连通性($cdn)：" . Dev::colorPrint("Connected", 32) . "\r\n");
-		echo sprintf("--- 资源映射(%s): " . Dev::colorPrint("Connected", 32) . "\r\n", str_replace('{%cdn%}', '', $this->mapsApi));
-		self::smartPad($width - 7);
-		echo "\r\n";
+		self::smartPad($this->width - 7);
+		echo sprintf("--- CDN Ping( $cdn )：" . Dev::colorPrint("Ok", 32) . "\r\n");
+		echo sprintf("--- CDN Maps( %s ): " . Dev::colorPrint("Ok", 32) . "\r\n", str_replace('{%cdn%}', $cdn, $this->mapsApi));
+		self::smartPad($this->width - 7);
 		unset($apiHeaderInfo);
 
 		// echo "----".str_pad("任务构建",56,'·',STR_PAD_BOTH)."----".PHP_EOL;
-		$maps = json_decode(file_get_contents($api), true);
+		$maps = json_decode(file_get_contents($api, false, stream_context_create([
+			'http' => [
+				'method' => 'GET',
+				// 'header' => 'Content-type:application/x-www-form-urlencoded',
+				// 'content' => http_build_query([]),
+				'timeout' => 5
+			]
+		])), true);
+
+		if (!is_array($maps) || empty($maps)) {
+			exit(sprintf("--- " . Dev::colorPrint("The CDN mapping content is invalid.", 31) . "\r\n"));
+		}
+		echo "\r\n";
 
 		$idx = 1;
 		$mapLength = count($maps);
@@ -78,19 +100,43 @@ class LoadAssets extends Command
 			$mapLength >= 5 && $idx = str_pad("$idx", strlen("$mapLength"), " ", STR_PAD_LEFT);
 			$sfile = self::buildPath($file);
 			$key = file_exists($sfile) ? hash_file('md5', $sfile) : null;
-			self::smartPad($width, "--> [{$idx}] " . Dev::colorPrint($map['hash'], 35) . " " . Dev::colorPrint($file, "4;7;37"));
+			self::smartPad($this->width, "--> [{$idx}] " . Dev::colorPrint($map['hash'], 35) . " " . Dev::colorPrint($file, "4;7;37"));
 			if ($key != $map['hash']) {
 				File::downloadHttpFile($map['url'], $sfile);
-				self::smartPad($width, "   ### (" . ($key === null ? 'Download' : 'Update') . Dev::colorPrint(" completed", 32) . ")", "###", "  └-");
+				self::smartPad($this->width, "   ### (" . ($key === null ? 'Download' : 'Update') . Dev::colorPrint(" completed", 32) . ")", "###", "  └-");
 				usleep(600);
 			} else {
-				self::smartPad($width, "   ### (Exists" . Dev::colorPrint(" Skiped", 33) . ")", "###", "  └-");
+				self::smartPad($this->width, "   ### (Exists" . Dev::colorPrint(" Skiped", 33) . ")", "###", "  └-");
 			}
 			$mapLength >= 10 && $idx = intval($idx);
 			$idx++;
 		}
-		//self::smartPad($width);
+		//self::smartPad($this->width);
 		return 1;
+	}
+
+
+	private function dumpCdnList(InputInterface $input, OutputInterface $output, $cdn)
+	{
+		$style = new SymfonyStyle($input, $output);
+		$style->block(sprintf("You must use option `-c https://domain.com` manually enter the cdn address or specify one from the list of below"), null, 'error');
+		if (!$cdn && !empty($this->cdnList)) {
+			$cdn = $this->cdnList[0];
+			if (count($this->cdnList) > 1) {
+				$this->cdnList[] = "quit cli command";
+				$cdn = $style->choice(sprintf('But have found the following cdn maps, please choose[index/url] one of them? '), $this->cdnList, 0);
+				if ($cdn == 'quit cli command') {
+					return;
+				}
+				return $cdn;
+			}
+		};
+		if ($cdn !== null) {
+			if ($style->confirm(sprintf('Do you want to run cdn[index/url]:"%s" instead? ', $cdn), false)) {
+				return $cdn;
+			}
+		}
+		return;
 	}
 
 	/**

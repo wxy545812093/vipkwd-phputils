@@ -123,7 +123,7 @@ class Math
             if ($leftBelow == $rightBelow) {
                 $this->base = ($leftTop - $rightTop) . '/' . $leftBelow;
             } else {
-                // 蝴蝶算法 1/2 - 1/2 = (1*3 - 1*2) / (2*3) = 1/6
+                // 蝴蝶算法 1/2 - 1/3 = (1*3 - 1*2) / (2*3) = 1/6
                 $this->base = ($leftTop * $rightBelow - $rightTop * $leftBelow) . "/" . ($leftBelow * $rightBelow);
             }
 

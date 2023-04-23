@@ -124,7 +124,7 @@ class Http
      * @param string $url
      * @param array $header
      * @param integer $timeout <3000>
-     * @return array
+     * @return array curl_getinfo
      */
     static function connectTest(string $url, array $header = [], int $timeout = 3000)
     {

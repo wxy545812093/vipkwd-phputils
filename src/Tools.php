@@ -268,8 +268,20 @@ class Tools
     /**
      * 发送邮件
      *
-     * @param array  $form 发件人信息
-     * @param array  $data 收件人信息
+     * @param array  $form 发件人信息 [host,port,username,password,address,title]
+     * @param array  $data 收件人信息 [subject,body,mail,name,attachment]
+     * 
+     * // SMTP服务器: form.host
+     * // SMTP端口号: form.port
+     * // SMTP用户名: form.username
+     * // SMTP授权码: form.password
+     * 
+     *   // $mail->Port = 465;                                        // SMTP服务器的端口号
+     *   // $mail->Username = "devkeep@aliyun.com";                   // SMTP服务器用户名
+     *   // $mail->Password = "xxxxxxxxxxxx";                         // SMTP服务器密码
+     *   // $mail->SetFrom('devkeep@aliyun.com', '项目完成通知');
+     * 
+     * 
      *
      * @return mixed
      */

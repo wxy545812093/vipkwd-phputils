@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @name Mysql
  * @author vipkwd <service@vipkwd.com>
@@ -6,15 +7,18 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Vipkwd\Utils\Db;
+
 use \PDO;
 use \Exception;
 use Vipkwd\Utils\Error;
 use Vipkwd\Utils\Libs\Medoo;
 
-class Mysql{
+class Mysql
+{
 
     protected static $instance = array();
     private $_fields = "*";
@@ -29,7 +33,8 @@ class Mysql{
     private $_beginDebug = false;
     private $_medoo = null;
 
-    private function __construct(array $options){
+    private function __construct(array $options)
+    {
 
         $options = array_merge([
             // [required]
@@ -45,7 +50,7 @@ class Mysql{
             // 'socket' => '/tmp/mysql.sock',
 
             // Initialized and connected PDO object.
-	        //'pdo' => new PDO('mysql:dbname=test;host=127.0.0.1', 'user', 'password');,
+            //'pdo' => new PDO('mysql:dbname=test;host=127.0.0.1', 'user', 'password');,
 
             // 'dsn' => [
             //     // The PDO driver name for DSN driver parameter.
@@ -92,7 +97,7 @@ class Mysql{
             'command' => [
                 'SET SQL_MODE=ANSI_QUOTES'
             ]
-        ],$options);
+        ], $options);
 
         self::toRealPath($options, 'socket');
         self::toRealPath($options, 'database');
@@ -116,7 +121,7 @@ class Mysql{
      */
     public static function instance(array $options)
     {
-        $hash = "db".md5(json_encode($options));
+        $hash = "db" . md5(json_encode($options));
         if (!key_exists($hash, self::$instance)) {
             self::$instance[$hash] = new self($options);
         }
@@ -128,7 +133,8 @@ class Mysql{
      *
      * @return void
      */
-    public function pdo(){
+    public function pdo()
+    {
         return $this->_medoo->pdo;
     }
 
@@ -136,9 +142,11 @@ class Mysql{
      * 切换/选择数据表
      *
      * @param string $tbName
-     * @return Object
+     * 
+     * @return class instance
      */
-    public function table(string $tbName):Object{
+    public function table(string $tbName): self
+    {
         $this->_table = $tbName;
         return $this;
     }
@@ -149,12 +157,13 @@ class Mysql{
      * @param string|array $fields
      * @return Object
      */
-    public function field($fields ="*"):Object{
-        if($fields !="*" && is_string($fields)){
-            $fields = preg_replace("/\ +/", " ",$fields);
+    public function field($fields = "*"): Object
+    {
+        if ($fields != "*" && is_string($fields)) {
+            $fields = preg_replace("/\ +/", " ", $fields);
             $fields = explode(',', $fields);
         }
-        array_walk($fields, function(&$value, $key){
+        array_walk($fields, function (&$value, $key) {
             $value = trim($value);
         });
         $this->_fields = $fields;
@@ -167,7 +176,8 @@ class Mysql{
      * @param array $where
      * @return Object
      */
-    public function where(array $where = []):Object{
+    public function where(array $where = []): Object
+    {
         $this->_where = $where;
         return $this;
     }
@@ -178,7 +188,8 @@ class Mysql{
      * @param array $join
      * @return Object
      */
-    public function join(array $join = []):Object{
+    public function join(array $join = []): Object
+    {
         $this->_join = $join;
         return $this;
     }
@@ -189,7 +200,8 @@ class Mysql{
      * @param array $data
      * @return Object
      */
-    public function data(array $data):Object{
+    public function data(array $data): Object
+    {
         $this->_data = $data;
         return $this;
     }
@@ -201,7 +213,8 @@ class Mysql{
      * @param integer $offset <0>
      * @return Object
      */
-    public function limit(int $limit = 10,int $offset = 0):Object{
+    public function limit(int $limit = 10, int $offset = 0): Object
+    {
         $this->_limit = [$offset, $limit];
         return $this;
     }
@@ -212,11 +225,13 @@ class Mysql{
      *
      * @param integer $page 页码
      * @param integer $limit 每页数据条数
-     * @return Object
+     * 
+     * @return class instance
      */
-    public function page(int $page=1, $limit=10):Object{
+    public function page(int $page = 1, $limit = 10): self
+    {
         $page = $page <= 1 ? 1 : $page;
-        $this->_limit = [ ($page-1) * $limit , $limit];
+        $this->_limit = [($page - 1) * $limit, $limit];
         return $this;
     }
 
@@ -224,9 +239,11 @@ class Mysql{
      * order by
      *
      * @param string|array $order
-     * @return Object
+     * 
+     * @return class instance
      */
-    public function order($order):Object{
+    public function order($order): self
+    {
         $this->_order = $order;
         return $this;
     }
@@ -234,9 +251,11 @@ class Mysql{
      * GROUP
      *
      * @param string|array $group
-     * @return Object
+     * 
+     * @return class instance
      */
-    public function group($group):Object{
+    public function group($group): self
+    {
         $this->_group = $group;
         return $this;
     }
@@ -245,9 +264,11 @@ class Mysql{
      * having
      *
      * @param array $havingArr
-     * @return Object
+     * 
+     * @return class instance
      */
-    public function having(array $havingArr):Object{
+    public function having(array $havingArr): self
+    {
         $this->_having = $havingArr;
         return $this;
     }
@@ -258,9 +279,10 @@ class Mysql{
      * @param callable|null $callback
      * @return array
      */
-    public function select(callable $callback = null){
+    public function select(callable $callback = null)
+    {
         $this->checkTable();
-        return $this->watchException(function($that)use($callback){
+        return $this->watchException(function ($that) use ($callback) {
             return $that->_cmd("select", true, $callback);
         });
     }
@@ -270,10 +292,11 @@ class Mysql{
      *
      * @return void
      */
-    public function get(){
+    public function get()
+    {
         $this->checkTable();
 
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("get", true);
         });
     }
@@ -284,18 +307,19 @@ class Mysql{
      * array数据将自动JSON化存储
      * 
      * @param string|null $primaryKey 主要为Oracle时指定主键
-     * @return string
+     * @return int
      */
-    public function insert(string $primaryKey=null):string{
-        if($this->_data == null){
+    public function insert(string $primaryKey = null)
+    {
+        if ($this->_data == null) {
             return $this->outputError("Missing data");
         }
-        if(strtolower($this->_medoo->type) == 'oracle'){
-            if($primaryKey == ""){
+        if (strtolower($this->_medoo->type) == 'oracle') {
+            if ($primaryKey == "") {
                 $this->outputError("Oracle database, please specify the primary key field");
             }
             $this->_medoo->insert($this->_table, $this->_dataArrayToJson($this->_data), $primaryKey);
-        }else{
+        } else {
             $this->_medoo->insert($this->_table, $this->_dataArrayToJson($this->_data));
         }
         return $this->lastInsertId();
@@ -308,28 +332,29 @@ class Mysql{
      * 
      * @return integer
      */
-    public function insertAll(){
-        if($this->_data == null){
+    public function insertAll()
+    {
+        if ($this->_data == null) {
             return $this->outputError("Missing data");
         }
 
         // _data 需要索引数组
-        $_data = array_filter($this->_data, function($val, $key){
-            if( "$key" == strval(intval($key)) && $key >= 0){
+        $_data = array_filter($this->_data, function ($val, $key) {
+            if ("$key" == strval(intval($key)) && $key >= 0) {
                 return true;
             }
             return false;
-        },1);
+        }, 1);
 
-        if(empty($_data) || count($_data) != count($this->_data) ){
+        if (empty($_data) || count($_data) != count($this->_data)) {
             return $this->outputError("Error in index array format");
         }
-        foreach($_data as $k => $v){
+        foreach ($_data as $k => $v) {
             $_data[$k] = $this->_dataArrayToJson($v);
         }
         $result = $this->_medoo->insert($this->_table, $_data);
         unset($_data);
-        return $result->rowCount *1;
+        return $result->rowCount * 1;
     }
 
     /**
@@ -337,7 +362,8 @@ class Mysql{
      *
      * @return void
      */
-    public function lastInsertId(){
+    public function lastInsertId()
+    {
         return $this->_medoo->id();
     }
 
@@ -347,20 +373,21 @@ class Mysql{
      * @param array $data
      * @return integer
      */
-    public function update(array $data = []):int{
-        if(!empty($data)){
+    public function update(array $data = []): int
+    {
+        if (!empty($data)) {
             $this->_data = $data;
         }
-        if($this->_data == null){
+        if ($this->_data == null) {
             return $this->outputError("Missing data");
         }
 
-        if(empty($this->_where)){
-            return $this->outputError("Missing the where condition"); 
+        if (empty($this->_where)) {
+            return $this->outputError("Missing the where condition");
         }
         $this->buildWhereCondition();
-        $result=$this->_medoo->update($this->_table, $this->_dataArrayToJson($this->_data), $this->_where);
-        return $result ? $result->rowCount() *1 : 0;
+        $result = $this->_medoo->update($this->_table, $this->_dataArrayToJson($this->_data), $this->_where);
+        return $result ? $result->rowCount() * 1 : 0;
     }
 
     /**
@@ -370,12 +397,13 @@ class Mysql{
      * 
      * @return integer
      */
-    public function delete():int{
-        if(empty($this->_where)){
-            return $this->outputError("Missing the where condition"); 
+    public function delete(): int
+    {
+        if (empty($this->_where)) {
+            return $this->outputError("Missing the where condition");
         }
         $this->buildWhereCondition();
-        $result=$this->_medoo->delete($this->_table,$this->_where);
+        $result = $this->_medoo->delete($this->_table, $this->_where);
         return $result->rowCount() * 1;
     }
 
@@ -392,13 +420,14 @@ class Mysql{
      * 
      * UPDATE `account` SET type = REPLACE(`type`, 'user', 'new_user'), type = REPLACE(`type`, 'business', 'new_business'), groups = REPLACE(`groups`, 'groupA', 'groupB') WHERE `user_id` > 0
      * @param array $columns
-     * @return void
+     * @return int
      */
-    public function replace(array $columns){
-        if(!empty($columns)){
+    public function replace(array $columns):int
+    {
+        if (!empty($columns)) {
 
-            if(empty($this->_where)){
-                return $this->outputError("Missing the where condition"); 
+            if (empty($this->_where)) {
+                return $this->outputError("Missing the where condition");
             }
             $this->buildWhereCondition();
             $result = $this->_medoo->replace($this->_table, $columns, $this->_where);
@@ -412,9 +441,10 @@ class Mysql{
      *
      * @return boolean
      */
-    public function has():bool{
+    public function has(): bool
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("has", false);
         });
     }
@@ -424,9 +454,10 @@ class Mysql{
      *
      * @return array
      */
-    public function random():array{
+    public function random(): array
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("rand", true);
         });
     }
@@ -436,9 +467,10 @@ class Mysql{
      *
      * @return integer
      */
-    public function count():int{
+    public function count(): int
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("count", false);
         });
     }
@@ -448,9 +480,10 @@ class Mysql{
      *
      * @return integer
      */
-    public function max():int{
+    public function max(): int
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("max", true);
         });
     }
@@ -460,9 +493,10 @@ class Mysql{
      *
      * @return integer
      */
-    public function min():int{
+    public function min(): int
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("min", true);
         });
     }
@@ -472,9 +506,10 @@ class Mysql{
      *
      * @return integer
      */
-    public function avg():int{
+    public function avg(): int
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("avg", true);
         });
     }
@@ -484,9 +519,10 @@ class Mysql{
      *
      * @return integer
      */
-    public function sum():int{
+    public function sum(): int
+    {
         $this->checkTable();
-        return $this->watchException(function($that){
+        return $this->watchException(function ($that) {
             return $that->_cmd("sum", true);
         });
     }
@@ -499,9 +535,10 @@ class Mysql{
      * @param callable $callback 事务内执行的方法,如果返回false，则回滚事务
      * @return void
      */
-    public function action(callable $callback):void{
+    public function action(callable $callback): void
+    {
         $that = $this;
-        $this->_medoo->action(function($medoo) use($that, $callback){
+        $this->_medoo->action(function ($medoo) use ($that, $callback) {
             return $callback($that);
         });
         unset($that);
@@ -514,7 +551,8 @@ class Mysql{
      * @param array $map 如： [ ':today' => $today ]
      * @return string
      */
-    public function raw(string $expression, $map=[]):string{
+    public function raw(string $expression, $map = []): string
+    {
         return $this->_medoo::raw($expression, $map);
     }
 
@@ -527,21 +565,22 @@ class Mysql{
      * @param integer $stime 计时标记  时间戳 默认time()
      * @return integer 耗时秒
      */
-    public function chunk(int $limit = 10, callable $callback, $stime = null):int{
+    public function chunk(int $limit = 10, callable $callback, $stime = null): int
+    {
         (!$stime || $stime <= 0) && $stime = time();
 
-        if(!$callback || !is_callable($callback)){
+        if (!$callback || !is_callable($callback)) {
             return 0;
         }
         $totals = $this->count();
-        if($totals == 0){
+        if ($totals == 0) {
             return time() - $stime;
         }
-        $pages = ceil( $totals / $limit);
+        $pages = ceil($totals / $limit);
         $page = 1;
-        while( $page <= $pages){
+        while ($page <= $pages) {
             $resultSet = $this->page($page, $limit)->select();
-            if(false === call_user_func($callback, $resultSet)){
+            if (false === call_user_func($callback, $resultSet)) {
                 unset($resultSet);
                 break;
             }
@@ -558,7 +597,8 @@ class Mysql{
      *
      * @return void
      */
-    public function beginDebug():void{
+    public function beginDebug(): void
+    {
         $this->_beginDebug = true;
         $this->_medoo->beginDebug();
     }
@@ -568,9 +608,10 @@ class Mysql{
      *
      * @return array
      */
-    public function debugLog():array{
+    public function debugLog(): array
+    {
 
-        if(!$this->_beginDebug){
+        if (!$this->_beginDebug) {
             $this->outputError("Debugging mode must be turned on first");
         }
 
@@ -582,7 +623,8 @@ class Mysql{
      *
      * @return array
      */
-    public function log():array{
+    public function log(): array
+    {
         return $this->_medoo->log();
     }
 
@@ -591,29 +633,33 @@ class Mysql{
      *
      * @return string
      */
-    public function last():string{
+    public function last(): string
+    {
         return $this->_medoo->last();
     }
-    
+
     /**
      * 获取数据库连接信息
      *
      * @return array
      */
-    public function info():array{
+    public function info(): array
+    {
         return $this->_medoo->info();
     }
 
-    public function query($sql){
+    public function query($sql)
+    {
         return $this->_medoo->query($sql)->fetchAll();
     }
 
-    private function _dataArrayToJson(array $data){
+    private function _dataArrayToJson(array $data)
+    {
         $list = [];
-        foreach($data as $k => $v){
-            if(is_array($v)){
-                $kk = str_ireplace('[JSON]','', $k);
-                $list[ $kk."[JSON]" ] = $v;
+        foreach ($data as $k => $v) {
+            if (is_array($v)) {
+                $kk = str_ireplace('[JSON]', '', $k);
+                $list[$kk . "[JSON]"] = $v;
                 unset($data[$k], $kk);
             }
             unset($k, $v);
@@ -621,30 +667,33 @@ class Mysql{
         return array_merge($data, $list);
     }
 
-    private function outputError(string $message){
+    private function outputError(string $message)
+    {
         throw new Exception($message);
         exit;
     }
 
-    private function checkTable():void{
-        if(!$this->_table){
+    private function checkTable(): void
+    {
+        if (!$this->_table) {
             $this->outputError("Missing Table");
         }
     }
 
-    private function watchException(callable $function){
-        try{
+    private function watchException(callable $function)
+    {
+        try {
             return $function($this);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return $this->outputError($e->getMessage());
         }
     }
 
-    private function _cmd(string $command, bool $fieldsEnable=true, ?callable $callback=null){
+    private function _cmd(string $command, bool $fieldsEnable = true, ?callable $callback = null)
+    {
         $this->buildWhereCondition();
-        if($this->_join){
-            if(!$fieldsEnable){
+        if ($this->_join) {
+            if (!$fieldsEnable) {
                 return $this->_medoo->$command(
                     $this->_table,
                     $this->_join,
@@ -659,7 +708,7 @@ class Mysql{
                 $callback
             );
         }
-        if(!$fieldsEnable){
+        if (!$fieldsEnable) {
             return $this->_medoo->$command(
                 $this->_table,
                 $this->_where
@@ -678,12 +727,13 @@ class Mysql{
      *
      * @return void
      */
-    private function buildWhereCondition():void{
-        if(!is_array($this->_where)) $this->_where = [];
-        if($this->_limit) $this->_where['LIMIT'] = $this->_limit;
-        if($this->_group) $this->_where['GROUP'] = $this->_group;
-        if($this->_order) $this->_where['ORDER'] = $this->_order;
-        if($this->_having) $this->_where['HAVING'] = $this->_having;
+    private function buildWhereCondition(): void
+    {
+        if (!is_array($this->_where)) $this->_where = [];
+        if ($this->_limit) $this->_where['LIMIT'] = $this->_limit;
+        if ($this->_group) $this->_where['GROUP'] = $this->_group;
+        if ($this->_order) $this->_where['ORDER'] = $this->_order;
+        if ($this->_having) $this->_where['HAVING'] = $this->_having;
     }
 
     /**
@@ -693,17 +743,18 @@ class Mysql{
      * @param string $arrKey
      * @return void
      */
-    private static function toRealPath(&$path, $arrKey=""){
-        if(is_array($path)){
-            if($arrKey && isset($path[$arrKey]) && is_file($path[$arrKey])){
-                $path[$arrKey]= realpath($path[$arrKey]);
+    private static function toRealPath(&$path, $arrKey = "")
+    {
+        if (is_array($path)) {
+            if ($arrKey && isset($path[$arrKey]) && is_file($path[$arrKey])) {
+                $path[$arrKey] = realpath($path[$arrKey]);
                 return $path[$arrKey];
             }
-        }else{
-            if(!empty($path) && is_file($path)){
+        } else {
+            if (!empty($path) && is_file($path)) {
                 $path = realpath($path);
                 return $path;
-            }   
+            }
         }
         return "";
     }
