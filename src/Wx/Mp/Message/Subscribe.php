@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils\Wx\Mp\Message;
 
-use Vipkwd\Utils\Wx\Mp\Base;
-use Vipkwd\Utils\Wx\Mp\Traits;
+use Vipkwd\Utils\Wx\Mp\__Base as Base;
+use Vipkwd\Utils\Wx\Mp\__Traits as Traits;
 use \Exception;
 use Vipkwd\Utils\Color;
 

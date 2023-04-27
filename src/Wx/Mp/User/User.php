@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils\Wx\Mp\User;
 
-use Vipkwd\Utils\Wx\Mp\Base;
-use Vipkwd\Utils\Wx\Mp\Traits;
+use Vipkwd\Utils\Wx\Mp\__Base as Base;
+use Vipkwd\Utils\Wx\Mp\__Traits as Traits;
 
 class User
 {
@@ -118,10 +118,10 @@ class User
      * 模拟微信客户端错误
      * 
      * @param string $message
-     * @param string $styleType [ success|info|safe_warn|warn|waiting|error|cancel ]
+     * @param string $style [ success|info|safe_warn|warn|waiting|error|cancel ]
      * @param boolean $html 消息体是否为HTML(默认文本直接嵌入H4标签里的)
      */
-    static function wxBrowserMessage(string $message = '操作成功', string $styleType = 'success', bool $html = false){
+    static function wxBrowserMessage(string $message = '操作成功', string $style = 'success', bool $html = false){
 
         $styleClassName = [
             'success' => 'weui_icon_success',
@@ -159,6 +159,6 @@ class User
             </body>
         </html>
 HTML;
-        echo str_ireplace(['%styleclass%'], [ $styleClassName[$styleType] ], $html);
+        echo str_ireplace(['%styleclass%'], [ $styleClassName[$style] ], $html);
     }
 }

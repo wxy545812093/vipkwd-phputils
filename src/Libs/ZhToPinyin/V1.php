@@ -25,7 +25,7 @@ class V1 {
      * @param string $allow_chars 允许的非中文字符
      * @return string             拼音字符串
      */
-	static function encode($str, $ret_format = 'head', $placeholder = '*', $allow_chars = '/[a-zA-Z\d]/'){
+	static function encode(string $str, string $ret_format = 'head', string $placeholder = '*', string $separator = '', string $allow_chars = '/[a-zA-Z\d]/'){
 		$str = trim($str);
         $len = mb_strlen($str, 'UTF-8');
         $rs = '';
@@ -48,6 +48,7 @@ class V1 {
             if ('one' === $ret_format && '' !== $rs) {
                 return $rs[0];
             }
+            ($i < $len-1) && $rs .= $separator; 
         }
         return $rs;
 	}

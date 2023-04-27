@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @name 常用工具集合
+ * @name 存储管理
  * @author devkeep <devkeep@skeep.cc>
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/aiqq363927173/Tools
@@ -105,7 +105,7 @@ class Store{
             // cookie 保存路径
             'path'     => $path ?: '/',
             // cookie 有效域名
-            'domain'   => $domain ?: '',
+            'domain'   => $domain ?: null,
             //  cookie 启用安全传输
             'secure'   => $secure ? true : false,
             // httponly设置

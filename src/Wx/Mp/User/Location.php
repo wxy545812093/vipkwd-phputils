@@ -11,7 +11,7 @@
 declare(strict_types=1);
 
 namespace Vipkwd\Utils\Wx\Mp\User;
-use Vipkwd\Utils\Wx\Mp\Traits;
+use Vipkwd\Utils\Wx\Mp\__Traits as Traits;
 
 class Location
 {

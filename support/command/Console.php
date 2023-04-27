@@ -144,12 +144,15 @@ class Console extends Command
 			"Arguments" => 0,
 			"Eg"		=> 0,
 			"Comment" 	=> 40,
-		] : ["Idx" => 4, 'Dir' => 16, 'Namespace' => 30,'Cli' => 40];
+		] : ["Idx" => 4, 'Dir' => 16, 'Namespace' => 30, 'Cli' => 40];
 
 		$checker = function ($line) use (&$widths) {
 			foreach ($widths as $field => $width) {
 				$txt = str_replace(['<info>', '</info>'], "", strval($line[$field]));
 				$len = VipkwdStr::strLenPlus($txt);
+				//额外填充表格宽度
+				($field == 'Arguments' || $field == 'Comment') && $len+= 4;
+				
 				if ($len > $width) {
 					$widths[$field] = $len;
 				}
@@ -167,8 +170,8 @@ class Console extends Command
 		// Dev::dumper(self::$writelnLines,1);
 		self::$writelnWidths = $widths;
 		foreach (self::$writelnLines as $index => $line) {
-			if($index == array_key_last(self::$writelnLines) && $index === 3){
-				self::$_output->writeln("|". self::createTDText(array_sum(array_values($widths)) + 8, "没有内容") ." |");
+			if ($index == array_key_last(self::$writelnLines) && $index === 3) {
+				self::$_output->writeln("|" . self::createTDText(array_sum(array_values($widths)) + 8, "没有内容") . " |");
 			}
 			if (is_array($line)) {
 				self::$_output->writeln(self::createTRLine($line[0], $line[1], $line[2] ?? false));
@@ -190,20 +193,19 @@ class Console extends Command
 				if (!is_dir($dir)) {
 					continue;
 				}
-				$dir = str_replace(self::getSrcPath() .'/','', $dir);
+				$dir = str_replace(self::getSrcPath() . '/', '', $dir);
 				self::$writelnLines[] = ["|", [
 					"Idx" => str_pad(strval($index++), 2, " ", STR_PAD_LEFT),
 					// "Dir" => "<info>{$dir}</info>",
-					"Namespace" => self::$nameSpace . str_replace('/', '\\',$dir),
+					"Namespace" => self::$nameSpace . str_replace('/', '\\', $dir),
 					"Dir" => "{$dir}",
 					// "Cli" => 'php vipkwd dump <info>'.str_replace('/','.',$dir).'</info>',
-					"Cli" => 'php vipkwd dump '.str_replace('/','.',$dir),
+					"Cli" => 'php vendor/bin/vipkwd dump ' . str_replace('/', '.', $dir),
 				]];
 			}
-		} else {
 			self::$writelnLines[] = ["+", "-"];
-			self::$writelnLines[] = ["|", true, true];
-			self::$writelnLines[] = ["+", "-"];	
+		} else {
+			$parseList = [];
 			foreach (glob($path . "/*.php") as $index => $classFile) {
 				$_classFile = preg_replace("|[A-Za-z0-9\._\-]+|", '', str_replace($path, '', $classFile));
 				if ($_classFile != "/") {
@@ -227,11 +229,27 @@ class Console extends Command
 				$filename = array_pop($classFile);
 				unset($classFile);
 
-				self::parseClass(str_replace(".php", "", $filename), $index, $classDescript);
+				if (!preg_match("/^__[\w]+\.php$/", $filename)) {
+					$parseList[] = [
+						'class' => str_replace(".php", "", $filename),
+						'index' => $index,
+						'descript' => $classDescript
+					];
+				}
 			}
+			// if (empty($parseList)) {
+			// 	self::$dumpDir = true;
+			// 	self::buildMethodListDoc($cmd);
+			// } else {
+				self::$writelnLines[] = ["+", "-"];
+				self::$writelnLines[] = ["|", true, true];
+				self::$writelnLines[] = ["+", "-"];
+				foreach ($parseList as $item) {
+					self::parseClass($item['class'], $item['index'], $item['descript']);
+				}
+				self::$writelnLines[] = ["+", "-"];
+			// }
 		}
-
-		self::$writelnLines[] = ["+", "-"];
 	}
 
 	private static function parseClass($Class, $index, $classDescript = null)
@@ -482,7 +500,7 @@ class Console extends Command
 	 * @param [type] $doc
 	 * @return void
 	 */
-	private static function phpunit($doc, $nameSpace ='')
+	private static function phpunit($doc, $nameSpace = '')
 	{
 		// devdump($doc,1);
 		if (self::$testMethod) {
@@ -519,19 +537,19 @@ class Console extends Command
 							list($prefix, $subfix) = explode('punit(', $nameSpace);
 							$nameSpace = substr($subfix, 1);
 
-							$buildClassName = function($nameSpace){
+							$buildClassName = function ($nameSpace) {
 								$_tmp = explode('.', $nameSpace);
-								$_tmp = array_map(function($p){
+								$_tmp = array_map(function ($p) {
 									return ucfirst($p);
 								}, $_tmp);
 								$nameSpace = implode('\\', $_tmp);
 								unset($_tmp);
-						
+
 								(stristr($nameSpace, "Vipkwd\\Utils\\") === false) && $nameSpace = "\\Vipkwd\\Utils\\{$nameSpace}";
 								return $nameSpace;
 							};
 							$nameSpace = $buildClassName($nameSpace);
-							$_eg = $prefix . 'punit(' .(substr($subfix, 0, 1)).  $nameSpace . '::'.$method;
+							$_eg = $prefix . 'punit(' . (substr($subfix, 0, 1)) .  $nameSpace . '::' . $method;
 						}
 
 						\Vipkwd\Utils\Dev::console(eval("$_eg"), !1, !1);
@@ -551,7 +569,7 @@ class Console extends Command
 
 	private static function createTRLine(string $septer, $data = " ", $isTitle = false)
 	{
-		$list = [ '' ];
+		$list = [''];
 		foreach (self::$writelnWidths as $title => $with) {
 			if ($isTitle === true) {
 				$field = $title;

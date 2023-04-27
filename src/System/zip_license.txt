@@ -1,0 +1,8 @@
+This zip package create by PHP utils with "vipkwd/utils"
+
+-- composer use:
+--      composer require vipkwd/utils
+-- 
+--      include "vendor/autoload.php"
+--      Vipkwd\Utils\System\Zip::addZip("demo.zip", ".");
+--      //And a zip package was created
