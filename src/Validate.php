@@ -7,27 +7,32 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Vipkwd\Utils;
 
-class Validate{
+class Validate
+{
 
     use \Vipkwd\Utils\Libs\Random\Payment\ValidateTrait;
 
     static $reg_internat_mobile = "/^(((\+?0?\d{1,4})[\ \-])?(\d{5,11}))$/";
     static $reg_email = "/\w+([-+.]\w+)*@((\w+([-.]\w+)*)\.)[a-zA-Z]{2,5}$/";
-    static $reg_telephone ="/^(((0[1-9]\d{1,2})[ \-]|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/";
+    static $reg_telephone = "/^(((0[1-9]\d{1,2})[\ \-]?|\(0[1-9]\d{1,2}\))?\d{4}\ ?)(\d{3,4})(([\-|\ ]\d{1,6})?)$/";
     static $reg_zipcode = "/^[1-9]\d{5}(?!\d)$/";
 
     /**
      * 验证移动通讯号码（兼容：国际号码格式）
+     * 
+     * -e.g: phpunit("Validate::internatMobile", ["+08613805060708"]);
      *
      * @param string $str
      * @return boolean
      */
-    static function internatMobile(string $str):bool{
-        if( false === $result = self::mobileOfChina($str)){
+    static function internatMobile(string $str): bool
+    {
+        if (false === $result = self::mobileOfChina($str)) {
             // match 组1：完整匹配
             // match 组2：带分隔符的区域码
             // match 组3：区域码
@@ -40,21 +45,31 @@ class Validate{
     /**
      * 验证邮箱号码
      *
+     * -e.g: phpunit("Validate::email", ["admin@admin.com"]);
+     * 
      * @param string $str
      * @return boolean
      */
-    static function email(string $str):bool{
+    static function email(string $str): bool
+    {
         return self::exec(self::$reg_email, $str);
     }
 
     /**
      * 验证手机或座机
+     * 
+     * -e.g: phpunit("Validate::phone", ["13805060708"]);
+     * -e.g: phpunit("Validate::phone", ["020-2685478"]);
+     * -e.g: phpunit("Validate::phone", ["02026854780"]);
+     * -e.g: phpunit("Validate::phone", ["(020)26854780"]);
+     * -e.g: phpunit("Validate::phone", ["020 26854780"]);
      *
      * @param string $str
      * @return boolean
      */
-    static function phone(string $str):bool{
-        if( false === $result = self::mobileOfChina($str)){
+    static function phone(string $str): bool
+    {
+        if (false === $result = self::mobileOfChina($str)) {
             $result = self::telePhone($str);
         }
         return $result;
@@ -66,62 +81,88 @@ class Validate{
      * 010 1234567
      * 2811369
      *
+     * -e.g: phpunit("Validate::phone", ["020-2685478"]);
+     * -e.g: phpunit("Validate::phone", ["02026854780"]);
+     * -e.g: phpunit("Validate::phone", ["(020)26854780"]);
+     * -e.g: phpunit("Validate::phone", ["020 26854780"]);
+     * 
      * @param string $str
      * @return boolean
      */
-    static function telephone(string $str):bool{
+    static function telephone(string $str): bool
+    {
         return self::exec(self::$reg_telephone, $str);
     }
 
     /**
      * 验证大陆邮政编码
      *
+     * 
+     * -e.g: phpunit("Validate::zipCodeOfChina", ["725411"]);
+     * 
      * @param string $str
      * @return boolean
      */
-    static function zipCodeOfChina(string $str):bool{
+    static function zipCodeOfChina(string $str): bool
+    {
         return self::exec(self::$reg_zipcode, $str);
     }
 
     /**
      * 验证大陆手机号 (兼容：地区码前缀)
      *
+     * 
+     * -e.g: phpunit("Validate::mobileOfChina", ["13805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["+8613805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["+08613805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["+08613805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["+8613805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["8613805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["(86)13805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["(086)13805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["086 13805060708"]);
+     * -e.g: phpunit("Validate::mobileOfChina", ["086-13805060708"]);
+     * 
      * @param string $str
-     * @param boolean $prefixSupport
+     * @param boolean $prefix <true>
      * @return boolean
      */
-    static function mobileOfChina(string $str, $prefixSupport=true):bool{
-        return $prefixSupport
-                ? self::exec("/^((\+?0?86[\ \-]?)?1)[3-9]\d{9}$/", $str)
-                : self::exec("/^1[3-9]\d{9}$/", $str);
+    static function mobileOfChina(string $str, bool $prefix = true): bool
+    {
+        return $prefix ? self::exec("/^(?:\+?0?86[\ \-]?|\(\+?0?86[\ \-]?\))?(1[3-9]\d{9})$/", $str) : self::exec("/^1[3-9]\d{9}$/", $str);
     }
 
     /**
      * 验证大陆身份证号码
      *
+     * -e.g: phpunit("Validate::idcardOfChina", ["210782199108173425"]);
+     * -e.g: phpunit("Validate::idcardOfChina", ["411381198906072624"]);
+     * -e.g: phpunit("Validate::idcardOfChina", ["36042219720817002X"]);
+     * 
      * @param string $str
      * @return boolean
      */
-    static function idcardOfChina(string $str):bool{
-        $pass = self::exec("/^(^[1-9]\d{7}((0[1-9])|(1[0-2]))(([0|1|2][1-9])|3[0-1])\d{3}$)|(^[1-9]\d{5}[1-9]\d{3}((0[1-9])|(1[0-2]))(([0|1|2][1-9])|3[0-1])((\d{4})|\d{3}[Xx])$)$/",$str);
-        if($pass){
+    static function idcardOfChina(string $str): bool
+    {
+        $pass = self::exec("/^(^[1-9]\d{7}((0[1-9])|(1[0-2]))(([0|1|2][1-9])|3[0-1])\d{3}$)|(^[1-9]\d{5}[1-9]\d{3}((0[1-9])|(1[0-2]))(([0|1|2][1-9])|3[0-1])((\d{4})|\d{3}[Xx])$)$/", $str);
+        if ($pass) {
             $prov = [
-                11 =>"北京",12 =>"天津",13 =>"河北",14 =>"山西",15 =>"内蒙古",21 =>"辽宁",22 =>"吉林",23 =>"黑龙江",31 =>"上海",32 =>"江苏",
-                33 =>"浙江",34 =>"安徽",35 =>"福建",36 =>"江西",37 =>"山东",41 =>"河南",42 =>"湖北 ",43 =>"湖南",44 =>"广东",45 =>"广西",
-                46 =>"海南",50 =>"重庆",51 =>"四川",52 =>"贵州",53 =>"云南",54 =>"西藏",61 =>"陕西",62 =>"甘肃",63 =>"青海",64 =>"宁夏",
-                65 =>"新疆",71 =>"台湾",81 =>"香港",82 =>"澳门"//,91 =>"国外",
+                11 => "北京", 12 => "天津", 13 => "河北", 14 => "山西", 15 => "内蒙古", 21 => "辽宁", 22 => "吉林", 23 => "黑龙江", 31 => "上海", 32 => "江苏",
+                33 => "浙江", 34 => "安徽", 35 => "福建", 36 => "江西", 37 => "山东", 41 => "河南", 42 => "湖北 ", 43 => "湖南", 44 => "广东", 45 => "广西",
+                46 => "海南", 50 => "重庆", 51 => "四川", 52 => "贵州", 53 => "云南", 54 => "西藏", 61 => "陕西", 62 => "甘肃", 63 => "青海", 64 => "宁夏",
+                65 => "新疆", 71 => "台湾", 81 => "香港", 82 => "澳门" //,91 =>"国外",
             ];
             $tip = "";
-            if (!$str || !preg_match("/^[1-9]\d{16}(\d|X)$/i",$str) ) {
+            if (!$str || !preg_match("/^[1-9]\d{16}(\d|X)$/i", $str)) {
                 // $tip = "身份证号格式错误";
                 $pass = false;
-            } else if (!isset($prov[ (substr($str, 0, 2)) ]) ) {
+            } else if (!isset($prov[(substr($str, 0, 2))])) {
                 // $tip = "地址编码错误";
                 $pass = false;
             } else {
                 //18位身份证需要验证最后一位校验位
                 if (strlen($str) == 18) {
-                    $str = str_split(str_replace('x', 'X',$str));
+                    $str = str_split(str_replace('x', 'X', $str));
                     //∑(ai×Wi)(mod 11)
                     //加权因子
                     $factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -133,7 +174,7 @@ class Validate{
                         $wi = $factor[$i];
                         $sum += $ai * $wi;
                     }
-                    $last = $parity[ $sum % 11];
+                    $last = $parity[$sum % 11];
                     if ($parity[$sum % 11] != $str[17]) {
                         // $tip = "校验位错误";
                         $pass = false;
@@ -150,7 +191,8 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function number(string $str):bool{
+    static function number(string $str): bool
+    {
         return self::exec("/^(\-?\d+)(\.?\d+)?$/", $str);
     }
 
@@ -160,18 +202,32 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function date(string $str):bool{
+    static function date(string $str): bool
+    {
         return self::exec("/^[1-3]\d{3}(\-|\/)?((0[1-9])|(1[0-2]))(\-|\/)?((0[1-9])|([1-2]\d)|(3[0-1]))$/", $str);
     }
 
     /**
      * 验证腾讯QQ号
-     *
+     * 
+     * -e.g: $func = function(){$list = [];for($i=4;$i<14;$i++){$list[] = \Vipkwd\Utils\Type\Random::code($i,true);};return $list;};$list=$func();
+     * -e.g: echo "[QQ Len:4]";phpunit("Validate::qqAccount",[ $list[0] ]);
+     * -e.g: echo "[QQ Len:5]";phpunit("Validate::qqAccount",[ $list[1] ]);
+     * -e.g: echo "[QQ Len:6]";phpunit("Validate::qqAccount",[ $list[2] ]);
+     * -e.g: echo "[QQ Len:7]";phpunit("Validate::qqAccount",[ $list[3] ]);
+     * -e.g: echo "[QQ Len:8]";phpunit("Validate::qqAccount",[ $list[4] ]);
+     * -e.g: echo "[QQ Len:9]";phpunit("Validate::qqAccount",[ $list[5] ]);
+     * -e.g: echo "[QQ Len:10]";phpunit("Validate::qqAccount",[ $list[6] ]);
+     * -e.g: echo "[QQ Len:11]";phpunit("Validate::qqAccount",[ $list[7] ]);
+     * -e.g: echo "[QQ Len:12]";phpunit("Validate::qqAccount",[ $list[8] ]);
+     * -e.g: echo "[QQ Len:13]";phpunit("Validate::qqAccount",[ $list[9] ]);
+     * 
      * @param string $str
      * @return boolean
      */
-    static function qqAccount(string $str):bool{
-        return self::exec("/^[1-9]\d{4,11}$/",$str);
+    static function qqAccount(string $str): bool
+    {
+        return self::exec("/^[1-9]\d{4,11}$/", $str);
     }
 
     /**
@@ -182,8 +238,9 @@ class Validate{
      * @param integer $maxLength
      * @return boolean
      */
-    static function wechatAccount(string $str):bool{
-        return self::mobileOfChina($str,false)
+    static function wechatAccount(string $str): bool
+    {
+        return self::mobileOfChina($str, false)
             || self::isEnChar($str, 6, 20)
             || self::isCnChar($str, 6, 20)
             || self::isCnEnMixture($str, 6, 20);
@@ -191,14 +248,27 @@ class Validate{
 
     /**
      * 验证支付宝账号
+     * 
+     * -e.g: phpunit("Validate::alipayAccount",["admin@admin.com"]);
+     * -e.g: phpunit("Validate::alipayAccount",["13146525465"]);
      *
      * @param string $str
      * @return boolean
      */
-    static function alipayAccount(string $str):bool{
-        return self::mobileOfChina($str,false) || self::email($str);
+    static function alipayAccount(string $str): bool
+    {
+        return self::mobileOfChina($str, false) || self::email($str);
     }
-
+    /**
+     * 验证抖音账号
+     *
+     * @param string $str
+     * @return boolean
+     */
+    static function DouyinAccount(string $str): bool
+    {
+        return self::mobileOfChina($str, false) || self::email($str);
+    }
     /**
      * 互联网通用账号规则（字母或中文开头）
      *
@@ -207,10 +277,11 @@ class Validate{
      * @param integer $maxLength
      * @return boolean
      */
-    static function webAccount(string $str, int $minLength=5, int $maxLength=18):bool{
-        return self::isCnChar($str,$minLength, $maxLength)
+    static function webAccount(string $str, int $minLength = 5, int $maxLength = 18): bool
+    {
+        return self::isCnChar($str, $minLength, $maxLength)
             || self::isEnChar($str, $minLength, $maxLength)
-            || self::isCnEnMixture($str, $minLength,$maxLength);
+            || self::isCnEnMixture($str, $minLength, $maxLength);
     }
     /**
      * 验证url（|^[a-z]+://[^\s]*|i）
@@ -218,8 +289,9 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function isUrlRule(string $str):bool{
-        return self::exec("/^[a-z]+://[^\s]*/i", $str);
+    static function isUrlRule(string $str): bool
+    {
+        return self::exec("/^[a-z]+:\/\/[^\s]*/i", $str);
     }
 
     /**
@@ -228,8 +300,9 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function isHttpUrl(string $str):bool{
-        return self::exec("/^(?=^.{3,255}$)(http(s)?:\/\/)?(www\.)?[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+(:([1-5]\d{0,4}|[6-9]\d{0,3}|6([0-4]]\d{3}|5[0-4]\d{2}|55[0-2]\d{2}|553[0-5])))?(\/[\w\.\-]+){1,62}(\/)?$/i",$str);
+    static function isHttpUrl(string $str): bool
+    {
+        return self::exec("/^(?=^.{3,255}$)(http(s)?:\/\/)?(www\.)?[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+(:([1-5]\d{0,4}|[6-9]\d{0,3}|6([0-4]]\d{3}|5[0-4]\d{2}|55[0-2]\d{2}|553[0-5])))?(\/[\w\.\-]+){1,62}(\/)?$/i", $str);
     }
     /**
      * 验证URL（?xx=xx&yy=）
@@ -237,8 +310,9 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function isHttpQueryUrl(string $str):bool{
-        return self::exec("/^(?=^.{3,255}$)(http(s)?:\/\/)?(www\.)?[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+(:([1-5]\d{0,4}|[6-9]\d{0,3}|6([0-4]]\d{3}|5[0-4]\d{2}|55[0-2]\d{2}|553[0-5])))?(\/[\w\.\-]+){1,62}(\/)?(\??(&\w+(=(\w+)?)?){1,48}|\?&?\w+(=(\w+)?)?(&\w+(=(\w+)?)?){1,47})$/i",$str);
+    static function isHttpQueryUrl(string $str): bool
+    {
+        return self::exec("/^(?=^.{3,255}$)(http(s)?:\/\/)?(www\.)?[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+(:([1-5]\d{0,4}|[6-9]\d{0,3}|6([0-4]]\d{3}|5[0-4]\d{2}|55[0-2]\d{2}|553[0-5])))?(\/[\w\.\-]+){1,62}(\/)?(\??(&\w+(=(\w+)?)?){1,48}|\?&?\w+(=(\w+)?)?(&\w+(=(\w+)?)?){1,47})$/i", $str);
     }
 
     /**
@@ -247,7 +321,8 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function isDomain(string $str):bool{
+    static function isDomain(string $str): bool
+    {
         return self::exec("/^(?=^.{3,255}$)[a-z0-9][-a-z0-9]{0,62}(\.[a-z0-9][-a-z0-9]{0,62})+\.([a-z]{1,6})$/i", $str);
     }
 
@@ -259,9 +334,10 @@ class Validate{
      * @param integer $maxLength
      * @return boolean
      */
-    static function isCnChar(string $str, int $minLength=5, int $maxLength=18):bool{
+    static function isCnChar(string $str, int $minLength = 5, int $maxLength = 18): bool
+    {
         self::parseMaxMinLength($minLength, $maxLength);
-        return self::exec("/^[\u4e00-\u9fa5]{".$minLength.",".$maxLength."}$/", $str);
+        return self::exec("/^[\u4e00-\u9fa5]{" . $minLength . "," . $maxLength . "}$/", $str);
     }
 
     /**
@@ -272,9 +348,10 @@ class Validate{
      * @param integer $maxLength
      * @return boolean
      */
-    static function isEnChar(string $str, int $minLength=5, int $maxLength=18):bool{
+    static function isEnChar(string $str, int $minLength = 5, int $maxLength = 18): bool
+    {
         self::parseMaxMinLength($minLength, $maxLength);
-        return self::exec("/^[a-z][a-z0-9_\-]{".($minLength-1).",".($maxLength-1)."}$/i", $str);
+        return self::exec("/^[a-z][a-z0-9_\-]{" . ($minLength - 1) . "," . ($maxLength - 1) . "}$/i", $str);
     }
 
     /**
@@ -285,9 +362,10 @@ class Validate{
      * @param integer $maxLength
      * @return boolean
      */
-    static function isCnEnMixture(string $str, int $minLength=5,int $maxLength=18):bool{
+    static function isCnEnMixture(string $str, int $minLength = 5, int $maxLength = 18): bool
+    {
         self::parseMaxMinLength($minLength, $maxLength);
-        return self::exec("/^[a-z\u4e00-\u9fa5][a-z0-9_\-\u4e00-\u9fa5]{".($minLength-1).",".($maxLength-1)."}$/i", $str);
+        return self::exec("/^[a-z\u4e00-\u9fa5][a-z0-9_\-\u4e00-\u9fa5]{" . ($minLength - 1) . "," . ($maxLength - 1) . "}$/i", $str);
     }
 
     /**
@@ -297,8 +375,9 @@ class Validate{
      * @param string $str
      * @return boolean
      */
-    static function isDoubleBitChar(string $str):bool{
-        return self::exec("/[^\x00-\xff]{1,}/i",$str);
+    static function isDoubleBitChar(string $str): bool
+    {
+        return self::exec("/[^\x00-\xff]{1,}/i", $str);
     }
 
     /**
@@ -316,15 +395,16 @@ class Validate{
      * @param integer $maxPointPlace <2> 最多小数长度 0.\d\d
      * @return boolean
      */
-    static function isPrice(string $number, int $minPointPlace=1, int $maxPointPlace=2):bool{
+    static function isPrice(string $number, int $minPointPlace = 1, int $maxPointPlace = 2): bool
+    {
 
-        if($maxPointPlace <= 0){
-            return self::exec("/^([0-9]+|[0-9]{1,3}(,[0-9]{3})*)$/",$number);
+        if ($maxPointPlace <= 0) {
+            return self::exec("/^([0-9]+|[0-9]{1,3}(,[0-9]{3})*)$/", $number);
         }
-        if($maxPointPlace < $minPointPlace){
+        if ($maxPointPlace < $minPointPlace) {
             $maxPointPlace = $minPointPlace;
         }
-        return self::exec("/^([0-9]+|[0-9]{1,3}(,[0-9]{3})*)(.[0-9]{".$minPointPlace.",".$maxPointPlace."})?$/",$number);
+        return self::exec("/^([0-9]+|[0-9]{1,3}(,[0-9]{3})*)(.[0-9]{" . $minPointPlace . "," . $maxPointPlace . "})?$/", $number);
     }
 
     /**
@@ -338,9 +418,29 @@ class Validate{
      * @param string $ip
      * @param boolean $excludePrivIp 排除私有IP范围内 <false>
      * @param boolean $excludeResIp 排除保留IP范围内 <false>
+     * 
      * @return string|boolean
      */
-    static function ipv4(string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+    static function ipv4(string &$ip, bool $excludePrivIp = false, bool $excludeResIp = false)
+    {
+
+        if (preg_match('/^([01]{8}\.){3}[01]{8}\z/i', $ip)) {
+            // binary format  00000000.00000000.00000000.00000000
+            $ip = bindec(substr($ip, 0, 8)) . '.' . bindec(substr($ip, 9, 8)) . '.' . bindec(substr($ip, 18, 8)) . '.' . bindec(substr($ip, 27, 8));
+        } elseif (preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}\z/i', $ip)) {
+            // octet format 777.777.777.777
+            $ip = (int) substr($ip, 0, 3) . '.' . (int) substr($ip, 4, 3) . '.' . (int) substr($ip, 8, 3) . '.' . (int) substr($ip, 12, 3);
+        } elseif (preg_match('/^([0-9a-f]{2}\.){3}[0-9a-f]{2}\z/i', $ip)) {
+            // hex format ff.ff.ff.ff
+            $ip = hexdec(substr($ip, 0, 2)) . '.' . hexdec(substr($ip, 3, 2)) . '.' . hexdec(substr($ip, 6, 2)) . '.' . hexdec(substr($ip, 9, 2));
+        } else {
+            return false;
+        }
+
+        if (ip2long($ip) === false) {
+            return false;
+        }
+
         return self::isIP(FILTER_FLAG_IPV4, $ip, $excludePrivIp, $excludeResIp);
     }
 
@@ -357,7 +457,41 @@ class Validate{
      * @param boolean $excludeResIp 排除保留IP范围内 <false>
      * @return string|boolean
      */
-    static function ipv6(string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+    static function ipv6(string $ip, bool $excludePrivIp = false, bool $excludeResIp = false)
+    {
+
+        // if (strlen($ip) < 3) {
+        //     return $ip === '::';
+        // }
+
+        if (strpos($ip, '.')) {
+            $lastcolon = strrpos($ip, ':');
+            if (!($lastcolon && self::ipv4(substr($ip, $lastcolon + 1), $excludePrivIp, $excludeResIp))) {
+                return false;
+            }
+
+            $ip = substr($ip, 0, $lastcolon) . ':0:0';
+        }
+
+        if (strpos($ip, '::') === false) {
+            if (false === preg_match('/\A(?:[a-f0-9]{1,4}:){7}[a-f0-9]{1,4}\z/i', $ip)) {
+                return false;
+            }
+        }
+
+        $colonCount = substr_count($ip, ':');
+        if ($colonCount < 8) {
+            if (false === preg_match('/\A(?::|(?:[a-f0-9]{1,4}:)+):(?:(?:[a-f0-9]{1,4}:)*[a-f0-9]{1,4})?\z/i', $ip)) {
+                return false;
+            }
+        }
+
+        // special case with ending or starting double colon
+        if ($colonCount === 8) {
+            if (false === preg_match('/\A(?:::)?(?:[a-f0-9]{1,4}:){6}[a-f0-9]{1,4}(?:::)?\z/i', $ip)) {
+                return false;
+            }
+        }
         return self::isIP(FILTER_FLAG_IPV6, $ip, $excludePrivIp, $excludeResIp);
     }
 
@@ -366,12 +500,14 @@ class Validate{
      *
      * @return boolean
      */
-    static function isMobileDevice():bool{
+    static function isMobileDevice(): bool
+    {
         $result = false;
         if (isset($_SERVER['HTTP_USER_AGENT'])) {
-            $clientkeywords = array('nokia', 'sony', 'ericsson', 'mot','samsung', 'htc', 'sgh', 'lg', 'sharp',
-                'sie-', 'philips', 'panasonic', 'alcatel','meizu', 'android', 'netfront', 'symbian',
-                'ucweb', 'windowsce', 'palm', 'operamini','operamobi', 'openwave', 'nexusone', 'cldc','midp', 'wap', 'mobile'
+            $clientkeywords = array(
+                'nokia', 'sony', 'ericsson', 'mot', 'samsung', 'htc', 'sgh', 'lg', 'sharp',
+                'sie-', 'philips', 'panasonic', 'alcatel', 'meizu', 'android', 'netfront', 'symbian',
+                'ucweb', 'windowsce', 'palm', 'operamini', 'operamobi', 'openwave', 'nexusone', 'cldc', 'midp', 'wap', 'mobile'
             );
             if (preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) {
                 $result = true;
@@ -390,7 +526,8 @@ class Validate{
      *
      * @return bool
      */
-    static function imei($imei){
+    static function imei($imei)
+    {
         $imei = self::unDecorate($imei, ['‐', '-', ' ']);
         // for IMEI only; IMEISV = EMEI+1, and not Luhn check
         $length = 15;
@@ -405,17 +542,19 @@ class Validate{
     }
 
     /**
-     * 验证境外信用卡
+     * 验证境外信用卡1
      *
-     * -e.g: $number = \Vipkwd\Utils\Type\Random::creditCardNumber();
-     * -e.g: phpunit("Validate::creditCard", [$number]);
-     * -e.g: phpunit("Validate::creditCardValid", [$number]);
+     * -e.g: echo "生成信息卡信息组:";
+     * -e.g: $card = \Vipkwd\Utils\Type\Random::creditCard();
+     * -e.g: phpunit("Validate::creditCard", [$card['number']]);
+     * -e.g: phpunit("Validate::creditCardValid", [$card['number']]);
      * 
      * @param string $creditCard
      *
      * @return bool
      */
-    static function creditCard(string $number):bool{
+    static function creditCard(string $number): bool
+    {
         if ('' === trim($number)) {
             return false;
         }
@@ -447,7 +586,6 @@ class Validate{
             }
             return ($sum % 10) == 0;
         */
-
     }
 
     /**
@@ -463,7 +601,8 @@ class Validate{
      *
      * @return bool
      */
-    static function macAddr($macAddr):bool{
+    static function macAddr($macAddr): bool
+    {
         $pattern = '/^(([a-f0-9]{2}-){5}[a-f0-9]{2}|([A-F0-9]{2}-){5}[A-Z0-9]{2}|([a-f0-9]{2}:){5}[a-z0-9]{2}|([A-F0-9]{2}:){5}[A-Z0-9]{2})$/';
         return boolval(preg_match($pattern, $macAddr));
     }
@@ -477,11 +616,12 @@ class Validate{
      * @return boolean
      * @throws Exception
      */
-    static function exec(string $regexp, string $str){
-        $str = urldecode($str);
-        try{
+    static function exec(string $regexp, string $str)
+    {
+        // $str = urldecode($str);
+        try {
             return preg_match($regexp, $str) ? true : false;
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             //throw new \Exception($e->getMessage());
             return false;
         }
@@ -497,7 +637,8 @@ class Validate{
      * @param array $hyphens
      * @return boolean
      */
-    static function luhn(string $value, int $length, int $weight, int $divider, array $hyphens = ['‐', '-', ' ']): bool{
+    static function luhn(string $value, int $length, int $weight, int $divider, array $hyphens = ['‐', '-', ' ']): bool
+    {
         $value = self::unDecorate($value, $hyphens);
         $digits = substr($value, 0, $length - 1);
         $check = substr($value, $length - 1, 1);
@@ -538,11 +679,12 @@ class Validate{
      * @param boolean $excludeResIp 排除保留IP范围内 <false>
      * @return string|boolean
      */
-    private static function isIP($ipFlag, string $ip, bool $excludePrivIp = false, bool $excludeResIp=false){
+    private static function isIP($ipFlag, string $ip, bool $excludePrivIp = false, bool $excludeResIp = false)
+    {
         $status = filter_var($ip, FILTER_VALIDATE_IP, $ipFlag);
-        if($status !== false && $excludePrivIp === true){
+        if ($status !== false && $excludePrivIp === true) {
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);
-        }else if($status !== false && $excludeResIp === true){
+        } else if ($status !== false && $excludeResIp === true) {
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE);
         }
         return $status;
@@ -552,23 +694,25 @@ class Validate{
     /**
      * 解析长度数值边界
      */
-    private static function parseMaxMinLength(int &$minLength, int &$maxLength, int $prefixLength=0){
+    private static function parseMaxMinLength(int &$minLength, int &$maxLength, int $prefixLength = 0)
+    {
         $prefixLength < 0 && $prefixLength = 0;
-        if($minLength < $prefixLength)
+        if ($minLength < $prefixLength)
             $minLength = $prefixLength;
-        if($maxLength < $minLength){
+        if ($maxLength < $minLength) {
             $maxLength = $minLength;
         }
-        if($prefixLength){
-            $minLength-=$prefixLength;
-            $maxLength-=$prefixLength;
+        if ($prefixLength) {
+            $minLength -= $prefixLength;
+            $maxLength -= $prefixLength;
         }
     }
 
     /**
      * @param mixed $input: null or string
      */
-    private static function unDecorate($input, array $hyphens = []):string{
+    private static function unDecorate($input, array $hyphens = []): string
+    {
         $hyphensLength = count($hyphens);
         // removing hyphens
         for ($i = 0; $i < $hyphensLength; ++$i) {

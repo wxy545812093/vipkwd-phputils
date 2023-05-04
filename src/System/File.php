@@ -27,7 +27,7 @@ class File
         "Byte", "KB", "MB", "GB", "TB",
         "PB", "EB", "ZB", "YB", "DB", "NB"
     ];
-    private static $downloadSpeed = "1mb";
+    private static $downloadSpeed = 1024; //1MB
 
     /**
      * path转unix风格
@@ -175,12 +175,12 @@ class File
      *
      * @param string $localFilePath 要下载的文件路径
      * @param string $rename <null>文件名称,为空则与下载的文件名称一样
-     * @param integer $downloadSpeed <200>下载限速 单位KB，必须大于0
+     * @param integer $downloadSpeed <1024>下载限速 单位KB，必须大于0
      * @param boolean $breakpoint <true> 是否开启断点续传
      *
      * @return void
      */
-    static function download(string $localFilePath, $rename = null, int $downloadSpeed = 200, bool $breakpoint = true)
+    static function download(string $localFilePath, $rename = null, int $downloadSpeed = 1024, bool $breakpoint = true)
     {
         // 验证文件
         if (!is_file($localFilePath) || !is_readable($localFilePath)) {
@@ -237,7 +237,7 @@ class File
 
         // 校验是否限速(文件超过0.5M自动限速为 0.5Mb/s )
         // $limit = ($downloadSpeed > 0 ? Tools::format($downloadSpeed, 1) : 1) * 1024 * 1024;
-        $limit = self::toBytes(($downloadSpeed > 0 ? ($downloadSpeed < 1024 ? $downloadSpeed : 500) : 50) . "KB", true);
+        $limit = self::toBytes(($downloadSpeed > 0 ? ($downloadSpeed < (1024 * 8) ? $downloadSpeed : self::$downloadSpeed) : self::$downloadSpeed) . "KB", true);
 
         if ($fileSize <= $limit) {
             readfile($localFilePath);
@@ -249,7 +249,7 @@ class File
             //     ob_end_flush();
             // }
             // ob_implicit_flush();
-            
+
             // ini_set('output_buffering', 'Off');
             // ini_set('zlib.output_compression', 'Off');
 
@@ -330,7 +330,7 @@ class File
 
         // 启用 nginx X-Accel 下载
         header('Content-Type: application/octet-stream');
-        $encoded_fname = rawurlencode($origin_name ? $origin_name: basename($_file_path));
+        $encoded_fname = rawurlencode($origin_name ? $origin_name : basename($_file_path));
         header('Content-Disposition: attachment;filename="' . $encoded_fname . '";filename*=utf-8' . "''" . $encoded_fname);
 
         header('X-Accel-Redirect: ' . $_file_path);
@@ -519,22 +519,35 @@ class File
     }
 
     /**
-     * 获取指定目录下所有的文件(包括子目录)
+     * 递归获取指定目录下文件
      *
      * @param string $dir
+     * @param bool $exposeDirectory <false> 是否导出目录(默认不含目录)
      * @return array
      */
-    static function getFiles($dir)
+    static function getFiles($dir, bool $exposeDirectory = false)
     {
         $files = [];
-        $each = function ($dir) use (&$each, &$files) {
-            $it = new \FilesystemIterator($dir);
+        $dir  = self::pathToUnix($dir . '/');
+        $each = function ($_dir) use (&$each, &$files, $exposeDirectory, $dir) {
+            $it = new \FilesystemIterator($_dir);
             /**@var $file \SplFileInfo */
             foreach ($it as $file) {
                 if ($file->isDir()) {
+                    $exposeDirectory && $files[] = [
+                        'type' => 'd',
+                        'struct' =>  str_replace($dir .DIRECTORY_SEPARATOR, '', self::pathToUnix($file->getPathname())),
+                        'path' => self::pathToUnix($file->getPathname()),
+                        'name' => $file->getFilename()
+                    ];
                     $each($file->getPathname());
                 } else {
-                    $files[] = $file;
+                    $files[] = [
+                        'type' => 'f',
+                        'struct' =>  str_replace($dir .DIRECTORY_SEPARATOR, '', self::pathToUnix($file->getPathname())),
+                        'path' => self::pathToUnix($file->getPathname()),
+                        'name' => $file->getFilename()
+                    ];
                 }
             }
         };
@@ -554,19 +567,18 @@ class File
             $it = new \FilesystemIterator($dir);
             /**@var $file \SplFileInfo */
             foreach ($it as $file) {
-                if ($callback($file) === false) {
-                    return false;
-                }
-
                 if ($file->isDir()) {
                     if ($each($file->getPathname()) === false) {
+                        return false;
+                    }
+                } else {
+                    if ($callback($file) === false) {
                         return false;
                     }
                 }
             }
             return true;
         };
-
         $each($dir);
     }
 
@@ -579,12 +591,11 @@ class File
     static function delete($dirOrFile)
     {
         $each = function ($dir) use (&$each) {
-            if (!is_dir($dir)) return true;
-            $it = new \FilesystemIterator($dir);
             $flag = true;
+            if (!is_dir($dir)) return $flag;
+            $it = new \FilesystemIterator($dir);
             /**@var $file \SplFileInfo */
             foreach ($it as $file) {
-
                 if ($file->isDir()) {
                     if ($each($file->getPathname()) === true) {
                         if (!@rmdir($file->getPathname()))

@@ -1110,10 +1110,10 @@ class Thumb
 	/**
 	 * 生成占位图
 	 * 
-	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 3]);
-	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 2]);
-	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3, 1]);
-	 * -e.g: phpunit("Thumb::createPlaceholder",["100x100",3]);
+	 * -e.g: phpunit("Image\Thumb::createPlaceholder",["100x100",3, 3]);
+	 * -e.g: phpunit("Image\Thumb::createPlaceholder",["100x100",3, 2]);
+	 * -e.g: phpunit("Image\Thumb::createPlaceholder",["100x100",3, 1]);
+	 * -e.g: phpunit("Image\Thumb::createPlaceholder",["100x100",3]);
 	 *
 	 * @param string $WxHsize 400x300 || 4:3x400 || 16:9x300
 	 * @param integer $getType <1> 1:header 2:binData 3: savePath;

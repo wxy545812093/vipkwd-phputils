@@ -693,7 +693,7 @@ class Str
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "好"]);
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "你"]);
      *
-     * @param string[]  $possibilities 查找列表
+     * @param array  $possibilities 查找列表
      * @param string $value 查找文字
      *
      * @return string|null
@@ -701,7 +701,7 @@ class Str
     static function getSuggestion(array $possibilities, string $value): ?string
     {
         $best = null;
-        $min = (strlen($value) / 4 + 1) * 10 + .1;
+        $min = (strlen($value) / 4 + 1) * 10; // + .1;
         foreach (array_unique($possibilities) as $item) {
             if ($item !== $value && ($len = \levenshtein($item, $value, 10, 11, 10)) < $min) {
                 $min = $len;
@@ -709,6 +709,38 @@ class Str
             }
         }
         return $best;
+    }
+
+    /**
+     * 计算str1较str2的相似度
+     * 
+     * @param string $str1
+     * @param string|array $str2
+     * 
+     * @return array ['sim'=> xx, 'perc' => xx]
+     */
+    static function getTextSamePercent(string $str1, $str2): array
+    {
+        if (is_array($str2)) {
+            $list = [];
+            foreach ($str2 as $str) {
+                $sim = \similar_text($str, $str1, $perc);
+                $list[] = [
+                    'str1' => $str1,
+                    'str2' => $str, 
+                    'sim' => $sim,
+                    'perc' => $perc
+                ];
+            }
+            return $list;
+        }
+        $sim = \similar_text($str2, $str1, $perc);
+        return [
+            'str1' => $str1,
+            'str2' => $str2,
+            'sim' => $sim,
+            'perc' => $perc
+        ];
     }
 
     /**

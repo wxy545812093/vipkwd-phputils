@@ -11,14 +11,103 @@
 declare(strict_types=1);
 
 namespace Vipkwd\Utils;
+
 use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Tools;
 use Vipkwd\Utils\Validate;
 use Vipkwd\Utils\System\File;
+use Vipkwd\Utils\Type\Str;
 use Ip2Region;
+use \GeoIp2\Database\Reader;
 
 class Ip
 {
+
+    /**
+     * 二进制/十六进制转IPV4
+     */
+    static function toIpv4(string $ip)
+    {
+        if (false === Validate::ipv4($ip)) {
+            return '';
+        }
+        return $ip;
+    }
+
+    /**
+     * 使用GeoIP库解析IP信息
+     * 
+     * -e.g: $ipv4 = \Vipkwd\Utils\Type\Random::ipv4();
+     * -e.g: phpunit("Ip::maxmindGeoIp",['120.235.120.88']);
+     * 
+     * @param string $ip
+     * 
+     * @return array
+     */
+    static function maxmindGeoIp(string $ip): array
+    {
+        $ipv4 = self::toIpv4($ip);
+        if (!$ipv4) {
+            return [];
+        }
+        
+        // $path = File::realpath(__DIR__.'/../support/geoip/GeoLite2-City.mmdb');
+        $path = File::realpath(VIPKWD_UTILS_LIB_ROOT . "/support/geoip/GeoLite2-City.mmdb");
+        $reader = new Reader($path, ['zh-CN', 'en']);
+        $record = $reader->city($ipv4);
+
+        return [
+            'continent' => [
+                "code" => $record->continent->code ?? '',
+                "geonameId" => $record->continent->geonameId ?? '',
+                // "en" => Str::toPinyin($record->continent->names['zh-CN'] ?? '' ,'all','*',''),
+                "en" => $record->continent->names['en'] ?? '',
+                "cn" => $record->continent->names['zh-CN'] ?? '',
+            ],
+
+            'country' => [
+                "code" => $record->country->isoCode ?? '',
+                "geonameId" => $record->country->geonameId ?? '',
+                // "en" => Str::toPinyin($record->country->names['zh-CN'] ?? '' ,'all','*',''),
+                "en" => $record->country->names['en'] ?? '',
+                "cn" => $record->country->names['zh-CN'] ?? '',
+            ],
+            'province' => [
+                "code" => $record->subdivisions[0]->isoCode ?? '',
+                "geonameId" => $record->subdivisions[0]->geonameId ?? '',
+                "en" => $record->subdivisions[0]->names['en'] ?? '',
+                "cn" => $record->subdivisions[0]->names['zh-CN'] ?? '',
+            ],
+            'city' => [
+                "code" => $record->city->names['en'] ?? '',
+                "geonameId" => $record->city->geonameId ?? '',
+                "en" => $record->city->names['en'] ?? '',
+                "cn" => $record->city->names['zh-CN'] ?? '',
+            ],
+            'traits' => [
+                'ip' => $record->traits->ipAddress ?? '',
+                'len' => $record->raw['traits']['prefix_len'],
+                'network' => $record->traits->network ?? '',
+            ],
+            'location' => [
+                'radius' => $record->location->accuracyRadius ?? '',
+                'lat' => $record->location->latitude ?? '',
+                'lon' => $record->location->longitude ?? '',
+                'timeZone' => $record->location->timeZone ?? '',
+                'postalCode' => $record->postal->postal ?? ($record->location->postalCode ?? ''),
+            ],
+
+            // 'xxxx' => [
+            //     'raw' => $record->raw,
+            //     'city' => $record->city,
+            //     'location' => $record->location,
+            //     'postal' => $record->postal,
+            //     'subdivisions' => $record->subdivisions,
+            // ]
+
+        ];
+    }
+
     /**
      * 获取客户端IP
      *
@@ -304,9 +393,9 @@ class Ip
         !$ip && $ip = self::getClientIp();
         $ip = preg_replace("/[^0-9\.\/]/", '', $ip);
 
-        list($ip, ) = explode('/', $ip);
+        list($ip,) = explode('/', $ip);
 
-        $iplocation = new Helper_IpLocation(VIPKWD_UTILS_LIB_ROOT . '/support/qqwry.dat');
+        $iplocation = new Helper_IpLocation(VIPKWD_UTILS_LIB_ROOT . '/support/geoip/qqwry.dat');
         $location = $iplocation->getlocation($ip);
         $region = static::ip2region($ip);
         $addrParse = Tools::expressAddrParse(@$location['country']);

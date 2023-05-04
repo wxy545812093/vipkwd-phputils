@@ -11,7 +11,7 @@ A PHP common toolkit.
 - PHP 7.0+
 - composer
 
-## 安装使用
+## 安装使用[[Check it out on packagist.org]](https://packagist.org/packages/vipkwd/utils)
 ```shell
 composer require vipkwd/utils
 ```
@@ -19,7 +19,7 @@ composer require vipkwd/utils
 ## Artisan Command: vipkwd
 ```shell
 yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd
-vipkwd/utils 3.0.0
+vipkwd/utils 3.2.0
 Usage:
   command [options] [arguments]
 Options:
@@ -237,15 +237,37 @@ yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd dump porn
 
 ### [load::assets ] 下载/更新静态资源
 ```shell
-yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd load::assets
--> 1 Update ttfs/1.ttf ································ (Skiped)
--> 2 Update ttfs/2.ttf ································ (Skiped)
--> 3 Update ttfs/3.ttf ································ (Skiped)
--> 4 Update ttfs/4.ttf ································ (Skiped)
--> 5 Update ttfs/5.ttf ································ (Skiped)
--> 6 Update ttfs/6.ttf ································ (Skiped)
--> 7 Update ttfs/msyh.ttf ··························· ··· (Skiped)
--> 8 Update qqwry.dat ······················· ········· (Skiped)
+yipeng@mbp vipkwd-framework % php vendor/bin/vipkwd load:assets
+ You must use option `-c https://domain.com` manually enter your own cdn address or specify one from the list of below
+ But have found the following cdn maps, please choose[index/url] one of them?  [http://vipkwd.eu5.net]:
+  [0] http://vipkwd.eu5.net
+  [1] http://vipkwd.totalh.net
+  [2] http://dl.vipkwd.com
+  [3] http://vipkwd.byethost13.com
+  [4] quit
+ >
+
+-----------------------------------------------------------------------------------------------------------------
+--- CDN Ping( http://vipkwd.eu5.net )：Ok
+--- CDN Maps( http://vipkwd.eu5.net/vipkwd-cdn/maps.php ): Ok
+-----------------------------------------------------------------------------------------------------------------
+
+--> [1] 55fc1266e3821b3dd3d1a533dcd9c113 ttfs/1.ttf
+    └-····················································································· (Download completed)
+--> [2] 45d3bab54f8d612976187570fbde8e3a ttfs/2.ttf
+    └-····················································································· (Download completed)
+--> [3] 08774b94f4feaedebb6072251124f8aa ttfs/3.ttf
+    └-····················································································· (Download completed)
+--> [4] 629a55a7e793da068dc580d184cc0e31 ttfs/4.ttf
+    └-····················································································· (Download completed)
+--> [5] ac3f799d5bbaf5196fab15ab8de8431c ttfs/5.ttf
+    └-····················································································· (Download completed)
+--> [6] 1c5965c2b1dcdea439b54c3ac60cee38 ttfs/6.ttf
+    └-····················································································· (Download completed)
+--> [7] f80465e9d8cea2b48da01f5aba236b59 ttfs/msyh.ttf
+    └-····················································································· (Download completed)
+--> [8] 084fe7a7c7c24816842b618a3e839290 qqwry.dat
+     └-····················································································· (Download completed)
 ```
 
 ## 实例

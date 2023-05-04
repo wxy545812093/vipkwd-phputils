@@ -85,7 +85,7 @@ class Idcard {
 
     
     /**
-     * 验证身份证是否合法
+     * 验证-大陆身份证合法性
      */
     static function validateIdCard($idCard) {
         $card = trim ( $idCard );
@@ -187,7 +187,7 @@ class Idcard {
     }
 
     /**
-     * 验证 -澳门身份证号码
+     * 验证-澳门身份证号码
      *
      * @param string $idCard
      * @return boolean
@@ -202,7 +202,7 @@ class Idcard {
     }
 
     /**
-     * 港澳居民 -来往内地通行证
+     * 验证-港澳-来往内地通行证
      * 
      * -e.g:phpunit("Idcard::validatePmHK",["H60360448"]);
      *
@@ -215,7 +215,7 @@ class Idcard {
     }
 
     /**
-     * 台湾居民 -来往大陆通行证
+     * 验证-台湾-来往大陆通行证
      * -- 简称电子台胞证、台胞卡
      *
      * @param string $idCard
@@ -226,7 +226,7 @@ class Idcard {
     }
 
     /**
-     * 大陆居民 -往来台湾通行证
+     * 验证-大陆-往来台湾通行证
      *
      * @param string $idCard
      * @return boolean
@@ -236,7 +236,7 @@ class Idcard {
     }
 
     /**
-     * 韩国居民 -身份证号
+     * 验证-韩国-身份证号
      *
      * @param string $idCard
      * @return null|string
@@ -251,9 +251,12 @@ class Idcard {
     }
 
     /**
-     * 获取年龄
+     * 大陆证件-获取年龄
      * 
-     * -e.g: phpunit("Idcard::getAgeByIdCard", ["612426198901165783", true]);echo " <-- 证件生日是农历";
+     * -e.g: echo "证件生日是农历: ";
+     * -e.g: phpunit("Idcard::getAgeByIdCard", ["612426198901165783", true]);
+     * -e.g: echo "证件生日是公历: ";
+     * -e.g: phpunit("Idcard::getAgeByIdCard", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getAgeByIdCard", ["441381199908191520"]);
      * 
      * @param string idCard 身份编号
@@ -289,7 +292,7 @@ class Idcard {
     }
     
     /**
-     * 获取性别
+     * 大陆证件-获取性别
      * 
      * -e.g: phpunit("Idcard::getGenderByIdCard", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getGenderByIdCard", ["441381199908191520"]);
@@ -312,7 +315,7 @@ class Idcard {
     }
 
     /**
-     * 获取户籍省份
+     * 大陆证件-获取户籍省份
      * 
      * -e.g: phpunit("Idcard::getProvinceByIdCard", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getProvinceByIdCard", ["441381199908191520"]);
@@ -335,7 +338,7 @@ class Idcard {
     }
 
     /**
-     * 获取生日
+     * 大陆证件-获取生日
      *
      * -e.g: phpunit("Idcard::getBirthByIdCard", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getBirthByIdCard", ["441381199908191520"]);
@@ -352,7 +355,7 @@ class Idcard {
     }
     
     /**
-     * 获取星座
+     * 大陆证件-获取星座
      *
      * -e.g: phpunit("Idcard::getConstellationById", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getConstellationById", ["441381199908191520"]);
@@ -367,7 +370,7 @@ class Idcard {
     }
 
     /**
-     * 获取生肖
+     * 大陆证件-获取生肖
      *
      * -e.g: phpunit("Idcard::getZodiacById", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getZodiacById", ["441381199908191520"]);
@@ -382,7 +385,7 @@ class Idcard {
     }
 
     /**
-     * 获取干支
+     * 大陆证件-获取干支
      * 
      * -e.g: phpunit("Idcard::getChineseEraById", ["612426198901165783"]);
      * -e.g: phpunit("Idcard::getChineseEraById", ["441381199908191520"]);
@@ -403,7 +406,7 @@ class Idcard {
      * @return bool
      */
     private static function isNum($val):bool{
-        return ($val == null || $val == "") ? false : (0 < preg_match ( '/^[0-9]*$/', $val ));
+        return ($val == null || $val == "") ? false : (0 < preg_match ( '/^[0-9]*$/', strval($val) ));
     }
     
     /**

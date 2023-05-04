@@ -10,8 +10,8 @@ declare(strict_types = 1);
 
 namespace Vipkwd\Utils\Libs\Random\Payment;
 
-use Vipkwd\Utils\Type\DateTime as VipkwdDate;
-use \Vipkwd\Utils\Type\Random;
+// use Vipkwd\Utils\Type\DateTime as VipkwdDate;
+// use \Vipkwd\Utils\Type\Random;
 
 trait BaseTrait {
 

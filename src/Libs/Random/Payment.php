@@ -118,7 +118,7 @@ class Payment{
      *
      * @example 'MasterCard'
      */
-    private static function creditCardType(){
+    protected static function creditCardType(){
         return static::randomElement(static::$cardVendors);
     }
 
@@ -136,7 +136,7 @@ class Payment{
      * @example '4485480221084675'
      */
     
-    private static function creditCardNumber(string $type = null, bool $formatted = false, string $separator = '-'):string{
+    protected static function creditCardNumber(string $type = null, bool $formatted = false, string $separator = '-'):string{
         if (is_null($type)) {
             $type = static::creditCardType();
         }
@@ -163,7 +163,7 @@ class Payment{
      * @return string
      * @example '04/13'
      */
-    private static function creditCardExpirationDate(bool $valid = true, string $format = 'm/y'):string{
+    protected static function creditCardExpirationDate(bool $valid = true, string $format = 'm/y'):string{
         if ($valid) {
             $instance = VipkwdDate::dateTimeBetween('now','36 months');
         }

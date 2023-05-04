@@ -11,7 +11,8 @@ src/Page copy.php
 support/vipkwd-upload.js
 support/VipkwdComposerScripts.php
 support/ttfs
-support/qqwry.dat
+support/geoip/
 .bak
 -bak
+git.txt
 src/Libs/Pay/

@@ -31,6 +31,8 @@ class Mongo
     private $filters;
     private $options;
     private $sorts;
+    private $client;
+    private $collection;
 
     private $limit;
     private $usePage;
@@ -58,7 +60,7 @@ class Mongo
     }
 
     /**
-     * 刷新查询对象（初始化除 collection 外的一切条件）
+     * 刷新查询对象（初始化connect）
      * 
      * @return self
      */
@@ -626,7 +628,7 @@ class Mongo
             }
         } catch (\Exception $e) {
             $errormsg = sprintf("Other error: %s (%d): %s(%d)/n", $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine());
-            throw new InvalidArgumentException($errormsg);
+            throw new \InvalidArgumentException($errormsg);
         }
         return $filter;
     }
@@ -747,7 +749,7 @@ class Mongo
             }
         } catch (\Exception $e) {
             $errormsg = sprintf("Other error: %s (%d): %s(%d)/n", $e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine());
-            throw new InvalidArgumentException($errormsg);
+            throw new \InvalidArgumentException($errormsg);
         }
         return $filter;
     }

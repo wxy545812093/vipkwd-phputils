@@ -1,6 +1,7 @@
 <?php
 /**
  * @name 阴、阳历法
+ * 
  * @author vipkwd <service@vipkwd.com>
  * @link https://github.com/wxy545812093/vipkwd-phputils
  * @license http://www.apache.org/licenses/LICENSE-2.0
@@ -188,12 +189,12 @@ class Calendar{
         }
         //要求查询闰，但查无闰月
         //如果查询的农历是闰月并该年度农历数组存在闰月数据就获取
-        if ($Larray[$month] > 30 && $type == 1 && count($Larray) >= 13) {
+        if ($Larray[intval($month)] > 30 && $type == 1 && count($Larray) >= 13) {
             $day = $Larray[13] + $day;
         }
         //获取该年农历日期到公历1月1日的天数
         $days = $day;
-        for ($i = 0; $i <= $month - 1; $i++) {
+        for ($i = 0; $i <= intval($month) - 1; $i++) {
             $days += $Larray[$i];
         }
         //当查询农历日期距离公历1月1日超过一年时

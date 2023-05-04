@@ -43,7 +43,7 @@ class KZip
 	}
 
 	/**
-	 * 压缩文件或目录（zipFile不存在将自动创建)
+	 * 压缩文件或目录
 	 * 
 	 * @param string $zipFile 生成(压缩到)zip文件名
 	 * @param string $fileOrPath 文件或目录

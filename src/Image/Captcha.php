@@ -30,7 +30,7 @@ class Captcha
 	/**
 	 * 自定义验证码字符表
 	 */
-	static function setCode(string $code){
+	static function setCode(string $code='346789ABCDEFGHJKLMNPQRTUVWXY'){
 		if($code){
 			self::$codeSet = $code;
 		}

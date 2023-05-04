@@ -26,6 +26,7 @@ use \Vipkwd\Utils\Dev;
 class Console extends Command
 {
 
+	private static $toSeeMorePlaceholder = 'with option `-m %method%` to see more';
 	private static $_input = null;
 	private static $_output = null;
 	private static $nameSpace = '\\Vipkwd\\Utils\\';
@@ -33,11 +34,13 @@ class Console extends Command
 	private static $classSpacePath = '';
 	private static $methodsOrderBy = true;
 	private static $showList = true;
-	private static $showMethod = false;
+	private static $showMethod = "";
 	private static $testMethod = false;
 	private static $dumpDir = false;
 	private static $writelnLines = [];
 	private static $writelnWidths = [];
+	private static $egArgs = [];
+	private static $style;
 	private static $shieldMethods = [
 		// "__construct",
 		"__destruct",
@@ -69,6 +72,7 @@ class Console extends Command
 	{
 		self::$_input = $input;
 		self::$_output = $output;
+		self::$style = new SymfonyStyle(self::$_input, self::$_output);
 		// 你想要做的任何操作
 		$className = trim(self::$_input->getArgument('className'));
 		$method = trim(self::$_input->getOption('method') ?? "");
@@ -80,7 +84,7 @@ class Console extends Command
 		$eg = str_replace('=', "", $eg);
 		self::$dumpDir = str_replace('=', "", $dumpDir) !== '-';
 		self::$showList = true;
-		self::$showMethod = false;
+		self::$showMethod = "";
 		if ($className == "") {
 			$className = "list";
 		} else {
@@ -112,6 +116,20 @@ class Console extends Command
 				if ($method != "" && self::$dumpDir === false) {
 					self::$showMethod = $method;
 					self::$testMethod = $eg != "-";
+					if (self::$testMethod && $eg != '') {
+						if (substr($eg, 0, 1) == '[' && substr($eg, -1) == ']') {
+							eval("self::\$egArgs={$eg};");
+						} else {
+							self::$style->error(sprintf("测试用例参数无效.", $eg, self::$showMethod), null, 'error');
+							self::$style->info(array(
+								'正确用例格式：索引数组格式;字符串以单引号包裹',
+								" --eg",
+								" --eg=[false,0,null]",
+								" --eg ['false','stringxxx']",
+							));
+							return 1;
+						}
+					}
 					self::parseClass($className, 0, $classDescript = null);
 					self::output();
 					return 1;
@@ -151,8 +169,9 @@ class Console extends Command
 				$txt = str_replace(['<info>', '</info>'], "", strval($line[$field]));
 				$len = VipkwdStr::strLenPlus($txt);
 				//额外填充表格宽度
-				($field == 'Arguments' || $field == 'Comment') && $len+= 4;
-				
+				($field == 'Arguments' || $field == 'Comment') && $len += 4;
+				// ($field == 'Comment') && $len += 4;
+
 				if ($len > $width) {
 					$widths[$field] = $len;
 				}
@@ -213,13 +232,13 @@ class Console extends Command
 				}
 				unset($_classFile);
 				$classDescript = "#";
-				$classFile = str_replace('\\', '/', $classFile);
+				$classFile = str_replace(['\\', '//'], '/', $classFile);
 				if (self::$showList === false) {
 					if (substr($classFile, 0 - strlen("{$cmd}.php")) != "{$cmd}.php") {
 						continue;
 					}
 				} else {
-					preg_match("/@name\ ?(.*)" . PHP_EOL . "/", file_get_contents($classFile), $match);
+					preg_match("/@name\ ?(.*)/", file_get_contents($classFile), $match);
 					if (isset($match[1])) {
 						$classDescript = $match[1]; //preg_replace("/@name\ ?/", "", $match[0]);
 					}
@@ -241,13 +260,13 @@ class Console extends Command
 			// 	self::$dumpDir = true;
 			// 	self::buildMethodListDoc($cmd);
 			// } else {
-				self::$writelnLines[] = ["+", "-"];
-				self::$writelnLines[] = ["|", true, true];
-				self::$writelnLines[] = ["+", "-"];
-				foreach ($parseList as $item) {
-					self::parseClass($item['class'], $item['index'], $item['descript']);
-				}
-				self::$writelnLines[] = ["+", "-"];
+			self::$writelnLines[] = ["+", "-"];
+			self::$writelnLines[] = ["|", true, true];
+			self::$writelnLines[] = ["+", "-"];
+			foreach ($parseList as $item) {
+				self::parseClass($item['class'], $item['index'], $item['descript']);
+			}
+			self::$writelnLines[] = ["+", "-"];
 			// }
 		}
 	}
@@ -261,11 +280,13 @@ class Console extends Command
 		foreach ($methods as $k => $method) {
 			if ($method->isProtected() || $method->isPrivate()) {
 				unset($methods[$k]);
+				continue;
 			}
 			if (self::shieldMethod($method->getName(), "")) {
 				unset($methods[$k]);
+				continue;
 			}
-			unset($k, $method);
+			unset($k);
 		}
 		if (self::$showList === true) {
 			self::$writelnLines[] = ["|", [
@@ -314,7 +335,7 @@ class Console extends Command
 			}, explode(PHP_EOL, is_string($comment) ? $comment : "-")));
 
 			$flag = $method->getName() != self::$showMethod;
-			if (self::shieldMethod($method->getName(), "$comment") || (self::$showMethod !== false && $flag)) {
+			if (self::shieldMethod($method->getName(), "$comment") || (self::$showMethod != "" && $flag)) {
 				$methodContinues++;
 				continue;
 			}
@@ -337,6 +358,7 @@ class Console extends Command
 			}
 			$doc = str_replace(["/**", "*"], "", trim($doc[1] ?? ""));
 			$doc = preg_replace("/\ (\ )+/", ' ', $doc);
+			//$doc = VipkwdStr::substrPlus($doc, 0, 42);
 
 			//获取方法的类型
 			//$method_flag = $method->isProtected();//还可能是public,protected类型的
@@ -354,7 +376,7 @@ class Console extends Command
 				$position++;
 			}
 			// ------args-------
-			$args = "";
+			$tableArgs = $args = "";
 			if (!empty($arguments)) {
 				$args_seper = ', ';
 				foreach ($arguments as $idx => $field) {
@@ -389,10 +411,13 @@ class Console extends Command
 							break;
 					}
 				}
-				$args = ltrim($args, $args_seper);
+				$tableArgs = $args = ltrim($args, $args_seper);
+				if (VipkwdStr::strLenPlus($tableArgs) > 60) {
+					$tableArgs = VipkwdStr::substrPlus($tableArgs, 0, 60) .  str_ireplace('%method%', $method->getName(), self::$toSeeMorePlaceholder);
+				}
 			}
 
-			if (self::$showMethod != false) {
+			if (self::$showMethod != "") {
 				self::$writelnLines[] = ["+", "-"];
 				self::$writelnLines[] = ["|", true, true];
 				self::$writelnLines[] = ["+", "-"];
@@ -403,12 +428,12 @@ class Console extends Command
 				"Class" => $class->getShortName(),
 				"Method" => $method->getName(),
 				"Type" => $method->isStatic() ? "static" : "public",
-				"Arguments" => $args,
+				"Arguments" => $tableArgs,
 				"Eg" => $eg,
 				"Comment" => $doc,
 			]];
 
-			if (self::$showMethod !== false) {
+			if (self::$showMethod != "") {
 				self::$writelnLines[] = ["+", "-"];
 				self::$writelnLines[] = "";
 				if ($comment != "") {
@@ -446,21 +471,15 @@ class Console extends Command
 				break;
 			}
 		}
-
 		//类中没有枚举到指定方法(或级别不是 public|static)；
-		if (count($methods) == $methodContinues && self::$showMethod !== false) {
-
+		if (count($methods) == $methodContinues && self::$showMethod != "") {
 			$_alternatives = [];
+
+			self::$showMethod = preg_replace("/[^A-Z0-9_]/i", '', self::$showMethod);
+
 			$methods = array_map(function ($method) use (&$_alternatives) {
-				self::$showMethod = preg_replace("/[^A-Z0-9_]/i", '', self::$showMethod);
-				// self::$showMethod = preg_replace("/[^A-Z0-9_*]/i",'', self::$showMethod);
-				// $str = str_replace('*','(.*)', self::$showMethod);
 				try {
-					// preg_match("/{$str}/i", $method->name, $matches);
-					// if(isset($matches[0]) && isset($matches[1]) && !empty($matches[0])){
-					// 	$_alternatives[] = $matches[0];
-					// }
-					if (self::$showMethod && false !== stripos($method->name, self::$showMethod) && strlen(self::$showMethod) >= 3) {
+					if (self::$showMethod && false !== stripos($method->name, self::$showMethod) && strlen(self::$showMethod) >= 2) {
 						$_alternatives[] = $method->name;
 					}
 				} catch (\Exception $e) {
@@ -468,15 +487,18 @@ class Console extends Command
 				return $method->name;
 			}, $methods);
 
-			$alternative = VipkwdStr::getSuggestion($methods, self::$showMethod);
+			// 计算相似度
+			// $list = VipkwdStr::getTextSamePercent(self::$showMethod, $_alternatives);
 
-			$style = new SymfonyStyle(self::$_input, self::$_output);
-			$style->block(sprintf("%s::%s() method does not exist or does not expose access(public) rights..", $className, self::$showMethod), null, 'error');
-			if ($alternative === null && !empty($_alternatives)) {
+			//查找最大相似字符
+			$alternative = VipkwdStr::getSuggestion($methods, self::$showMethod);
+			self::$style->error(sprintf("%s::%s() method does not exist or does not expose access(public) rights..", $className, self::$showMethod));
+			if (!empty($_alternatives)) {
 				$alternative = $_alternatives[0];
+				//多选值
 				if (count($_alternatives) > 1) {
 					$_alternatives[] = "quit cli command";
-					$method = $style->choice(sprintf('But have found the following methods, please choose[index/name] one of them? '), $_alternatives, array_key_last($_alternatives));
+					$method = self::$style->choice(sprintf('But have found the following methods, please choose[index/name] one of them? '), $_alternatives, $alternative);
 					if ($method == 'quit cli command') {
 						return;
 					}
@@ -485,8 +507,9 @@ class Console extends Command
 					return;
 				}
 			};
+			//唯一值兜底
 			if ($alternative !== null) {
-				if ($style->confirm(sprintf('Do you want to run "%s" instead? ', $alternative), false)) {
+				if (self::$style->confirm(sprintf('Do you want to run "%s" instead? ', $alternative), true)) {
 					self::$showMethod = $alternative;
 					self::parseClass($Class, 0, $classDescript);
 				}
@@ -502,8 +525,24 @@ class Console extends Command
 	 */
 	private static function phpunit($doc, $nameSpace = '')
 	{
-		// devdump($doc,1);
+		// devdump(self::$classSpacePath,1);
 		if (self::$testMethod) {
+			//执行命令行提供的测试用例
+			if (is_array(self::$egArgs) && !empty(self::$egArgs)) {
+				self::$style->text("--- 解参中:");
+				self::$style->progressStart(100);
+				$i = 0;
+				while ($i < 100) {
+					self::$style->progressAdvance();
+					usleep(900);
+					$i++;
+				}
+				self::$style->progressFinish();
+				echo "[01]";
+				\Vipkwd\Utils\Dev::console(eval("phpunit(\"" . self::$classSpacePath . "::" . self::$showMethod . "\", [...self::\$egArgs]);"), !1, !1);
+				return true;
+			}
+			//指定文档测试用例
 			$_console = true;
 			$idx = 1;
 			foreach ($doc as $_eg) {
@@ -551,7 +590,6 @@ class Console extends Command
 							$nameSpace = $buildClassName($nameSpace);
 							$_eg = $prefix . 'punit(' . (substr($subfix, 0, 1)) .  $nameSpace . '::' . $method;
 						}
-
 						\Vipkwd\Utils\Dev::console(eval("$_eg"), !1, !1);
 						$idx++;
 					}
@@ -560,7 +598,7 @@ class Console extends Command
 			if ($_console !== true) {
 				echo $_console;
 			} else {
-				echo " -- [x] 没有提供测试用例或 “" . self::$showMethod . "” 方法不支持静态调用。\r\n";
+				self::$style->note("\"" . self::$showMethod . "\" 没有提供测试用例或该方法不支持静态调用。");
 			}
 			return true;
 		}
@@ -572,11 +610,11 @@ class Console extends Command
 		$list = [''];
 		foreach (self::$writelnWidths as $title => $with) {
 			if ($isTitle === true) {
-				$field = $title;
+				$text = $title;
 			} else {
-				$field = (is_array($data)) ? @$data[$title] : $data;
+				$text = (is_array($data)) ? @$data[$title] : $data;
 			}
-			$list[] = self::createTDText($with, $field, $isTitle === true);
+			$list[] = self::createTDText($with, $text, $isTitle === true);
 		}
 		$list[] = "";
 		return implode($septer, $list);
@@ -589,13 +627,25 @@ class Console extends Command
 			$septer = " ";
 			// $len -= 2;
 		}
+
+		if (preg_match("/\.+(\ +)?with\ option/i", $txt)) {
+			if (($length = $len - VipkwdStr::strLenPlus($txt)) >= 0) {
+				// var_dump($length);
+				$_txt = VipkwdStr::strPadPlus("", $length, $septer);
+				$txt = str_replace('...', '...' . $_txt, $txt);
+			}
+			$txt = str_ireplace(['`-m ', '` to'], ['`<info>-m ', '</info>` to'], $txt);
+		}
 		$txt = VipkwdStr::strPadPlus($txt, $len, $septer);
+
 		if ($setColor === true) {
 			//$txt = str_pad($txt, $len, $septer, STR_PAD_BOTH);
 			$txt = "<info>" . $txt . "</info>";
 		}
+
 		if ($septer != "-") $txt = " {$txt} ";
 		else $txt = "-{$txt}-";
+
 		return $txt;
 	}
 

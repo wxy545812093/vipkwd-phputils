@@ -13,6 +13,8 @@ namespace Vipkwd\Utils\Type;
 use Vipkwd\Utils\Tools;
 use \Vipkwd\Utils\Libs\Random\PersonName;
 use \Vipkwd\Utils\Libs\Random\Payment;
+use \Vipkwd\Utils\Idcard;
+use \Vipkwd\Utils\Validate;
 use \Exception;
 class Random extends Payment{
 
@@ -73,7 +75,7 @@ class Random extends Payment{
      * @return string|array
      */
     static function ipv4(int $size =1){
-        return self::maker($size, function($idx){
+        return self::maker($size, function($size){
             return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
         });
 
@@ -413,7 +415,7 @@ class Random extends Payment{
             for($i=0;$i<6;$i++){
                 $list[] = strtoupper(
                     dechex(
-                        floor(
+                        intval(
                             self::float(0,1,9) * 256
                         )
                     )
