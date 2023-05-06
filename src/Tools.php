@@ -13,20 +13,20 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils;
 
-// use Vipkwd\Utils\Libs\Cookie;
-// use Vipkwd\Utils\Libs\Session;
-use Vipkwd\Utils\Type\Random;
-use Vipkwd\Utils\Type\Arr;
-use Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
+// use Vipkwd\Utils\System\Cookie;
+// use Vipkwd\Utils\System\Session;
+// use Vipkwd\Utils\Type\Arr;
+use Vipkwd\Utils\Type\Random,
+    Vipkwd\Utils\Libs\ExpressAI\Address as ExpressAddressAI_V1,
     Vipkwd\Utils\Libs\SmartParsePro\Address as ExpressAddressAI_V2,
     PHPMailer\PHPMailer\PHPMailer,
-    Vipkwd\Utils\Libs\QRcode,
-    Vipkwd\Utils\Validate,
     Vipkwd\Utils\Type\Str as VipkwdStr,
     \Exception,
+    // Vipkwd\Utils\Libs\QRcode,
+    // Vipkwd\Utils\Validate,
+    // Vipkwd\Utils\System\Store,
     \Closure;
 
-use Vipkwd\Utils\System\Store;
 
 class Tools
 {
@@ -346,29 +346,6 @@ class Tools
         return $mail->Send() ? true : $mail->ErrorInfo;
     }
 
-
-    /**
-     * session管理函数
-     * 
-     * $name 支持“.”号深度访问 如：“user.id”
-     * $name = '?user.id' 检测数组“user”是否存在“id”键
-     * $name === null, 清空全部SESSION
-     * $name == (false|''|0) 返回全局SESSION
-     * 要设置$name等于Null，请使用 全等于null 而非 "null"
-     *
-     * -e.g: $store=[ 'users' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120, ] ]
-     * -e.g: phpunit('Tools::session', ['info', $store]);
-     * -e.g: phpunit('Tools::session', ['info']);
-     * 
-     * @param string $name
-     * @param mixed $value
-     * @return mixed
-     */
-    static function session($name = "", $value = "#null@")
-    {
-        return Store::session($name, $value);
-    }
-
     /**
      * 获取配置文件内容
      *
@@ -407,58 +384,9 @@ class Tools
         return $r;
     }
 
-    /**
-     * Cookie管理
-     * 
-     * -e.g: $store=[ 'user' => 'admin', 'amount' => [ 'balance' => 1000, 'alipay' => 120] ];
-     * -e.g: phpunit('Tools::cookie', ['info', $store]);
-     * -e.g: phpunit('Tools::cookie', ['info']);
-     * -e.g: phpunit('Tools::cookie', ['info', null]);
-     * -e.g: phpunit('Tools::cookie', ['info', null, 0]);
-     * -e.g: phpunit('Tools::cookie', ['info']);
-     * 
-     * @param string $name   cookie名称
-     * @param mixed  $value  cookie值
-     * @param int  $expire 有效期 （小于0：删除cookie, 大于0：设置cookie）
-     * @return boolean|array|null|string
-     */
-    static function cookie(string $name = null, $value = null, int $expire = 0, $path = null, $domain = null, $secure = null, $httponly = false)
-    {
-        return Store::cookie($name, $value, $expire, $path, $domain, $secure, $httponly);
-    }
 
     /**
-     * 保存Cookie
-     *
-     * @access public
-     * @param  string $name cookie名称
-     * @param  string $value cookie值
-     * @param  int    $expire cookie过期时间
-     * @param  string $path 有效的服务器路径
-     * @param  string $domain 有效域名/子域名
-     * @param  bool   $secure 是否仅仅通过HTTPS
-     * @param  bool   $httponly 仅可通过HTTP访问
-     * @param  string $samesite 防止CSRF攻击和用户追踪
-     * @return void
-     */
-    private static function saveCookie(string $name, string $value, int $expire, string $path, string $domain, bool $secure, bool $httponly, string $samesite): void
-    {
-        if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
-            setcookie($name, $value, [
-                'expires'  => $expire,
-                'path'     => $path,
-                'domain'   => $domain,
-                'secure'   => $secure,
-                'httponly' => $httponly,
-                'samesite' => $samesite,
-            ]);
-        } else {
-            setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
-        }
-    }
-
-    /**
-     * 获取Htpp头信息为数组
+     * 获取Http头信息为数组
      *
      * -e.g: phpunit("Tools::getHttpHeaders");
      *
@@ -654,23 +582,6 @@ class Tools
             $outputCharacters .= $CN_INTEGER;
         }
         return $CN_SYMBOL . $outputCharacters;
-    }
-
-    /**
-     * 数组转多规格SKU
-     *
-     * -e.g: $input=array();
-     * -e.g: $input[]=[["id" => 1, "name" => "红色"], ["id" => 2, "name" => "黑色"], ["id" => 3, "name" => "蓝色"]];
-     * -e.g: $input[]=[["id" => 4, "name" => "32G"], ["id" => 5, "name" => "64G"],];
-     * -e.g: phpunit("Tools::arrayToSku",[$input]);
-     *
-     * @param array $input 排列的数组
-     *
-     * @return array
-     */
-    static function arrayToSku(array $input)
-    {
-        return Arr::arrayArrRange($input);
     }
 
     /**

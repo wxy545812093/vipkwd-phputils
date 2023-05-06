@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils;
 
+use \Exception;
 use Vipkwd\Utils\Dev;
 use Vipkwd\Utils\Tools;
 use Vipkwd\Utils\Validate;
@@ -19,6 +20,7 @@ use Vipkwd\Utils\System\File;
 use Vipkwd\Utils\Type\Str;
 use Ip2Region;
 use \GeoIp2\Database\Reader;
+use GeoIp2\Exception\AddressNotFoundException;
 
 class Ip
 {
@@ -50,12 +52,18 @@ class Ip
         if (!$ipv4) {
             return [];
         }
-        
+
         // $path = File::realpath(__DIR__.'/../support/geoip/GeoLite2-City.mmdb');
         $path = File::realpath(VIPKWD_UTILS_LIB_ROOT . "/support/geoip/GeoLite2-City.mmdb");
         $reader = new Reader($path, ['zh-CN', 'en']);
-        $record = $reader->city($ipv4);
-
+        try {
+            $record = $reader->city($ipv4);
+        } catch (AddressNotFoundException $e) {
+            if (strripos($e->getMessage(), 'is not in the database') !== false) {
+                return [];
+            }
+            throw new Exception($e->getMessage());
+        }
         return [
             'continent' => [
                 "code" => $record->continent->code ?? '',
@@ -65,7 +73,7 @@ class Ip
                 "cn" => $record->continent->names['zh-CN'] ?? '',
             ],
 
-            'country' => [
+            'state' => [
                 "code" => $record->country->isoCode ?? '',
                 "geonameId" => $record->country->geonameId ?? '',
                 // "en" => Str::toPinyin($record->country->names['zh-CN'] ?? '' ,'all','*',''),

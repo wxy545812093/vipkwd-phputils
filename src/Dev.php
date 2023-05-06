@@ -16,11 +16,12 @@ class Dev {
     use \Vipkwd\Utils\Libs\Develop;
 
     /**
-	 *   Returns the last occurred PHP error or an empty string if no error occurred. Unlike error_get_last(),
+     * 前次错误捕获器(异于error_get_last)
+	 * 
+	 * -e.g: phpunit("Dev::getLastError");
+	 * 
+	 * Returns the last occurred PHP error or an empty string if no error occurred. Unlike error_get_last(),
 	 * it is nit affected by the PHP directive html_errors and always returns text, not HTML.
-	 */
-    /**
-     * 自定义前次错误捕获器(异于error_get_last)
      *
      * @return string
      */
@@ -30,6 +31,4 @@ class Dev {
 		$message = preg_replace('#^\w+\(.*?\): #', '', $message);
 		return $message;
 	}
-
-
 }

@@ -33,9 +33,9 @@ class Rsa
      *
      * @param string $pubkey <"">
      * @param string $prikey <"">
-     * @return void
+     * @return self
      */
-    static function instance(string $pubkey = "", string $prikey = "")
+    static function instance(string $pubkey = "", string $prikey = ""):self
     {
         $_k = md5($pubkey . $prikey . "jsk");
         if (!isset(self::$_instance[$_k]) || !self::$_instance[$_k]) {
@@ -48,9 +48,9 @@ class Rsa
      * 设置私钥
      *
      * @param string $prikey
-     * @return void
+     * @return self
      */
-    public function setPriKey(string $prikey)
+    public function setPriKey(string $prikey):self
     {
         ($prikey && $prikey != "your pri key") && $this->fileToKey($prikey, "pri");
         return $this;
@@ -60,9 +60,9 @@ class Rsa
      * 设置公钥
      *
      * @param string $pubkey
-     * @return void
+     * @return self
      */
-    public function setPubKey(string $pubkey)
+    public function setPubKey(string $pubkey):self
     {
         ($pubkey && $pubkey != "your pub key") && $this->fileToKey($pubkey, "pub");
         return $this;
@@ -72,9 +72,9 @@ class Rsa
      * 公钥加密
      *
      * @param string $str
-     * @return void
+     * @return string
      */
-    public function encryptPubkey(string $str)
+    public function encryptPubkey(string $str):string
     {
         return $this->_encrypt($str, "pub");
     }
@@ -83,9 +83,9 @@ class Rsa
      * 私钥解密
      *
      * @param string $str
-     * @return void
+     * @return string
      */
-    public function decryptPrikey(string $str)
+    public function decryptPrikey(string $str):string
     {
         return $this->_decrypt($str, "pri");
     }
@@ -94,9 +94,9 @@ class Rsa
      * 私钥加密
      *
      * @param string $str
-     * @return void
+     * @return string
      */
-    public function encryptPrikey(string $str)
+    public function encryptPrikey(string $str):string
     {
         return $this->_encrypt($str, "pri");
     }
@@ -105,9 +105,9 @@ class Rsa
      * 公钥解密
      *
      * @param string $str
-     * @return void
+     * @return string
      */
-    public function decryptPubkey(string $str)
+    public function decryptPubkey(string $str):string
     {
         return $this->_decrypt($str, "pub");
     }
@@ -116,6 +116,8 @@ class Rsa
      * 私钥签名
      *
      * @param string $str
+     * 
+     * @throw \Exception
      * @return string
      */
     public function sign(string $str): string
@@ -141,7 +143,7 @@ class Rsa
         throw new Exception("公钥无效");
     }
 
-    private function _encrypt($str, $type = "pri")
+    private function _encrypt($str, $type = "pri"):string
     {
         $state = false;
         if ($type == "pub") {
@@ -155,7 +157,7 @@ class Rsa
         return base64_encode($crypted);
     }
 
-    private function _decrypt($str, $type = "pub")
+    private function _decrypt($str, $type = "pub"):string
     {
         $str = base64_decode($str);
         $state = false;

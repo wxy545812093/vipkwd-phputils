@@ -33,13 +33,14 @@ class File
      * path转unix风格
      *
      * @param string $path
+     * @param bool $forceUnix 强制Unix风格
      * @return string
      */
-    static function pathToUnix(string $path): string
+    static function pathToUnix(string $path, bool $forceUnix = false): string
     {
         if ($path) {
             $path = str_replace('\\', '/', $path);
-            $path = self::normalizePath($path);
+            $path = self::normalizePath($path, $forceUnix);
             if (false != ($_p = realpath($path))) {
                 $path = $_p;
             }
@@ -699,12 +700,13 @@ class File
      * -e.g: phpunit("File::normalizePath",["file/../../bar"]);
      *
      * @param string $path
+     * @param bool $forceUnix 强制Uninx风格
      * @return string
      */
-    static function normalizePath(string $path): string
+    static function normalizePath(string $path, bool $forceUnix = false): string
     {
         //模糊检测网址
-        if (strrpos($path, ':') > 0) {
+        if (strrpos($path, ':') > 0 && $forceUnix === false) {
             return $path;
         }
         $parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
@@ -718,8 +720,8 @@ class File
         }
 
         return empty($res)
-            ? DIRECTORY_SEPARATOR
-            : implode(DIRECTORY_SEPARATOR, $res);
+            ? ($forceUnix ? '/' : DIRECTORY_SEPARATOR)
+            : implode(($forceUnix ? '/' : DIRECTORY_SEPARATOR), $res);
     }
 
 
@@ -735,7 +737,7 @@ class File
      */
     static function joinPaths(string ...$paths): string
     {
-        return self::normalizePath(implode('/', $paths));
+        return self::normalizePath(implode('/', $paths), true);
     }
 
     /**
