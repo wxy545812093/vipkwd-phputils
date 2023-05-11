@@ -26,7 +26,7 @@
         "jsondb/jsondb":"*",
         "friendsofphp/php-cs-fixer":"*",
         "tracy/tracy": "*",
-        "jandrabek/tracy-gitversion-panel": "*"
+        "vipkwd/tracy-gitversion-panel": "*"
     },
     "bin":["bin/vipkwd"],
     "autoload": {
@@ -57,5 +57,19 @@
         "bluerhinos/phpmqtt": "@dev",
         "jaeger/querylist": "dev-master",
         "thiagoalessio/tesseract_ocr": "dev-main"
+    },
+    "repositories": {
+        "aliyun": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        },
+        "cnpkg": {
+            "type": "composer",
+            "url": "https://php.cnpkg.org"
+        },
+        "sjtu.edu": {
+            "type": "composer",
+            "url": "https://packagist.mirrors.sjtug.sjtu.edu.cn/"
+        }
     }
 }
