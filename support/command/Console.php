@@ -53,7 +53,6 @@ class Console extends Command
 
 	protected function configure()
 	{
-		// return $this->__default_configure();
 		$this->setName("dump")
 			->setDescription('Show the class list of <info>Vipkwd/utils</info> package')
 			->setHelp('This command allow you to View/Show the doc of class methods list')
@@ -65,7 +64,6 @@ class Console extends Command
 		// 	->setDescription('导入/更新扩展资源')
 		// 	->setHelp('导入/更新扩展资源')
 		// ;
-
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
@@ -124,8 +122,8 @@ class Console extends Command
 							self::$style->info(array(
 								'正确用例格式：索引数组格式;字符串以单引号包裹',
 								" --eg",
-								" --eg=[false,0,null]",
-								" --eg ['false','stringxxx']",
+								" --eg [false,0,null]",
+								" --eg=['false','stringxxx',\"'中文'\"]",
 							));
 							return 1;
 						}
@@ -141,9 +139,7 @@ class Console extends Command
 		}
 		self::buildMethodListDoc($className);
 		self::output();
-		return 1;
-
-		// return $this->__default_execute();
+		return 0;
 	}
 
 	private static function namespaceToPath($className = '', $subfix = '')

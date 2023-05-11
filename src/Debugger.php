@@ -14,9 +14,8 @@ declare(strict_types=1);
 
 namespace Vipkwd\Utils;
 
-use \Nofutur3\GitPanel\Diagnostics\Panel;
 use \Tracy\NativeSession;
-
+use \JanDrabek\Tracy\GitVersionPanel;
 class Debugger extends \Tracy\Debugger
 {
 
@@ -25,10 +24,10 @@ class Debugger extends \Tracy\Debugger
      * 
      * @return void
      */
-    static function default():void
+    static function default(?string $logSavePath = '/var/log'): void
     {
-        // self::$strictMode = true;
-        self::$strictMode = E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED; // all errors except deprecated notices
+        self::$strictMode = true;
+        // self::$strictMode = E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED; // all errors except deprecated notices
 
         //self::$showBar = false;
         self::$scream = true;
@@ -37,7 +36,6 @@ class Debugger extends \Tracy\Debugger
         self::$maxDepth = 3; // default: 3
         self::$maxLength = 150; // default: 150
         self::setSessionStorage(new NativeSession);
-        self::getBar()->addPanel(new Panel(['production', 'staging']));
         // self::$showLocation = Tracy\Dumper::LOCATION_SOURCE; // Shows path to where the dump() was called
         // self::$showLocation = Tracy\Dumper::LOCATION_CLASS | Tracy\Dumper::LOCATION_LINK; // Shows both paths to the classes and link to where the dump() was called
         // self::$showLocation = false; // Hides additional location information
@@ -45,6 +43,7 @@ class Debugger extends \Tracy\Debugger
         self::getBlueScreen()->scrubber = function (string $key, $value, ?string $class): bool {
             return preg_match('#password#i', $key) && $value !== null;
         };
-        self::enable();
+        self::getBar()->addPanel(new GitVersionPanel());
+        self::enable(null, $logSavePath);
     }
 }

@@ -9,7 +9,7 @@
  */
 declare(strict_types = 1);
 namespace Vipkwd\Utils;
-
+use \Exception;
 class Calendar{
     private const LUNAR_YEAR_CHARS = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
     private const LUNAR_MONTH_CHARS = [1 => "正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"];
@@ -117,8 +117,8 @@ class Calendar{
      */
     static function toLunar(string $date, bool $toChar=true):string{
         list($year, $month, $day) = self::dateFixes($date, true);
-        if ($year <= 1951 || $month <= 0 || $day <= 0 || $year >= 2051) {
-            return false;
+        if ($year < 1950 || $month <= 0 || $day <= 0 || $year >= 2051) {
+            throw new Exception("暂支持1950~2050年之间的年份的合法日期换算");
         }
         //获取查询日期到当年1月1日的天数
         $date1 = strtotime($year . "-01-01");
@@ -173,19 +173,21 @@ class Calendar{
      * 
      * @param string $date
      * @param integer $type
-     * @return void
+     * @return string
      */
     static function toSolar($date, $type = 0){
         if(strpos($date, "年") && (preg_replace("/[^0-9\-]/",'',$date) == '' )){
             $date = self::LDayToNumber($date);
         }
         list($year, $month, $day) = explode("-", $date);
-        if ($year <= 1951 || $month <= 0 || $day <= 0 || $year >= 2051) {
-            return false;
+        if ($year < 1950 || $month <= 0 || $day <= 0 || $year >= 2051) {
+            throw new Exception("暂支持1950~2050年之间的年份的合法日期换算");
+            return "0000-00-00";
         }
         $Larray = self::$_LMDay[$year - self::$_LStart];
         if ($type == 1 && count($Larray) <= 12) {
-            return false;
+            throw new Exception("月份值溢出");
+            return "0000-00-00";
         }
         //要求查询闰，但查无闰月
         //如果查询的农历是闰月并该年度农历数组存在闰月数据就获取
@@ -236,6 +238,8 @@ class Calendar{
      * -e.g: phpunit("Calendar::getYearGZ",[2020]);
      * 
      * @param string $year
+     * 
+     * @return string
      */
     static function getYearGZ($year){
         list($year,,)=self::dateFixes($year);
@@ -417,14 +421,14 @@ class Calendar{
      *
      * @param [type] $year
      * @param [type] $month
-     * @return void
+     * @return integer
      */
-    private static function GetSMon($year, $month)
+    private static function GetSMon($year, $month):int
     {
         if (self::IsLeapYear($year) && $month == 2) {
             return 29;
         } else {
-            return self::$_SMDay[$month];
+            return (int)self::$_SMDay[$month];
         }
     }
 
@@ -432,9 +436,9 @@ class Calendar{
      * 农历年份数字转换名称
      *
      * @param string $year
-     * @return void
+     * @return string
      */
-    private static function LYearName($year){
+    private static function LYearName($year):string{
         $year.= '';
         $tmp="";
         for ($i = 0; $i < 4; $i++) {
@@ -447,7 +451,7 @@ class Calendar{
      * 农历月份数字转名称
      *
      * @param string $month
-     * @return void
+     * @return string
      */
     private static function LMonName($month){
         $month = intval($month);
@@ -460,7 +464,7 @@ class Calendar{
      * 农历日期(天)数字转名称
      *
      * @param string $day
-     * @return void
+     * @return string
      */
     private static function LDayName($day){
         $day = intval($day);

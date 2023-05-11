@@ -14,7 +14,6 @@ namespace Vipkwd\Utils\Db;
 
 use \PDO;
 use \Exception;
-use Vipkwd\Utils\Error;
 use Vipkwd\Utils\Libs\Medoo;
 
 class Mysql
@@ -64,9 +63,6 @@ class Mysql
             //'type' => 'sqlite',
             //'database' => 'my/database/path/database.db'
             //'database' => ':memory:'
-
-
-
 
             // [optional]
             'charset' => 'utf8mb4',
@@ -163,9 +159,11 @@ class Mysql
             $fields = preg_replace("/\ +/", " ", $fields);
             $fields = explode(',', $fields);
         }
-        array_walk($fields, function (&$value, $key) {
-            $value = trim($value);
-        });
+        if (is_array($fields)) {
+            array_walk($fields, function (&$value, $key) {
+                $value = trim($value);
+            });
+        }
         $this->_fields = $fields;
         return $this;
     }
@@ -191,18 +189,6 @@ class Mysql
     public function join(array $join = []): Object
     {
         $this->_join = $join;
-        return $this;
-    }
-
-    /**
-     * 设置操作目标数据
-     *
-     * @param array $data
-     * @return Object
-     */
-    public function data(array $data): Object
-    {
-        $this->_data = $data;
         return $this;
     }
 
@@ -244,6 +230,14 @@ class Mysql
      */
     public function order($order): self
     {
+        if (is_string($order)) {
+            $_order = explode(',', $order);
+            $order = [];
+            foreach ($_order as $item) {
+                $__ = explode(' ', trim($item));
+                $order[$__[0]] = strtoupper($__[1]);
+            }
+        }
         $this->_order = $order;
         return $this;
     }
@@ -302,6 +296,18 @@ class Mysql
     }
 
     /**
+     * 设置操作目标数据
+     *
+     * @param array $data
+     * @return Object
+     */
+    public function data(array $data): Object
+    {
+        $this->_data = $data;
+        return $this;
+    }
+
+    /**
      * 插入数据到表中
      *
      * array数据将自动JSON化存储
@@ -354,7 +360,8 @@ class Mysql
         }
         $result = $this->_medoo->insert($this->_table, $_data);
         unset($_data);
-        return $result->rowCount * 1;
+        return 1;
+        return $result ? $result->rowCount * 1 : 0;
     }
 
     /**
@@ -422,7 +429,7 @@ class Mysql
      * @param array $columns
      * @return int
      */
-    public function replace(array $columns):int
+    public function replace(array $columns): int
     {
         if (!empty($columns)) {
 
@@ -562,25 +569,26 @@ class Mysql
      *
      * @param integer $limit <10>
      * @param callable $callback
+     * @param integer $page <1> 起始页
      * @param integer $stime 计时标记  时间戳 默认time()
-     * @return integer 耗时秒
+     * @return float 耗时秒
      */
-    public function chunk(int $limit = 10, callable $callback, $stime = null): int
+    public function chunk(int $limit = 10, callable $callback, int $page = 1, $stime = null): float
     {
-        (!$stime || $stime <= 0) && $stime = time();
+        (!$stime || $stime <= 0) && $stime = microtime(true);
 
         if (!$callback || !is_callable($callback)) {
             return 0;
         }
         $totals = $this->count();
         if ($totals == 0) {
-            return time() - $stime;
+            return microtime(true) - $stime;
         }
         $pages = ceil($totals / $limit);
-        $page = 1;
+        $page < 1 && $page = 1;
         while ($page <= $pages) {
             $resultSet = $this->page($page, $limit)->select();
-            if (false === call_user_func($callback, $resultSet)) {
+            if (false === call_user_func($callback, $resultSet, $page, $pages)) {
                 unset($resultSet);
                 break;
             }
@@ -588,7 +596,7 @@ class Mysql
             $page++;
         }
         unset($totals, $pages, $page, $callback, $limit);
-        return time() - $stime;
+        return microtime(true) - $stime;
     }
 
 

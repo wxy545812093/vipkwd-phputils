@@ -26,7 +26,7 @@
         "jsondb/jsondb":"*",
         "friendsofphp/php-cs-fixer":"*",
         "tracy/tracy": "*",
-        "nofutur3/tracy-gitpanel": "*"
+        "jandrabek/tracy-gitversion-panel": "*"
     },
     "bin":["bin/vipkwd"],
     "autoload": {

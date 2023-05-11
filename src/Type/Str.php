@@ -15,6 +15,7 @@ namespace Vipkwd\Utils\Type;
 use \Exception;
 use Vipkwd\Utils\Libs\ZhToPinyin\V1 as ZhToPy;
 use Vipkwd\Utils\Libs\ZhToPinyin\Tone as ZhToPyTone;
+use function \similar_text, \levenshtein;
 
 class Str
 {
@@ -182,7 +183,9 @@ class Str
         $i = 0;
         $n = 0;
         ($start < 0) && $start = $str_length - abs($start);
-        ($len <= 0) && $len = $str_length;
+        if($len == 0)$len = $str_length;
+        elseif($len < 0) $len = $str_length - abs($len);
+
         if (($start + $len) > $str_length) {
             $len = $str_length - $start;
         }
@@ -517,16 +520,17 @@ class Str
      *
      * @param string $str utf8字符串
      * @param string $type  返回格式 [all:全拼音|head:首字母|one:仅第一字符首字母]
-     * @param string $placeholder 无法识别的字符占位符
      * @param string $separator 分隔符
+     * @param boolean $ucfirst
+     * @param string $placeholder 无法识别的字符占位符
      * @param string $allow_chars 允许的非中文字符
      * 
      * @return string
      */
-    static function toPinyin(string $str, string $type = 'head', string $placeholder = "*", string $separator = " ", string $allow_chars = "/[a-zA-Z\d]/"): string
+    static function toPinyin(string $str, string $type = 'head', string $separator = " ",bool $ucfirst = false, string $placeholder = "*", string $allow_chars = "/[a-zA-Z\d]/"): string
     {
-        $result = ZhToPy::encode($str, $type, $placeholder, $separator, $allow_chars);
-        return strtolower($result); //返回结果转小写
+        $text = ZhToPy::encode($str, $type, $separator, $ucfirst, $placeholder, $allow_chars);
+        return $ucfirst ? $text : strtolower($text); //返回结果转小写
     }
 
     /**
@@ -703,7 +707,7 @@ class Str
         $best = null;
         $min = (strlen($value) / 4 + 1) * 10; // + .1;
         foreach (array_unique($possibilities) as $item) {
-            if ($item !== $value && ($len = \levenshtein($item, $value, 10, 11, 10)) < $min) {
+            if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) < $min) {
                 $min = $len;
                 $best = $item;
             }
@@ -717,30 +721,26 @@ class Str
      * @param string $str1
      * @param string|array $str2
      * 
-     * @return array ['sim'=> xx, 'perc' => xx]
+     * @return array[] ['sim'=> xx, 'perc' => xx]
      */
     static function getTextSamePercent(string $str1, $str2): array
     {
-        if (is_array($str2)) {
-            $list = [];
-            foreach ($str2 as $str) {
-                $sim = \similar_text($str, $str1, $perc);
-                $list[] = [
-                    'str1' => $str1,
-                    'str2' => $str, 
-                    'sim' => $sim,
-                    'perc' => $perc
-                ];
-            }
-            return $list;
+        $flag = false;
+        if (!is_array($str2)) {
+            $flag = true;
+            $str2 = [$str2];
         }
-        $sim = \similar_text($str2, $str1, $perc);
-        return [
-            'str1' => $str1,
-            'str2' => $str2,
-            'sim' => $sim,
-            'perc' => $perc
-        ];
+        $list = [];
+        foreach ($str2 as $str) {
+            $sim = similar_text($str, $str1, $perc);
+            $list[] = [
+                'str1' => $str1,
+                'str2' => $str,
+                'sim' => $sim,
+                'perc' => $perc
+            ];
+        }
+        return $flag ? $list[0] : $list;
     }
 
     /**

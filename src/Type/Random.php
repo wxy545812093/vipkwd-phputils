@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @name 构建各类有意义的随机数
  * @author vipkwd <service@vipkwd.com>
@@ -6,7 +7,8 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Vipkwd\Utils\Type;
 
@@ -16,7 +18,9 @@ use \Vipkwd\Utils\Libs\Random\Payment;
 use \Vipkwd\Utils\Idcard;
 use \Vipkwd\Utils\Validate;
 use \Exception;
-class Random extends Payment{
+
+class Random extends Payment
+{
 
     /**
      * 构建一个随机浮点数
@@ -32,19 +36,20 @@ class Random extends Payment{
      * @param integer $decimal <0> 小数位数
      * @return float
      */
-    static function float(int $min = -999999999, int $max = 999999999, int $decimal = 10): float {
-        if($max < $min){
+    static function float(int $min = -999999999, int $max = 999999999, int $decimal = 10): float
+    {
+        if ($max < $min) {
             throw new Exception("mathRandom(): max({$max}) is smaller than min({$min}).");
         }
         $range = mt_rand($min, $max);
-        if($decimal > 0){
-            $_ = lcg_value(); 
-            while($_ < 0.1){
+        if ($decimal > 0) {
+            $_ = lcg_value();
+            while ($_ < 0.1) {
                 $_ *= 10;
             }
-            $range += floatval(substr( "$_". str_pad("0", $decimal, "0"),0, $decimal+2));
-            if($range > $max){
-                $range -=1;
+            $range += floatval(substr("$_" . str_pad("0", $decimal, "0"), 0, $decimal + 2));
+            if ($range > $max) {
+                $range -= 1;
             }
         }
         return floatval($range);
@@ -61,7 +66,8 @@ class Random extends Payment{
      * @param string $format PHP的时间日期格式化字符
      * @return false|string
      */
-    static function date(string $format = 'Y-m-d H:i:s'): string {
+    static function date(string $format = 'Y-m-d H:i:s'): string
+    {
         return DateTime::randomDate($format);
     }
 
@@ -74,8 +80,9 @@ class Random extends Payment{
      * 
      * @return string|array
      */
-    static function ipv4(int $size =1){
-        return self::maker($size, function($size){
+    static function ipv4(int $size = 1)
+    {
+        return self::maker($size, function ($size) {
             return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
         });
 
@@ -110,10 +117,11 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string|array
      */
-    static function localIpv4(?int $point = null, int $size =1){
-        return self::maker($size, function($idx)use($point){
-            ($point != 10 && $point != 192) && $point = mt_rand(10,11);
-            if ( ($point % 10) === 0) {
+    static function localIpv4(?int $point = null, int $size = 1)
+    {
+        return self::maker($size, function ($idx) use ($point) {
+            ($point != 10 && $point != 192) && $point = mt_rand(10, 11);
+            if (($point % 10) === 0) {
                 // 10.x.x.x range
                 return long2ip(mt_rand(ip2long("10.0.0.0"), ip2long("10.255.255.255")));
             }
@@ -132,11 +140,12 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string|array
      */
-    static function ipv6(int $size =1){
-        return self::maker($size, function($idx){
+    static function ipv6(int $size = 1)
+    {
+        return self::maker($size, function ($idx) {
             $res = array();
-            for ($i=0; $i < 8; $i++) {
-                $res []= dechex(mt_rand(0, 65535));
+            for ($i = 0; $i < 8; $i++) {
+                $res[] = dechex(mt_rand(0, 65535));
             }
             return join(':', $res);
         });
@@ -149,8 +158,9 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function protocol(): string {
-        $proArr = [ 'http', 'ftp', 'gopher', 'mailto', 'mid', 'cid', 'news', 'nntp', 'prospero', 'telnet', 'rlogin', 'tn3270', 'wais' ];
+    static function protocol(): string
+    {
+        $proArr = ['http', 'ftp', 'gopher', 'mailto', 'mid', 'cid', 'news', 'nntp', 'prospero', 'telnet', 'rlogin', 'tn3270', 'wais'];
         shuffle($proArr);
         return $proArr[0];
     }
@@ -163,7 +173,8 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function tld(): string {
+    static function tld(): string
+    {
         $tldArr = [
             'com', 'cn', 'xin', 'net', 'top', '在线',
             'xyz', 'wang', 'shop', 'site', 'club', 'cc',
@@ -188,10 +199,11 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string
      */
-    static function domain(int $size =1){
-        return self::maker($size, function($idx){
+    static function domain(int $size = 1)
+    {
+        return self::maker($size, function ($idx) {
             $len = mt_rand(6, 16);
-            return strtolower(self::code($len,false)) . '.' . self::tld();
+            return strtolower(self::code($len, false)) . '.' . self::tld();
         });
     }
 
@@ -208,11 +220,12 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string|array
      */
-    static function url(string $protocol = '', int $size =1){
-        return self::maker($size, function($idx) use($protocol){
+    static function url(string $protocol = '', int $size = 1)
+    {
+        return self::maker($size, function ($idx) use ($protocol) {
             $protocol = $protocol ? $protocol : self::protocol();
             return $protocol . '://' . self::domain();
-        }); 
+        });
     }
 
     /**
@@ -228,11 +241,12 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string|array
      */
-    static function email(string $domain = '', $size =1){
-        return self::maker($size, function($idx) use($domain){
+    static function email(string $domain = '', $size = 1)
+    {
+        return self::maker($size, function ($idx) use ($domain) {
             $len = mt_rand(6, 16);
             $domain = $domain ? $domain : self::domain();
-            return strtolower(self::code($len,false)) . '@' . $domain;
+            return strtolower(self::code($len, false)) . '@' . $domain;
         });
     }
 
@@ -246,11 +260,12 @@ class Random extends Payment{
      * @param integer $size <1>
      * @return string|array
      */
-    static function mobilePhone(int $size=1){
-        return self::maker($size, function($idx){
-            $prefixArr = [13,14,15,16,17,18,19];
+    static function mobilePhone(int $size = 1)
+    {
+        return self::maker($size, function ($idx) {
+            $prefixArr = [13, 14, 15, 16, 17, 18, 19];
             shuffle($prefixArr);
-            return $prefixArr[ mt_rand(0,6) ] . self::code(9, true);
+            return $prefixArr[mt_rand(0, 6)] . self::code(9, true);
         });
     }
 
@@ -263,14 +278,16 @@ class Random extends Payment{
      * 
      * @param integer $size <1> 生成个数
      * @param boolean $valid <false> 验证格式
+     * @param string|integer|null $prefixCode 指定地区码（证件号前2~6位）
      * @return string|array
      */
-    static function idcard(int $size =1, bool $valid = false){
-        return self::maker($size, function($idx)use($valid){
-            $id = Idcard::createIdCard18();
-            if($valid){
-                if(!Validate::idcardOfChina($id)){
-                    return self::idcard(1, true);
+    static function idcard(int $size = 1, bool $valid = false, ?string $prefixCode = null)
+    {
+        return self::maker($size, function ($idx) use ($valid, $prefixCode) {
+            $id = Idcard::createIdCard18($prefixCode);
+            if ($valid) {
+                if (!Validate::idcardOfChina($id)) {
+                    return self::idcard(1, true, $prefixCode);
                 }
             }
             return $id;
@@ -289,14 +306,15 @@ class Random extends Payment{
      * @return string
      * 
      */
-    static function password(int $len = 16, bool $specialChar = true):string{
-        $char = self::code(62,false);
-        $specialChar && $char.= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
+    static function password(int $len = 16, bool $specialChar = true): string
+    {
+        $char = self::code(62, false);
+        $specialChar && $char .= "`!\"?$?%^&*()_-+={[}]:;@'~#|\<,./>";
 
-        return self::maker($len, function($idx)use(&$char){
+        return self::maker($len, function ($idx) use (&$char) {
             $char = str_shuffle($char);
-            return $char[ mt_rand(0,9)];
-        },'join');
+            return $char[mt_rand(0, 9)];
+        }, 'join');
     }
 
     /**
@@ -309,15 +327,16 @@ class Random extends Payment{
      * @param int $len <1>
      * @return string
      */
-    static function zhCNChar(int $len=1): string {
-        return self::maker($len, function($idx){
+    static function zhCNChar(int $len = 1): string
+    {
+        return self::maker($len, function ($idx) {
             return @iconv(
                 'GB2312',
-                'UTF-8', 
+                'UTF-8',
                 // 使用chr()函数拼接双字节汉字，前一个chr()为高位字节，后一个为低位字节
                 chr(mt_rand(0xB0, 0xD0)) . chr(mt_rand(0xA1, 0xF0))
             );
-        },'join');
+        }, 'join');
     }
 
     /**
@@ -335,16 +354,17 @@ class Random extends Payment{
      * @param boolean $onlyDigit <false> 是否纯数字，默认包含字母
      * @return string
      */
-    static function code(int $len = 6, bool $onlyDigit = false):string{
+    static function code(int $len = 6, bool $onlyDigit = false): string
+    {
         $char = '1234567890';
-		if ($onlyDigit === false) {
-			$char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-		}
-        return self::maker($len, function($idx) use(&$char){
+        if ($onlyDigit === false) {
+            $char .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        }
+        return self::maker($len, function ($idx) use (&$char) {
             $char = str_shuffle($char);
-            return $char[ mt_rand(0,9) ];
-        },'join');
-	}
+            return $char[mt_rand(0, 9)];
+        }, 'join');
+    }
 
 
     /**
@@ -358,8 +378,9 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string|array
      */
-    static function nickName(int $len =1){
-        return self::maker($len, function($idx){
+    static function nickName(int $len = 1)
+    {
+        return self::maker($len, function ($idx) {
             return PersonName::getNickName();
         });
     }
@@ -375,11 +396,12 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string|array
      */
-    static function femaleName(bool $surName = true, int $len =1){
-        return self::maker($len, function($idx)use($surName){
+    static function femaleName(bool $surName = true, int $len = 1)
+    {
+        return self::maker($len, function ($idx) use ($surName) {
             return PersonName::getFemaleName($surName);
         });
-    }   
+    }
 
     /**
      * 男性 姓名
@@ -392,8 +414,9 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string|array
      */
-    static function maleName(bool $surName = true, int $len =1){
-        return self::maker($len, function($idx)use($surName){
+    static function maleName(bool $surName = true, int $len = 1)
+    {
+        return self::maker($len, function ($idx) use ($surName) {
             return PersonName::getMaleName($surName);
         });
     }
@@ -409,14 +432,15 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string|array
      */
-    static function macAddress(string $sep=":", int $len =1){
-        return self::maker($len, function()use($sep){
+    static function macAddress(string $sep = ":", int $len = 1)
+    {
+        return self::maker($len, function () use ($sep) {
             $list = [];
-            for($i=0;$i<6;$i++){
+            for ($i = 0; $i < 6; $i++) {
                 $list[] = strtoupper(
                     dechex(
                         intval(
-                            self::float(0,1,9) * 256
+                            self::float(0, 1, 9) * 256
                         )
                     )
                 );
@@ -435,7 +459,8 @@ class Random extends Payment{
      * 
      * @return boolean
      */
-    static function boolean():bool{
+    static function boolean(): bool
+    {
         return mt_rand(1, 100) <= 50;
     }
 
@@ -447,7 +472,8 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function md5():string{
+    static function md5(): string
+    {
         return md5(strval(mt_rand()));
     }
 
@@ -459,7 +485,8 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function sha1():string{
+    static function sha1(): string
+    {
         return sha1(strval(mt_rand()));
     }
 
@@ -471,7 +498,8 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function sha256():string{
+    static function sha256(): string
+    {
         return hash('sha256', strval(mt_rand()));
     }
 
@@ -489,7 +517,8 @@ class Random extends Payment{
      * 
      * @return string
      */
-    static function currencyCode():string{
+    static function currencyCode(): string
+    {
         $currencyCode = array(
             'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
             'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL',
@@ -508,8 +537,7 @@ class Random extends Payment{
             'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XCD',
             'XOF', 'XPF', 'YER', 'ZAR', 'ZMW',
         );
-        return $currencyCode[ mt_rand(0, 154) ];
-
+        return $currencyCode[mt_rand(0, 154)];
     }
 
     /**
@@ -522,7 +550,8 @@ class Random extends Payment{
      * 
      * @return void
      */
-    static function emoji(){
+    static function emoji()
+    {
         static $emoji = array(
             '\uD83D\uDE00', '\uD83D\uDE01', '\uD83D\uDE02', '\uD83D\uDE03',
             '\uD83D\uDE04', '\uD83D\uDE05', '\uD83D\uDE06', '\uD83D\uDE07',
@@ -539,7 +568,7 @@ class Random extends Payment{
             '\uD83D\uDE30', '\uD83D\uDE31', '\uD83D\uDE32', '\uD83D\uDE33',
             '\uD83D\uDE34', '\uD83D\uDE35', '\uD83D\uDE36', '\uD83D\uDE37',
         );
-        return json_decode('"' . $emoji[mt_rand(0, count($emoji)-1) ] . '"');
+        return json_decode('"' . $emoji[mt_rand(0, count($emoji) - 1)] . '"');
     }
 
     /**
@@ -552,7 +581,8 @@ class Random extends Payment{
      * @param integer $max
      * @return float
      */
-    static function latitude(int $min = -90, int $max = 90):float{
+    static function latitude(int $min = -90, int $max = 90): float
+    {
         return static::float($min, $max, 6);
     }
 
@@ -566,7 +596,8 @@ class Random extends Payment{
      * @param integer $max
      * @return float
      */
-    static function longitude(int $min = -180, int $max = 180):float{
+    static function longitude(int $min = -180, int $max = 180): float
+    {
         return static::float($min, $max, 6);
     }
 
@@ -580,10 +611,11 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string
      */
-    static function letter(int $len = 1):string{
-        return self::maker($len, function(){
+    static function letter(int $len = 1): string
+    {
+        return self::maker($len, function () {
             return chr(mt_rand(97, 122));
-        },'join');
+        }, 'join');
     }
 
     /**
@@ -596,10 +628,11 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string
      */
-    static function ascii(int $len = 1):string{
-        return self::maker($len, function(){
+    static function ascii(int $len = 1): string
+    {
+        return self::maker($len, function () {
             return chr(mt_rand(33, 126));
-        },'join');
+        }, 'join');
     }
 
     /**
@@ -612,29 +645,31 @@ class Random extends Payment{
      * @param integer $len <1>
      * @return string
      */
-    static function digit(int $len = 1):int{
-        return intval(self::maker($len, function(){
-            return mt_rand(0,9);
-        },'join'));
+    static function digit(int $len = 1): int
+    {
+        return intval(self::maker($len, function () {
+            return mt_rand(0, 9);
+        }, 'join'));
     }
 
-    
 
 
 
-    private static function maker($len=1, callable $fn, string $format=null){
+
+    private static function maker($len = 1, callable $fn, string $format = null)
+    {
         $len = intval($len);
         $len < 1 && $len = 1;
         $map = [];
-        do{
+        do {
             $map[] = $fn($len);
-            $len --;
-        }while($len > 0);
+            $len--;
+        } while ($len > 0);
 
-        if(count($map) == 1){
+        if (count($map) == 1) {
             return $map[0];
         }
-        if($format == 'join'){
+        if ($format == 'join') {
             return implode('', $map);
         }
         return $map;
