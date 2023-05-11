@@ -101,6 +101,102 @@ class Str
         }
         return $str;
     }
+    
+    /**
+     * 压缩JS代码
+     * 
+     * @param string $str js code
+     * 
+     * @return string 
+     */
+    static function minifyJs(string $str): string
+    {
+        // author: Jakub Vrana https://php.vrana.cz/minifikace-javascriptu.php
+        $last = '';
+        return preg_replace_callback(
+            <<<'JSCODE'
+			(
+				(?:
+					(^|[-+\([{}=,:;!%^&*|?~]|/(?![/*])|return|throw) # context before regexp
+					(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* # optional space
+					(/(?![/*])(?:\\[^\n]|[^[\n/\\]|\[(?:\\[^\n]|[^]])++)+/) # regexp
+					|(^
+						|'(?:\\.|[^\n'\\])*'
+						|"(?:\\.|[^\n"\\])*"
+						|([0-9A-Za-z_$]+)
+						|([-+]+)
+						|.
+					)
+				)(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* # optional space
+			())sx
+JSCODE,
+            function ($match) use (&$last) {
+                [, $context, $regexp, $result, $word, $operator] = $match;
+                if ($word !== '') {
+                    $result = ($last === 'word' ? ' ' : ($last === 'return' ? ' ' : '')) . $result;
+                    $last = ($word === 'return' || $word === 'throw' || $word === 'break' ? 'return' : 'word');
+                } elseif ($operator) {
+                    $result = ($last === $operator[0] ? ' ' : '') . $result;
+                    $last = $operator[0];
+                } else {
+                    if ($regexp) {
+                        $result = $context . ($context === '/' ? ' ' : '') . $regexp;
+                    }
+
+                    $last = '';
+                }
+
+                return $result;
+            },
+            $str . "\n"
+        );
+    }
+
+
+    /**
+     * 压缩CSS代码
+     * 
+     * @param string $str
+     * 
+     * @return string
+     */
+    static function minifyCss(string $str): string
+    {
+        $last = '';
+        return preg_replace_callback(
+            <<<'CSSCODE'
+			(
+				(^
+					|'(?:\\.|[^\n'\\])*'
+					|"(?:\\.|[^\n"\\])*"
+					|([0-9A-Za-z_*#.%:()[\]-]+)
+					|.
+				)(?:\s|/\*(?:[^*]|\*(?!/))*+\*/)* # optional space
+			())sx
+CSSCODE,
+            function ($match) use (&$last) {
+                [, $result, $word] = $match;
+                if ($last === ';') {
+                    $result = $result === '}' ? '}' : ';' . $result;
+                    $last = '';
+                }
+
+                if ($word !== '') {
+                    // $result = ($last === 'word' ? ' ' : '') . $result;
+                    $result = ($last === 'word' ? '' : '') . $result;
+                    $last = 'word';
+                } elseif ($result === ';') {
+                    $last = ';';
+                    $result = '';
+                } else {
+                    $last = '';
+                }
+                return $result;
+            },
+            $str . "\n"
+        );
+    }
+
 
     /**
      * 获取纯文本内容(移除一切HTML元素)
@@ -183,8 +279,8 @@ class Str
         $i = 0;
         $n = 0;
         ($start < 0) && $start = $str_length - abs($start);
-        if($len == 0)$len = $str_length;
-        elseif($len < 0) $len = $str_length - abs($len);
+        if ($len == 0) $len = $str_length;
+        elseif ($len < 0) $len = $str_length - abs($len);
 
         if (($start + $len) > $str_length) {
             $len = $str_length - $start;
@@ -527,7 +623,7 @@ class Str
      * 
      * @return string
      */
-    static function toPinyin(string $str, string $type = 'head', string $separator = " ",bool $ucfirst = false, string $placeholder = "*", string $allow_chars = "/[a-zA-Z\d]/"): string
+    static function toPinyin(string $str, string $type = 'head', string $separator = " ", bool $ucfirst = false, string $placeholder = "*", string $allow_chars = "/[a-zA-Z\d]/"): string
     {
         $text = ZhToPy::encode($str, $type, $separator, $ucfirst, $placeholder, $allow_chars);
         return $ucfirst ? $text : strtolower($text); //返回结果转小写
@@ -705,9 +801,13 @@ class Str
     static function getSuggestion(array $possibilities, string $value): ?string
     {
         $best = null;
-        $min = (strlen($value) / 4 + 1) * 10; // + .1;
+        $min = (strlen($value) / 4 + 1) * 10 + .1;
+        $possibilities = array_map(function ($item) {
+            return $item instanceof \Reflector ? $item->getName() : (string) $item;
+        }, $possibilities);
         foreach (array_unique($possibilities) as $item) {
-            if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) < $min) {
+            //if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) < $min) {
+            if ($item !== $value && ($len = levenshtein($item, $value, 10, 11, 10)) > 0 && $len < $min) {
                 $min = $len;
                 $best = $item;
             }

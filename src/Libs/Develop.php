@@ -196,7 +196,7 @@ trait Develop{
     static function isCli(){
         //return preg_match("/cli/i", @php_sapi_name()) ? true : false;
         $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
-        return (bool)preg_match("/cli/i", $str );
+        return (bool)preg_match("/(cli|phpdbg)/i", $str );
     }
 
     static function colorPrint($string, $color)
