@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Vipkwd\Utils;
 
 use \Tracy\NativeSession;
-use \JanDrabek\Tracy\GitVersionPanel;
+use \Vipkwd\Tracy\GitVersionPanel;
 class Debugger extends \Tracy\Debugger
 {
 
