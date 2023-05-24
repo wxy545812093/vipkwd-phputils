@@ -71,37 +71,41 @@ class Str
     /**
      * 字符XSS过滤
      *
-     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",["wa haha<div > div> <script>javascript</script> </div>"]);
-     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",["wa haha<div > div> <script >javascript</script> </div>",true]);
+     * -e.g: $html = 'wa haha<div > div><a href="../base.log">../../log</a> <script >javascript</script> </div>';
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",[$html]);
+     * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",[$html,true]);
      *
      * @param string|array $str 待检字符 或 索引数组
-     * @param boolean $DPI <false> 除常规过滤外，是否深度(额外使用正则)过滤。默认false仅常规过滤
+     * @param boolean $dpi <false> 除常规过滤外，是否深度(额外使用正则)过滤。默认false仅常规过滤
      * @return string|array
      */
-    static function removeXss($str, bool $DPI = false)
+    static function removeXss($str, bool $dpi = false, bool $keepHtmlTag = false)
     {
         if (!is_array($str)) {
             $str = trim($str);
-            $str = strip_tags($str);
+            $keepHtmlTag === false && $str = strip_tags($str);
             $str = htmlspecialchars($str);
-            if ($DPI === true) {
+            if ($dpi === true) {
                 $str = str_replace(array('"', "\\", "'", "/", "..", "../", "./", "//"), '', $str);
                 $no = '/%0[0-8bcef]/';
                 $str = preg_replace($no, '', $str);
+
+                // 移除 百分号后两位字符
                 $no = '/%1[0-9a-f]/';
                 $str = preg_replace($no, '', $str);
+
+                // 移除W3C的标准下，XML文件无法识别的字符
                 $no = '/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]+/S';
                 $str = preg_replace($no, '', $str);
             }
             return $str;
         }
-        $keys = array_keys($str);
-        foreach ($keys as $key) {
-            $str[$key] = self::removeXss($str[$key], $DPI);
+        foreach ($str as $k => $v) {
+            $str[$k] = self::removeXss($v, $dpi);
         }
         return $str;
     }
-    
+
     /**
      * 压缩JS代码
      * 
@@ -774,13 +778,16 @@ CSSCODE,
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{<>}']);
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::isJson",['{{}}']);
      *
-     * @param string $str
+     * @param mixed $str
      * @return boolean
      */
-    static function isJson(string $str): bool
+    static function isJson($str): bool
     {
-        @json_decode($str);
-        return (json_last_error() == JSON_ERROR_NONE);
+        if (is_string($str)) {
+            @json_decode($str);
+            return (json_last_error() == JSON_ERROR_NONE);
+        }
+        return false;
     }
 
     /**
@@ -845,6 +852,9 @@ CSSCODE,
 
     /**
      * 转换HTML代码为文本
+     * 
+     * -e.g: $html='<b>boldText</b><span>spanText</span>';
+     * -e.g: phpunit("Type\Str::htmlToText", [$html]);
      *
      * @param string $html
      * @return string

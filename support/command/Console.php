@@ -116,14 +116,14 @@ class Console extends Command
 					self::$testMethod = $eg != "-";
 					if (self::$testMethod && $eg != '') {
 						if (substr($eg, 0, 1) == '[' && substr($eg, -1) == ']') {
-							eval("self::\$egArgs={$eg};");
+							eval("self::\$egArgs=" . $eg . ";");
 						} else {
-							self::$style->error(sprintf("测试用例参数无效.", $eg, self::$showMethod), null, 'error');
+							self::$style->error(sprintf("class:%s 测试用例参数无效=>  %s", self::$showMethod, $eg));
 							self::$style->info(array(
 								'正确用例格式：索引数组格式;字符串以单引号包裹',
 								" --eg",
-								" --eg [false,0,null]",
-								" --eg=['false','stringxxx',\"'中文'\"]",
+								" --eg \"[false,0,null]\"",
+								" --eg=\"['false','stringxxx','中文']\"",
 							));
 							return 1;
 						}

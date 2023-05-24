@@ -44,12 +44,14 @@ class Session
     static function start(string $sessionId = null): bool
     {
         if (self::$_start === true) return true;
-        if ($sessionId) {
-            self::id($sessionId);
-        } else if (isset($_POST['session_id']) && ($sessionId = trim($_POST['session_id']))) {
-            self::id($sessionId);
+        if (!isset($_SESSION)) {
+            if ($sessionId) {
+                self::id($sessionId);
+            } else if (isset($_POST['session_id']) && ($sessionId = trim($_POST['session_id']))) {
+                self::id($sessionId);
+            }
+            session_start();
         }
-        session_start();
         header("Cache-control:private");
         self::$_start = true;
         return true;
@@ -321,8 +323,10 @@ class Session
     static function setGcMaxLifetime(?int $gcMaxLifetime = null)
     {
         $return = ini_get('session.gc_maxlifetime');
-        if (isset($gcMaxLifetime) && is_int($gcMaxLifetime) && $gcMaxLifetime >= 1) {
-            ini_set('session.gc_maxlifetime', $gcMaxLifetime);
+        if (!isset($_SESSION)) {
+            if (isset($gcMaxLifetime) && is_int($gcMaxLifetime) && $gcMaxLifetime >= 1) {
+                ini_set('session.gc_maxlifetime', "$gcMaxLifetime");
+            }
         }
         return $return;
     }

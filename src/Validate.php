@@ -265,7 +265,7 @@ class Validate
      * @param string $str
      * @return boolean
      */
-    static function DouyinAccount(string $str): bool
+    static function douyinAccount(string $str): bool
     {
         return self::mobileOfChina($str, false) || self::email($str);
     }

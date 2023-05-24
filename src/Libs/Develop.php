@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @name 开发调试函数
  * @author vipkwd <service@vipkwd.com>
@@ -6,27 +7,37 @@
  * @license http://www.apache.org/licenses/LICENSE-2.0
  * @copyright The PHP-Tools
  */
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Vipkwd\Utils\Libs;
 
 use \Vipkwd\VarDumper\LightVarDumper;
+use \Vipkwd\Utils\Http;
 
-trait Develop{
+trait Develop
+{
     /**
      * 网页打印 print_r
      *
      * @param mixed $data
      * @param boolean $exit
+     * @param bool $printr 为false时即 var_dump
      * @return void
      */
-    static function dump($data, $exit = false, $printr=true){
-		if(!$printr){
-			return self::vdump($data, $exit);
-		}
-        if(self::isCli() == false){ echo "<pre>";}
+    static function dump($data, $exit = false, $printr = true)
+    {
+        $data = Http::encode($data, false);
+        if (!$printr) {
+            return self::vdump($data, $exit);
+        }
+        if (self::isCli() == false) {
+            echo "<pre>";
+        }
         print_r($data);
-        if(self::isCli() == false){ echo "</pre>";}
+        if (self::isCli() == false) {
+            echo "</pre>";
+        }
         $exit && exit;
     }
 
@@ -35,37 +46,43 @@ trait Develop{
      *
      * @param mixed $data
      * @param boolean $exit
-     * @param boolean $format
+     * @param boolean $pre
      * @return void
      */
-    static function dumper($data, $exit = false, bool $format = true){
-        if(!class_exists(LightVarDumper::class)){
+    static function dumper($data, $exit = false, bool $pre = true)
+    {
+        if (!class_exists(LightVarDumper::class)) {
             return self::dump($data, $exit);
         }
-        if($format) echo "<pre>";
+        if ($pre) echo "<pre>";
         (new LightVarDumper())
             // ->setIndent('    ')
             ->setMaxChildren(9999)
             ->setMaxFileNameDepth(66) //文件path深度
             // ->setMaxDepth(30)
             // ->setMaxLineLength(5)
-            ->setMaxStringLength(4999)//字符串打印前 xx 位
+            ->setMaxStringLength(4999) //字符串打印前 xx 位
             ->dump($data);
-            if($format) echo "</pre>";
+        if ($pre) echo "</pre>";
         $exit && exit;
     }
 
     /**
-     * 网页打印var_dump
+     * var_dump结构化
      *
      * @param mixed $data
      * @param boolean $exit
      * @return void
      */
-    static function vdump($data, $exit = false){
-        if(self::isCli() == false){ echo "<pre>";}
+    static function vdump($data, $exit = false)
+    {
+        if (self::isCli() == false) {
+            echo "<pre>";
+        }
         var_dump($data);
-        if(self::isCli() == false){ echo "</pre>";}
+        if (self::isCli() == false) {
+            echo "</pre>";
+        }
         $exit && exit;
     }
 
@@ -77,53 +94,57 @@ trait Develop{
      * @param boolean $br <true> 是否换行打印
      * @return void
      */
-    static function console($data, $exit = false, bool $br = true){
-        if($br){ echo "\r\n"; }
+    static function console($data, $exit = false, bool $br = true)
+    {
+        if ($br) {
+            echo "\r\n";
+        }
         print_r($data);
-        if($br){ echo "\r\n"; }else{ echo "\n";}
+        if ($br) {
+            echo "\r\n";
+        } else {
+            echo "\n";
+        }
         $exit && exit;
     }
 
-    private static function buildArgsType(array $args){
-        $txt = '';
-        foreach($args as $v){
-            if(is_callable($v)){
-                $txt .= "\Closure";
-            }elseif(gettype($v) == 'object'){
-                $txt .= "\Object{}";
-            }elseif(gettype($v) == 'array'){
-                $txt .= "[]";
-            }elseif(gettype($v) == 'string'){
-                $txt .="\"{$v}\"";
-            }else if($v === null){
-                $txt .="null";
-            }else if($v === true){
-                $txt .="true";
-            }else if($v === false){
-                $txt .= "false";
-            }else if( substr(strval($v),0,1) == "-" || substr(strval($v),0,1) >= 0){
-                $txt .= $v;
-            }
-            $txt .=', ';
-        }
-        return rtrim($txt, ', ');
+    /**
+     * Prints a debug backtrace
+     *
+     * @param array $trace [OPTIONAL] you can pass your own trace, otherwise, `debug_backtrace` will be called
+     *
+     * @return mixed
+     */
+    static function trace($trace = null, bool $autoPrint = true)
+    {
+        $trace = isset($trace) ? $trace : (defined('DEBUG_BACKTRACE_IGNORE_ARGS') ? debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) : debug_backtrace());
+        return $autoPrint ? self::dump($trace) : $trace;
     }
 
-    static function phpunit($classMethod, array $args = [], array $initArgs = []){
-
+    /**
+     * 测试用例调试
+     * 
+     * @param string $classMethod class::method
+     * @param array $args
+     * @param array $initArgs 非静态方法时的类初始化参数
+     * 
+     * @return mixed
+     */
+    static function phpunit($classMethod, array $args = [], array $initArgs = [])
+    {
         $args_txt = self::buildArgsType($args);
         $initArgs_txt = self::buildArgsType($initArgs);
 
         list($classPath, $method) = explode('::', $classMethod);
 
-        $buildClassName = function($classPath){
+        $buildClassName = function ($classPath) {
             $_tmp = explode('.', $classPath);
-            $_tmp = array_map(function($p){
+            $_tmp = array_map(function ($p) {
                 return ucfirst($p);
             }, $_tmp);
             $classPath = implode('\\', $_tmp);
             unset($_tmp);
-    
+
             (stristr($classPath, "Vipkwd\\Utils\\") === false) && $classPath = "\\Vipkwd\\Utils\\{$classPath}";
             return $classPath;
         };
@@ -133,18 +154,18 @@ trait Develop{
         //方法调用路径
         $callPath = '';
         $refMethod = $refClass->getMethod($method);
-        if($refMethod->isPublic() && !$refMethod->isStatic()){
+        if ($refMethod->isPublic() && !$refMethod->isStatic()) {
 
-            if($refClass->hasMethod('instance')){
+            if ($refClass->hasMethod('instance')) {
                 $insMethod = $refClass->getMethod('instance');
-                if($insMethod -> isStatic()){
-                    $callPath = $classPath.'::instance('.$initArgs_txt.')';
+                if ($insMethod->isStatic()) {
+                    $callPath = $classPath . '::instance(' . $initArgs_txt . ')';
                     $instance = $insMethod->invokeArgs(null, $initArgs);
                 }
             }
 
-            if(!isset($instance)){
-                $callPath = '(new '.$classPath.'('.$initArgs_txt.'))';
+            if (!isset($instance)) {
+                $callPath = '(new ' . $classPath . '(' . $initArgs_txt . '))';
                 // $insMethod = $refClass->getMethod('__construct');
                 // $instance = $insMethod->invokeArgs(null, $txt);
                 // $instance = new $classPath($txt);
@@ -157,13 +178,13 @@ trait Develop{
             // $construct = $refClass->hasMethod('instance')
             // $method->invokeArgs($instance, array('snsgou.com'));
             echo " {$callPath}; //";
-        }else{
+        } else {
             echo " {$classMethod}($args_txt); //";
             // $res = call_user_func_array("{$classMethod}", $args);
             $res = call_user_func_array([$classPath, $method], $args);
         }
 
-        switch($type = gettype($res)){
+        switch ($type = gettype($res)) {
             case "boolean":
                 $res = ($res ? 'true' : 'false');
                 break;
@@ -174,7 +195,7 @@ trait Develop{
             case "object":
                 self::dumper($res, false, false);
                 echo "\r\n";
-                return ;
+                return;
                 break;
             default:
                 break;
@@ -184,7 +205,8 @@ trait Develop{
         echo "\r\n";
     }
 
-    static function br(){
+    static function br()
+    {
         echo (self::isCli() ? "\r\n" : "<br />");
     }
 
@@ -193,28 +215,61 @@ trait Develop{
      *
      * @return boolean
      */
-    static function isCli(){
+    static function isCli()
+    {
         //return preg_match("/cli/i", @php_sapi_name()) ? true : false;
-        $str = defined('PHP_SAPI') ? PHP_SAPI : ( function_exists('php_sapi_name') ? php_sapi_name() : "" );
-        return (bool)preg_match("/(cli|phpdbg)/i", $str );
+        $str = defined('PHP_SAPI') ? PHP_SAPI : (function_exists('php_sapi_name') ? php_sapi_name() : "");
+        return (bool)preg_match("/(cli|phpdbg)/i", $str);
     }
 
-    static function colorPrint($string, $color)
-	{
-		if (preg_match("/[A-Z]/i", "$color")) {
-			$color = str_replace("black", "30", $color);
-			$color = str_replace("red", "31", $color);
-			$color = str_replace("green", "32", $color);
-			$color = str_replace("yellow", "33", $color);
-			$color = str_replace("blue", "34", $color);
-			$color = str_replace("purple", "35", $color);
-			$color = str_replace("dark_green", "36", $color);
-			$color = str_replace("darkgreen", "36", $color);
-			$color = str_replace("white", "37", $color);
-			$color = str_replace("underline", "4", $color);
-			$color = str_replace("cover", "7", $color);
-		}
-		return "\033[{$color}m{$string}\033[0m";
-	}
-
+    /**
+     * 控制台颜色控制
+     * 
+     * @param string $string
+     * @param string $coloe
+     * 
+     * @return string
+     */
+    static function colorPrint($string = '', $color = 'white')
+    {
+        if (preg_match("/[A-Z]/i", "$color")) {
+            $color = str_replace("black", "30", $color);
+            $color = str_replace("red", "31", $color);
+            $color = str_replace("green", "32", $color);
+            $color = str_replace("yellow", "33", $color);
+            $color = str_replace("blue", "34", $color);
+            $color = str_replace("purple", "35", $color);
+            $color = str_replace("dark_green", "36", $color);
+            $color = str_replace("darkgreen", "36", $color);
+            $color = str_replace("white", "37", $color);
+            $color = str_replace("underline", "4", $color);
+            $color = str_replace("cover", "7", $color);
+        }
+        return "\033[{$color}m{$string}\033[0m";
+    }
+    private static function buildArgsType(array $args)
+    {
+        $txt = '';
+        foreach ($args as $v) {
+            if (is_callable($v)) {
+                $txt .= "\Closure";
+            } elseif (gettype($v) == 'object') {
+                $txt .= "\Object{}";
+            } elseif (gettype($v) == 'array') {
+                $txt .= "[]";
+            } elseif (gettype($v) == 'string') {
+                $txt .= "\"{$v}\"";
+            } else if ($v === null) {
+                $txt .= "null";
+            } else if ($v === true) {
+                $txt .= "true";
+            } else if ($v === false) {
+                $txt .= "false";
+            } else if (substr(strval($v), 0, 1) == "-" || substr(strval($v), 0, 1) >= 0) {
+                $txt .= $v;
+            }
+            $txt .= ', ';
+        }
+        return rtrim($txt, ', ');
+    }
 }
