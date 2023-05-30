@@ -37,12 +37,12 @@ class Xsshtml {
      * @param array $allowTags 允许的标签
      * @return string
      */
-	static function getHtml($html, $charset = 'utf-8', $allowTags = array()){
+	public function getHtml($html, $charset = 'utf-8', $allowTags = array()){
 		self::$m_AllowTag = empty($allowTags) ? self::$m_AllowTag : $allowTags;
 		$this->m_xss = strip_tags($html, '<' . implode('><', self::$m_AllowTag) . '>');
 		if (!empty($this->m_xss)) {
 			$this->m_xss = "<meta http-equiv=\"Content-Type\" content=\"text/html;charset={$charset}\"><nouse>" . $this->m_xss . "</nouse>";
-			$this->m_dom = new DOMDocument();
+			$this->m_dom = new \DOMDocument();
 			$this->m_dom->strictErrorChecking = FALSE;
 			$this->m_ok = @$this->m_dom->loadHTML($this->m_xss);
 		}else{

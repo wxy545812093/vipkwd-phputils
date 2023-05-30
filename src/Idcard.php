@@ -539,14 +539,14 @@ class Idcard
      * @param idCard
      * @return array 信息数组
      */
-    private function validateIdCard10(string $idCard): array
+    private static function validateIdCard10(string $idCard): array
     {
         $idCard = trim($idCard);
         $card = str_replace(['(', '/', ')'], "", $idCard);
-        if (strlen($card) < 8 || strlen($card) > 10) {
-            return null;
-        }
         $res = ['-', 'N', false];
+        if (strlen($card) < 8 || strlen($card) > 10) {
+            return $res;
+        }
         if (true === ($res[2] = self::validateTWCard($card))) {
             $res[0] = "tw";
             $res[1] = substr($card, 1, 1) == "1" ? "M" : "F";
@@ -625,7 +625,7 @@ class Idcard
                     $iSum17 = self::getPowerSum($iArr);
                     // 获取校验位
                     $val = self::getCheckCode18($iSum17);
-                    if (strlen($val) > 0 && $val == $code18) {
+                    if (strlen("$val") > 0 && strtolower($val) == $code18) {
                         return true;
                     }
                 }

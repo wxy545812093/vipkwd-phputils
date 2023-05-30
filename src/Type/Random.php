@@ -643,19 +643,19 @@ class Random extends Payment
      * -e.g: phpunit("Vipkwd\Utils\Type\Random::digit",[6]);
      * 
      * @param integer $len <1>
+     * @param integer $min <0>
+     * @param integer $max <9>
      * @return string
      */
-    static function digit(int $len = 1): int
+    static function digit(int $len = 1, int $min = 0, int $max = 9): int
     {
-        return intval(self::maker($len, function () {
-            return mt_rand(0, 9);
+        $_max = pow(10, $len) - 1;
+        ($len > 1 && $max < $_max) && $max = $_max;
+        $min > $max && $min = $max;
+        return intval(self::maker($len, function () use ($min, $max) {
+            return mt_rand($min, $max);
         }, 'join'));
     }
-
-
-
-
-
     private static function maker($len = 1, callable $fn, string $format = null)
     {
         $len = intval($len);

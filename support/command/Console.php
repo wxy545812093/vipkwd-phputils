@@ -365,9 +365,16 @@ class Console extends Command
 			$arguments = [];
 			$defaults = [];
 			foreach ($params as $param) {
-				$arguments[$position] = $param->getName();
+				$arguments[$position] = [$param->getName()];
 				//参数是否设置了默认参数，如果设置了，则获取其默认值
 				$defaults[$position] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : "...NuLl"; //TODO 标识必传参数
+				if($defaults[$position] == '...NuLl'){
+					preg_match( sprintf("/.*?\@param\ +([a-zA-Z0-9\|]+)\ +(?:\\$%s).*?/i", $param->getName()), $comment, $matches);
+					if(!empty($matches)){
+						$arguments[$position][1] = $matches[1];
+					}
+				}
+				unset($param);
 				// Dev::dump($param->getClass());
 				$position++;
 			}
@@ -375,26 +382,35 @@ class Console extends Command
 			$tableArgs = $args = "";
 			if (!empty($arguments)) {
 				$args_seper = ', ';
+
+				$__wrVarType = function(array $field, string $type = 'string') use($args_seper){
+					if($field[0] == 'value'){
+						devdump($field);
+					}
+					return $args_seper . (isset($field[1]) ? $field[1] : $type) .' $'.$field[0];
+				};
+
 				foreach ($arguments as $idx => $field) {
-					$args .= $args_seper . '$' . $field;
 					switch (strtolower(gettype($defaults[$idx]))) {
 						case "boolean":
-							$args .= ('=' . ($defaults[$idx] === true ? "true" : "false"));
+							$args .= $__wrVarType($field, 'boolean') . ('=' . ($defaults[$idx] === true ? "true" : "false"));
 							break;
 						case "string":
 							//TODO 标识必传参数
 							if ($defaults[$idx] != "...NuLl") {
-								$args .= ('="' . $defaults[$idx] . '"');
+								$args .= $__wrVarType($field, 'string') . ('="' . $defaults[$idx] . '"');
+							}else{
+								$args .= $__wrVarType($field, 'mixed');
 							}
 							break;
 						case "array":
-							$args .= ('=[]');
+							$args .= $__wrVarType($field, 'array') . ('=[]');
 							break;
 						case "object":
-							$args .= ('={}');
+							$args .= $__wrVarType($field, 'object') . ('={}');
 							break;
 						case "null":
-							$args .= ('=null');
+							$args .= $__wrVarType($field, '?') . ('=null');
 							break;
 						default:
 							// if ($defaults[$idx] instanceof \Closure){
@@ -402,7 +418,7 @@ class Console extends Command
 							// }elseif(is_callable($defaults[$idx])){
 							// 	$args .= ('=fn()');
 							// }else{
-							$args .= ('=' . $defaults[$idx]);
+							$args .= sprintf("%s=%s", $__wrVarType($field, gettype($defaults[$idx])), $defaults[$idx]);
 							// }
 							break;
 					}

@@ -76,7 +76,8 @@ class Str
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::removeXss",[$html,true]);
      *
      * @param string|array $str 待检字符 或 索引数组
-     * @param boolean $dpi <false> 除常规过滤外，是否深度(额外使用正则)过滤。默认false仅常规过滤
+     * @param boolean $dpi <false> 除常规过滤外，是否深度(额外使用正则)过滤
+     * @param boolean $keepHtmlTag <false> 默认false仅常规过滤
      * @return string|array
      */
     static function removeXss($str, bool $dpi = false, bool $keepHtmlTag = false)
@@ -655,7 +656,7 @@ CSSCODE,
         $plus = new ZhToPyTone($tone);
         $plus->separator($separator);
         $plus->placeholder($placeholder);
-        $plus->retFormat($tone === true ? 'all' : $type); //带声调时只能是词输出(编码问题)
+        $plus->retFormat($tone === true ? 'all' : $type); //带声调时只能是全词输出(编码问题)
         return $plus->text($str);
     }
 
@@ -800,7 +801,7 @@ CSSCODE,
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "好"]);
      * -e.g: phpunit("Vipkwd\Utils\Type\Str::getSuggestion",[$items, "你"]);
      *
-     * @param array  $possibilities 查找列表
+     * @param array $possibilities 查找列表
      * @param string $value 查找文字
      *
      * @return string|null

@@ -383,6 +383,33 @@ class Ip
         return ("{$ip}/{$cidr}");
         //return Random::ip();
     }
+    /**
+     * CIDR表示法返回IP和前缀网络长度
+     *
+     * @param string $ipAddress
+     * @param integer $prefixLen
+     * @return string
+     */
+    static function cidr(string $ipAddress, int $prefixLen): string
+    {
+        $ipBytes = inet_pton($ipAddress);
+        $networkBytes = str_repeat("\0", \strlen($ipBytes));
+
+        $curPrefix = $prefixLen;
+        for ($i = 0; $i < \strlen($ipBytes) && $curPrefix > 0; $i++) {
+            $b = $ipBytes[$i];
+            if ($curPrefix < 8) {
+                $shiftN = 8 - $curPrefix;
+                $b = \chr(0xFF & (\ord($b) >> $shiftN) << $shiftN);
+            }
+            $networkBytes[$i] = $b;
+            $curPrefix -= 8;
+        }
+
+        $network = inet_ntop($networkBytes);
+
+        return "$network/$prefixLen";
+    }
 
     /**
      * 获取IP信息
@@ -396,7 +423,7 @@ class Ip
      * @param string|null $ip
      * @return array
      */
-    static function getInfo(?string $ip = ''): array
+    static function getInfo(?string $ip = null):array
     {
         !$ip && $ip = self::getClientIp();
         $ip = preg_replace("/[^0-9\.\/]/", '', $ip);
